@@ -32,6 +32,7 @@ dependencies = [
     "tslearn>=0.6.3",
     "shap>=0.47.0",
     "setuptools>=81.0.0",
+    "ephem>=4.2.1",
 ]
 
 requires-python = "==3.12.*"

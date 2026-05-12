@@ -1,155 +1,139 @@
 import os
 import sys
-import yaml
-import shutil
-import logging
 import pandas as pd
-from collections import defaultdict
 
+from src.configs.experiment_conf import init_experiment_config
+from src.setups.experiment_setup import init_experiment_setup
+from src.calendar_encoder.temporal_encoding import Time2Vec
 
+from config import logger_language
 
-from config import experiment_output_dir
-from src.utils.logger import get_logger
-from src.data.data_config import datasets_csv_dict, datasets_col_mapping
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-logger.info("Start")
-
-home_path = os.getcwd()
-
-export_path = os.path.join(home_path, experiment_output_dir)
-os.makedirs(export_path, exist_ok=True)
-
-params_path = os.path.join(home_path, "src", "runners", "params.yaml")
-
-with open(params_path, "r", encoding="utf-8") as f:
-    params = yaml.safe_load(f)
-
-print(params)
-experiment_dir_name = params["experiment_unique_name"]
-
-
-
-try:
-    experiment_path = os.path.join(
-        export_path,
-        experiment_dir_name
-    )
-
-    if not os.path.exists(experiment_path):
-        os.makedirs(experiment_path)
-        logger.info(
-            f"Папка эксперимента создана: {experiment_path}"
-        )
-    else:
-        logger.info(
-            f"Папка эксперимента уже существует: {experiment_path}"
-        )
-
-except Exception as e:
-    logger.error(
-        f"Ошибка при создании папки эксперимента: {e}"
-    )
-    raise
-
-logger = get_logger(log_dir=experiment_path, name="experiment")
-
-logger.info("Начало")
-
-
-src_path = os.path.join(home_path, "src")
-zip_path = os.path.join(experiment_path, "src_snapshot")
-
-try:
-    shutil.make_archive(
-        zip_path,
-        "zip",
-        src_path
-    )
-
-    logger.info(
-        f"Снимок src директории успешно создан: {zip_path}.zip"
-    )
-
-except Exception as e:
-    logger.error(
-        f"Ошибка при создании снимка src директории: {e}"
-    )
-    raise
-
-
-trajectory_cols = ["baseline", "all_time_2_vec_col", "best_time_2_vec_col"]
-
-model_to_test = ["LSTM", "XGBoost"]
-
-datasets = [
-    {
-        "dataset_name": "morocco_zone_1",
-        "start_train_date": "",
-        "end_train_date": "",
-        "start_test_date": "",
-        "end_test_date": ""
+# ============================================
+# en: Multilingual logging messages for experiment pipeline
+# ru: Мультиязычные сообщения логирования для экспериментального пайплайна
+# zh: 实验流水线的多语言日志消息
+# ============================================
+# Define in src/config.py
+# ============================================
+MESSAGES = {
+    "en": {
+        "experiment_created": "Experiment design created. Available at {}",
+        "experiment_error": "Error while creating experiment design: {}",
+        "t2v_start": "Time2Vec encoding started",
+        "t2v_success": "Time2Vec encoding finished successfully",
+        "t2v_error": "Error during Time2Vec encoding: {}",
+        "dataset_load_start": "Loading dataset: id={}, name={}",
+        "dataset_load_success": "Dataset loaded successfully: id={}, name={}",
+        "dataset_load_error": "Error loading dataset: id={}, name={}, path={}"
     },
-    {
-        "dataset_name": "russia_elista",
-        "start_train_date": "",
-        "end_train_date": "",
-        "start_test_date": "",
-        "end_test_date": ""
+    "ru": {
+        "experiment_created": "Дизайн экспериментов создан. Доступен по пути {}",
+        "experiment_error": "Ошибка при создании дизайна экспериментов: {}",
+        "t2v_start": "Запуск Time2Vec encoding",
+        "t2v_success": "Time2Vec encoding успешно завершён",
+        "t2v_error": "Ошибка при Time2Vec encoding: {}",
+        "dataset_load_start": "Загрузка датасета: id={}, имя={}",
+        "dataset_load_success": "Датасет успешно загружен: id={}, имя={}",
+        "dataset_load_error": "Ошибка загрузки датасета: id={}, имя={}, путь={}"
+    },
+    "zh": {
+        "experiment_created": "实验设计已创建，路径：{}",
+        "experiment_error": "创建实验设计时出错：{}",
+        "t2v_start": "Time2Vec 编码开始",
+        "t2v_success": "Time2Vec 编码成功完成",
+        "t2v_error": "Time2Vec 编码错误：{}",
+        "dataset_load_start": "正在加载数据集：id={}, 名称={}",
+        "dataset_load_success": "数据集加载成功：id={}, 名称={}",
+        "dataset_load_error": "数据集加载失败：id={}, 名称={}, 路径={}"
     }
-]
-
-idx = 0
-rows = []
-
-for d in datasets:
-    dataset_name = d["dataset_name"]
-
-    dataset_csv = datasets_csv_dict.get(dataset_name)
-    if dataset_csv is None:
-        logger.error(f"dataset_csv не найден в datasets_csv_dict для dataset_name={dataset_name}")
-        sys.exit(1)
-
-    for m in model_to_test:
-        for t in trajectory_cols:
-            key = f"{dataset_name}_{m}_{t}"
-
-            rows.append({
-                "id": idx,
-                "model": m,
-                "trajectory_cols": t,
-                "dataset_name": dataset_name,
-                "dataset_csv": dataset_csv,
-                "start_train_date": d["start_train_date"],
-                "end_train_date": d["end_train_date"],
-                "start_test_date": d["start_test_date"],
-                "end_test_date": d["end_test_date"],
-                "result_dir_name": key
-            })
-
-            idx += 1
+}
+msg = MESSAGES[logger_language]
 
 
-df_experiment_design = pd.DataFrame(rows)
+# ============================================
+# en: Experiment initialization (folders, logger, snapshot)
+# ru: Инициализация эксперимента (папки, логгер, snapshot)
+# zh: 实验初始化（文件夹、日志器、快照）
+# ============================================
+home_path, export_path, experiment_path, logger = init_experiment_config()
 
-counts = df_experiment_design["result_dir_name"].value_counts()
-
-counters = {}
-
-def fix_name(x):
-    if counts[x] == 1:
-        return x
-    i = counters.get(x, 0)
-    counters[x] = i + 1
-    return f"{i}_{x}"
-
-df_experiment_design["result_dir_name"] = df_experiment_design["result_dir_name"].map(fix_name)
+# ============================================
+# en: Experiment design configuration initialization
+# ru: Инициализация конфигурации дизайна экспериментов
+# zh: 实验设计配置初始化
+# ============================================
+df_experiment_design = init_experiment_setup()
 
 experiment_design_path =os.path.join(experiment_path,"experiment_design.csv")
 df_experiment_design.to_csv(experiment_design_path)
-logger.info(f"Дизайн экспериментов создан. Доступен по пути {experiment_design_path}")
+logger.info(msg["experiment_created"].format(experiment_design_path))
+
+# ============================================
+# en: Experiment grid generation for models
+# ru: Генерация сетки экспериментов для моделей
+# zh: 模型实验网格生成
+# ============================================
+for _, experiment in df_experiment_design.iterrows():
+
+    id = experiment["id"]
+    model = experiment["model"]
+    trajectory_cols = experiment["trajectory_cols"]
+    dataset_name = experiment["dataset_name"]
+    dataset_csv = experiment["dataset_csv"]
+    col_time = experiment["col_time"]
+    col_target = experiment["col_target"]
+    start_train_date = experiment["start_train_date"]
+    end_train_date = experiment["end_train_date"]
+    start_test_date = experiment["start_test_date"]
+    end_test_date = experiment["end_test_date"]
+    result_dir_name = experiment["result_dir_name"]
+
+
+    # ============================================
+    # en: Dataset loading block
+    # ru: Блок загрузки датасета
+    # zh: 数据集加载模块
+    # ============================================
+    try:
+        df_init = pd.read_csv(dataset_csv)
+        logger.info(msg["dataset_load_success"].format(id, dataset_name))
+    except Exception as e:
+        logger.error(
+            msg["dataset_load_error"].format(id, dataset_name, dataset_csv)
+        )
+        logger.error(str(e))
+        raise
+
+    # ============================================
+    # en: Time2Vec encoder initialization block
+    # ru: Блок инициализации энкодера Time2Vec
+    # zh: Time2Vec 编码器初始化模块
+    # ============================================
+    logger.info(msg["t2v_start"])
+    try:
+        t2v = Time2Vec(col_time=col_time, col_target=col_target)
+    except Exception as e:
+        logger.error(msg["t2v_error"].format(str(e)))
+        raise
+
+    # ============================================
+    # en: Time2Vec encoding execution block
+    # ru: Блок создания эмбеддингов временного ряда
+    # zh: 时间序列嵌入生成模块
+    # ============================================
+    try:
+        df_t2v_embedding, min_val, max_val = t2v.encoder(df=df_init)
+        logger.info(msg["t2v_success"])
+    except Exception as e:
+        logger.error(msg["t2v_error"].format(str(e)))
+        raise
+
+    print(df_t2v_embedding)
+
+
+
+
+
 
 
 

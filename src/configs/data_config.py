@@ -12,6 +12,7 @@ datasets_csv_dict = {
     # 'DEKENERG_ZONE2_S_PEVRAOBL': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PEVRAOBL.csv',
     # 'ARHENERG_ZONE1_E_PARHENER': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/ARHENERG_ZONE1_E_PARHENER.csv',
     # 'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
+
     "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=403462504&single=true&output=csv",
 
 
