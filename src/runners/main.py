@@ -4,9 +4,9 @@ import pandas as pd
 
 from src.configs.experiment_conf import init_experiment_config
 from src.setups.experiment_setup import init_experiment_setup
-from src.calendar_encoder.temporal_encoding import Time2Vec
 
 from config import logger_language
+from src.pipelines.ts_pipeline import TSExperimentPipeline
 
 # ============================================
 # en: Multilingual logging messages for experiment pipeline
@@ -18,33 +18,12 @@ from config import logger_language
 MESSAGES = {
     "en": {
         "experiment_created": "Experiment design created. Available at {}",
-        "experiment_error": "Error while creating experiment design: {}",
-        "t2v_start": "Time2Vec encoding started",
-        "t2v_success": "Time2Vec encoding finished successfully",
-        "t2v_error": "Error during Time2Vec encoding: {}",
-        "dataset_load_start": "Loading dataset: id={}, name={}",
-        "dataset_load_success": "Dataset loaded successfully: id={}, name={}",
-        "dataset_load_error": "Error loading dataset: id={}, name={}, path={}"
     },
     "ru": {
         "experiment_created": "Дизайн экспериментов создан. Доступен по пути {}",
-        "experiment_error": "Ошибка при создании дизайна экспериментов: {}",
-        "t2v_start": "Запуск Time2Vec encoding",
-        "t2v_success": "Time2Vec encoding успешно завершён",
-        "t2v_error": "Ошибка при Time2Vec encoding: {}",
-        "dataset_load_start": "Загрузка датасета: id={}, имя={}",
-        "dataset_load_success": "Датасет успешно загружен: id={}, имя={}",
-        "dataset_load_error": "Ошибка загрузки датасета: id={}, имя={}, путь={}"
     },
     "zh": {
         "experiment_created": "实验设计已创建，路径：{}",
-        "experiment_error": "创建实验设计时出错：{}",
-        "t2v_start": "Time2Vec 编码开始",
-        "t2v_success": "Time2Vec 编码成功完成",
-        "t2v_error": "Time2Vec 编码错误：{}",
-        "dataset_load_start": "正在加载数据集：id={}, 名称={}",
-        "dataset_load_success": "数据集加载成功：id={}, 名称={}",
-        "dataset_load_error": "数据集加载失败：id={}, 名称={}, 路径={}"
     }
 }
 msg = MESSAGES[logger_language]
@@ -75,65 +54,62 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 # ============================================
 for _, experiment in df_experiment_design.iterrows():
 
-    id = experiment["id"]
-    model = experiment["model"]
-    trajectory_cols = experiment["trajectory_cols"]
-    dataset_name = experiment["dataset_name"]
-    dataset_csv = experiment["dataset_csv"]
-    col_time = experiment["col_time"]
-    col_target = experiment["col_target"]
-    start_train_date = experiment["start_train_date"]
-    end_train_date = experiment["end_train_date"]
-    start_test_date = experiment["start_test_date"]
-    end_test_date = experiment["end_test_date"]
-    result_dir_name = experiment["result_dir_name"]
-
+    # ============================================
+    # en: Initialize experiment pipeline instance
+    # ru: Инициализация экземпляра пайплайна эксперимента
+    # zh: 初始化实验管道实例
+    # ============================================
+    ts_pipeline = TSExperimentPipeline(
+        experiment=experiment,
+        home_path=home_path,
+        export_path=export_path,
+        experiment_path=experiment_path,
+        logger=logger,
+        messages=MESSAGES,
+        logger_language=logger_language
+    )
+    
+    # ============================================
+    # en: Save experiment grid configuration
+    # ru: Сохранение конфигурации сетки экспериментов
+    # zh: 保存实验网格配置
+    # ============================================
+    ts_pipeline.init_design(df_experiment_design)
+    
+    # ============================================
+    # en: Load dataset for current experiment
+    # ru: Загрузка датасета для текущего эксперимента
+    # zh: 加载当前实验的数据集
+    # ============================================
+    ts_pipeline.load_dataset()
+    
+    # ============================================
+    # en: Apply Time2Vec temporal encoding
+    # ru: Применение временного кодирования Time2Vec
+    # zh: 应用 Time2Vec 时间编码
+    # ============================================
+    ts_pipeline.run_time2vec()
+    
+    # ============================================
+    # en: Select optimal lag using PACF
+    # ru: Выбор оптимального лага с помощью PACF
+    # zh: 使用 PACF 选择最优滞后
+    # ============================================
+    ts_pipeline.run_lag_pacf()
+    
+    # ============================================
+    # en: Split dataset into train and test sets
+    # ru: Разделение данных на train и test выборки
+    # zh: 将数据划分为训练集和测试集
+    # ============================================
+    ts_pipeline.run_split()
 
     # ============================================
-    # en: Dataset loading block
-    # ru: Блок загрузки датасета
-    # zh: 数据集加载模块
+    # en: Statistical feature selection for forecasting
+    # ru: Статистический отбор признаков для прогнозирования
+    # zh: 预测任务的统计特征选择
     # ============================================
-    try:
-        df_init = pd.read_csv(dataset_csv)
-        logger.info(msg["dataset_load_success"].format(id, dataset_name))
-    except Exception as e:
-        logger.error(
-            msg["dataset_load_error"].format(id, dataset_name, dataset_csv)
-        )
-        logger.error(str(e))
-        raise
-
-    # ============================================
-    # en: Time2Vec encoder initialization block
-    # ru: Блок инициализации энкодера Time2Vec
-    # zh: Time2Vec 编码器初始化模块
-    # ============================================
-    logger.info(msg["t2v_start"])
-    try:
-        t2v = Time2Vec(col_time=col_time, col_target=col_target)
-    except Exception as e:
-        logger.error(msg["t2v_error"].format(str(e)))
-        raise
-
-    # ============================================
-    # en: Time2Vec encoding execution block
-    # ru: Блок создания эмбеддингов временного ряда
-    # zh: 时间序列嵌入生成模块
-    # ============================================
-    try:
-        df_t2v_embedding, min_val, max_val = t2v.encoder(df=df_init)
-        logger.info(msg["t2v_success"])
-    except Exception as e:
-        logger.error(msg["t2v_error"].format(str(e)))
-        raise
-
-    print(df_t2v_embedding)
-
-
-
-
-
+    ts_pipeline.fetch_stat_select_features()
 
 
 

@@ -54,10 +54,11 @@ datasets = [
         "dataset_name": "morocco_zone_1",
         "col_time": "Datetime",
         "col_target": "consumption",
-        "start_train_date": "",
-        "end_train_date": "",
-        "start_test_date": "",
-        "end_test_date": ""
+        "additional_cols": [],
+        "start_train_date": "2017-01-01",
+        "end_train_date": "2017-11-29",
+        "start_test_date": "2017-11-30",
+        "end_test_date": "2017-12-30"
     },
     # {
     #     "dataset_name": "russia_elista",
@@ -118,6 +119,7 @@ def init_experiment_setup() -> pd.DataFrame:
                             "dataset_csv": dataset_csv,
                             "col_time": d["col_time"],
                             "col_target": d["col_target"],
+                            "additional_cols": d["additional_cols"],
                             "start_train_date": d["start_train_date"],
                             "end_train_date": d["end_train_date"],
                             "start_test_date": d["start_test_date"],
