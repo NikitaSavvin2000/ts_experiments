@@ -1,12 +1,43 @@
+"""
+pdm run src/runners/main.py
+"""
 import os
+import time
 import sys
 import pandas as pd
 
 from src.configs.experiment_conf import init_experiment_config
-from src.setups.experiment_setup import init_experiment_setup
+from src.setups.experiment_setup import (init_experiment_setup,
+                                         load_and_prepare_progress,
+                                         get_pending_experiments,
+                                         append_experiment_to_csv,
+                                         not_exogenous_models)
 
 from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
+from tqdm import tqdm
+
+
+def scip_not_exogenous_models(experiment):
+
+    iteration_results_path = os.path.join(results_path, experiment["result_dir_name"])
+    os.makedirs(iteration_results_path, exist_ok=True)
+
+    exp_result["pacf_lag"] = None
+    exp_result["col_for_train"] = None
+    exp_result["discreteness"] = None
+    exp_result["r2"] = None
+    exp_result["mae"] = None
+    exp_result["mape"] = None
+    exp_result["rmse"] = None
+    exp_result["elapsed_seconds"] = None
+
+
+    df_result = pd.DataFrame([exp_result])
+
+    df_result.to_csv(os.path.join(iteration_results_path, "line_result_table.csv"))
+    append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
+
 
 # ============================================
 # en: Multilingual logging messages for experiment pipeline
@@ -43,17 +74,33 @@ home_path, export_path, experiment_path, logger = init_experiment_config()
 # ============================================
 df_experiment_design = init_experiment_setup()
 
-experiment_design_path =os.path.join(experiment_path,"experiment_design.csv")
+experiment_design_path = os.path.join(experiment_path,"experiment_design.csv")
+progress_csv_path = os.path.join(experiment_path, "progress.csv")
+results_path = os.path.join(experiment_path, "results")
+os.makedirs(results_path, exist_ok=True)
+
 df_experiment_design.to_csv(experiment_design_path)
 logger.info(msg["experiment_created"].format(experiment_design_path))
+
+
+df_ready_progress = load_and_prepare_progress(progress_csv_path=progress_csv_path, columns=df_experiment_design.columns)
+df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
+
+if df_to_experiment is None or df_to_experiment.empty:
+    logger.info("All experiments completed")
+    sys.exit(0)
 
 # ============================================
 # en: Experiment grid generation for models
 # ru: Генерация сетки экспериментов для моделей
 # zh: 模型实验网格生成
 # ============================================
-for _, experiment in df_experiment_design.iterrows():
+for _, experiment in tqdm(df_to_experiment.iterrows()):
 
+    if experiment["model"] in not_exogenous_models:
+        if experiment["trajectory_cols"] != "baseline":
+            scip_not_exogenous_models(experiment)
+            continue
     # ============================================
     # en: Initialize experiment pipeline instance
     # ru: Инициализация экземпляра пайплайна эксперимента
@@ -82,6 +129,11 @@ for _, experiment in df_experiment_design.iterrows():
     # zh: 加载当前实验的数据集
     # ============================================
     ts_pipeline.load_dataset()
+
+
+    start = time.perf_counter()
+
+    ts_pipeline.prepare_future_dataframe()
     
     # ============================================
     # en: Apply Time2Vec temporal encoding
@@ -95,7 +147,7 @@ for _, experiment in df_experiment_design.iterrows():
     # ru: Выбор оптимального лага с помощью PACF
     # zh: 使用 PACF 选择最优滞后
     # ============================================
-    ts_pipeline.run_lag_pacf()
+    # ts_pipeline.run_lag_pacf()
     
     # ============================================
     # en: Split dataset into train and test sets
@@ -109,7 +161,37 @@ for _, experiment in df_experiment_design.iterrows():
     # ru: Статистический отбор признаков для прогнозирования
     # zh: 预测任务的统计特征选择
     # ============================================
-    ts_pipeline.fetch_stat_select_features()
+    # ts_pipeline.fetch_stat_select_features()
 
+    ts_pipeline.run_test_predict()
+
+
+    iteration_results_path = os.path.join(results_path, experiment["result_dir_name"])
+    os.makedirs(iteration_results_path, exist_ok=True)
+
+    end = time.perf_counter()
+
+    elapsed_seconds = end - start
+
+    exp_result = experiment.copy()
+
+    exp_result["pacf_lag"] = ts_pipeline.pacf_lag
+    exp_result["col_for_train"] = ts_pipeline.col_for_train
+    exp_result["discreteness"] = ts_pipeline.discreteness_sec
+    exp_result["r2"] = ts_pipeline.metrix_dict["r2"]
+    exp_result["mae"] = ts_pipeline.metrix_dict["mae"]
+    exp_result["mape"] = ts_pipeline.metrix_dict["mape"]
+    exp_result["rmse"] = ts_pipeline.metrix_dict["rmse"]
+    exp_result["elapsed_seconds"] = elapsed_seconds
+
+
+    df_result = pd.DataFrame([exp_result])
+
+    df_result.to_csv(os.path.join(iteration_results_path, "line_result_table.csv"))
+
+    ts_pipeline.df_test_pred.to_csv(os.path.join(iteration_results_path, "test_pred_norm.csv"))
+    ts_pipeline.df_test_pred_not_norm.to_csv(os.path.join(iteration_results_path, "test_pred_not_norm.csv"))
+
+    append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
 
 

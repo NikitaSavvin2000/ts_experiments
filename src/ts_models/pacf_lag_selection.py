@@ -3,7 +3,7 @@ import pandas as pd
 import logging
 from statsmodels.tsa.stattools import pacf
 from config import logger_language
-
+from tqdm import tqdm
 
 MESSAGES = {
     "en": {
@@ -33,68 +33,51 @@ MESSAGES = {
 }
 
 
-def select_pacf_lag(df, col_target, col_time=None, max_lag=200, logger=None):
+
+def select_pacf_lag(df, col_target, col_time=None, max_lag=100, logger=None):
+    print(f"max_lag = {max_lag}")
+
     if logger is None:
         logger = logging.getLogger(__name__)
         if not logger.handlers:
             logging.basicConfig(level=logging.INFO)
 
-    msg = MESSAGES.get(logger_language, MESSAGES["en"])
+    df = df.copy()
 
-    try:
-        logger.info(msg["init"])
+    if col_time is not None and col_time in df.columns:
+        df = df.sort_values(col_time)
+    else:
+        df = df.sort_values(df.columns[0])
 
-        df = df.copy()
+    series = df[col_target]
+    series = pd.to_numeric(series, errors="coerce")
+    series = series.ffill().bfill().values
 
-        if col_time is not None and col_time in df.columns:
-            df = df.sort_values(col_time)
-        else:
-            df = df.sort_values(df.columns[0])
+    series = series[-5000:]
 
-        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+    def safe_pacf(x):
+        try:
+            vals = pacf(x, nlags=max_lag, method="ols")
+            if len(vals) < max_lag + 1:
+                return None
+            return np.abs(vals[1:max_lag + 1])
+        except Exception:
+            return None
 
-        exclude = {col_target}
-        if col_time is not None:
-            exclude.add(col_time)
+    pacf_vals = safe_pacf(series)
 
-        numeric_cols = [c for c in numeric_cols if c not in exclude]
+    if pacf_vals is None:
+        return 1
 
-        if len(numeric_cols) == 0:
-            logger.error(msg["no_numeric"])
-            raise ValueError(msg["no_numeric"])
+    if np.all(pacf_vals == 0):
+        return 1
 
-        lag_scores = np.zeros(max_lag)
-        valid_cols = 0
+    energy = np.cumsum(pacf_vals)
+    energy = energy / (energy[-1] + 1e-12)
 
-        for col in numeric_cols:
-            series = df[col].values
-            series = pd.Series(series).ffill().bfill().values
+    lag = int(np.searchsorted(energy, 0.85)) + 1
+    lag = max(1, min(lag, max_lag))
 
-            try:
-                pacf_vals = pacf(series, nlags=max_lag, method="yw")
-            except Exception:
-                logger.exception(msg["pacf_error"].format(col))
-                continue
+    print(f"lag = {lag}")
 
-            if len(pacf_vals) < max_lag + 1:
-                continue
-
-            lag_scores += np.abs(pacf_vals[1:max_lag + 1])
-            valid_cols += 1
-
-        if valid_cols == 0:
-            logger.warning(msg["no_valid"])
-            return 1
-
-        lag_scores = lag_scores / valid_cols
-        best_lag = int(np.argmax(lag_scores)) + 1
-
-        logger.info(msg["done"].format(best_lag))
-
-        logger.info(f"Selected lag: {best_lag}")
-
-        return best_lag
-
-    except Exception as e:
-        logger.exception(msg["critical"].format(e))
-        raise
+    return lag

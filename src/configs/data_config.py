@@ -18,6 +18,18 @@ datasets_csv_dict = {
 
 }
 
+# Климат
+# Энергетика
+# Транспорт и логистика
+# Медицина
+# Продажи
+
+# Climate
+# Energy
+# Transport and Logistics
+# Healthcare
+# Sales
+
 datasets_col_mapping = {
     "morocco_zone_1": {
         "time": "Datetime",
