@@ -3,6 +3,12 @@ import numpy as np
 import tensorflow as tf
 from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import os
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def split_sequence(sequence, n_steps):
@@ -238,4 +244,75 @@ def test_method_visualize(df_eval, df_test_pred, df_real_pred, col_time, col_tar
     )
 
     fig.show()
-    
+
+def test_method_visualize_m(
+        df_eval,
+        df_test_pred,
+        df_real_pred,
+        col_time,
+        col_target,
+        metrix_dict
+):
+
+    print("[VIS] start")
+
+    df_eval = df_eval.copy()
+    df_test_pred = df_test_pred.copy()
+    df_real_pred = df_real_pred.copy()
+
+    df_eval[col_time] = pd.to_datetime(df_eval[col_time])
+    df_test_pred[col_time] = pd.to_datetime(df_test_pred[col_time])
+    df_real_pred[col_time] = pd.to_datetime(df_real_pred[col_time])
+
+    df_eval = df_eval.sort_values(col_time)
+    df_test_pred = df_test_pred.sort_values(col_time)
+    df_real_pred = df_real_pred.sort_values(col_time)
+
+    print(f"[VIS] eval points: {len(df_eval)}")
+    print(f"[VIS] test_pred points: {len(df_test_pred)}")
+    print(f"[VIS] real_pred points: {len(df_real_pred)}")
+
+    plt.figure(figsize=(14, 6))
+
+    plt.plot(
+        df_eval[col_time],
+        df_eval[col_target],
+        label="real",
+        linewidth=2
+    )
+
+    plt.plot(
+        df_test_pred[col_time],
+        df_test_pred[col_target],
+        label="test_pred",
+        linewidth=2
+    )
+
+    plt.plot(
+        df_real_pred[col_time],
+        df_real_pred[col_target],
+        label="real_pred",
+        linewidth=2
+    )
+
+    title = " | ".join([f"{k}: {v}" for k, v in metrix_dict.items()])
+
+    plt.title(title)
+    plt.xlabel(col_time)
+    plt.ylabel(col_target)
+
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+
+    os.makedirs("IMAGE_ARTICLE", exist_ok=True)
+
+    save_path = os.path.join("IMAGE_ARTICLE", "forecast_plot_Transformer.png")
+
+    plt.savefig(save_path, dpi=200, bbox_inches="tight")
+
+    print(f"[VIS] saved: {save_path}")
+
+    plt.show()
+
+    print("[VIS] done")

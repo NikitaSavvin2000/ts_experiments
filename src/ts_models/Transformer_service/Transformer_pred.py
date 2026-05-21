@@ -21,7 +21,6 @@ np.random.seed(SEED)
 tf.random.set_seed(SEED)
 
 tf.keras.backend.clear_session()
-
 tf.config.optimizer.set_jit(False)
 
 try:
@@ -30,14 +29,15 @@ try:
 except Exception:
     print("[DEVICE] GPU config skipped")
 
+
 model_architecture_params = {
-    "embed_dim": 8,
-    "num_heads": 1,
-    "ff_dim": 16,
-    "dropout": 0.0,
-    "dense_units": 16,
-    "learning_rate": 0.001,
-    "epochs": 3,
+    "embed_dim": 64,
+    "num_heads": 3,
+    "ff_dim": 256,
+    "dropout": 0.1,
+    "dense_units": 64,
+    "learning_rate": 0.0005,
+    "epochs": 10,
     "batch_size": 64
 }
 
@@ -48,8 +48,6 @@ class TransformerBlock(layers.Layer):
 
     def __init__(self, embed_dim, num_heads, ff_dim, dropout):
         super().__init__()
-
-        print("[MODEL] init TransformerBlock")
 
         self.att = layers.MultiHeadAttention(
             num_heads=num_heads,
@@ -67,7 +65,6 @@ class TransformerBlock(layers.Layer):
         self.dropout = layers.Dropout(dropout)
 
     def call(self, x):
-
         attn = self.att(x, x)
         x = self.norm1(x + attn)
 
@@ -81,13 +78,9 @@ class TransformerBlock(layers.Layer):
 
 def build_transformer_model(lag, n_features):
 
-    print("[MODEL] building started")
-
     inputs = layers.Input(shape=(lag, n_features))
 
     x = layers.Dense(model_architecture_params["embed_dim"])(inputs)
-
-    print("[MODEL] embedding done")
 
     x = TransformerBlock(
         embed_dim=model_architecture_params["embed_dim"],
@@ -95,8 +88,6 @@ def build_transformer_model(lag, n_features):
         ff_dim=model_architecture_params["ff_dim"],
         dropout=model_architecture_params["dropout"]
     )(x)
-
-    print("[MODEL] transformer block done")
 
     x = layers.GlobalAveragePooling1D()(x)
 
@@ -117,10 +108,22 @@ def build_transformer_model(lag, n_features):
         metrics=["mae"]
     )
 
-    print("[MODEL] compiled")
-
     return model
 
+
+def _clean_numeric(df, cols):
+
+    df = df.copy()
+
+    for c in cols:
+        df[c] = (
+            df[c]
+            .replace(["None", "nan", "NaN", None], np.nan)
+        )
+
+    df = df.fillna(df.median(numeric_only=True))
+
+    return df
 
 def Transformer_forecast(
         col_target,
@@ -132,59 +135,69 @@ def Transformer_forecast(
         logger
 ):
 
-    print("[PIPELINE] START")
-
-    print("[PIPELINE] step 1 - copy data")
-
     df_train = df_train.copy()
     df_test = df_test.copy()
 
-    print("[PIPELINE] step 2 - datetime parse")
-
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
-    df_train = df_train.sort_values(time_column).reset_index(drop=True)
+    df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
 
-    print("[PIPELINE] step 3 - feature selection")
+    col_for_train = [
+        col for col in col_for_train
+        if col not in [col_target, time_column]
+    ]
 
-    cols = [col_target] + list(col_for_train)
-    cols = list(dict.fromkeys(cols))
+    col_for_train = [col_target] + col_for_train
 
-    df_train = df_train[cols]
-    df_test = df_test[cols]
+    df_train = df_train[col_for_train].copy()
 
-    print("[PIPELINE] step 4 - cleaning")
+    df_test_pred = df_test[[time_column]].copy()
 
-    df_train = df_train.replace([np.inf, -np.inf], np.nan)
-    df_test = df_test.replace([np.inf, -np.inf], np.nan)
+    if col_target in df_test.columns:
+        df_test_pred[col_target] = df_test[col_target].values
+    else:
+        df_test_pred[col_target] = np.nan
+
+    df_test = df_test[col_for_train].copy()
+
+    df_train[col_target] = (
+        df_train[col_target]
+        .replace("None", np.nan)
+        .astype(float)
+    )
+
+    df_test = df_test.replace("None", np.nan)
+
+    nan_locations = df_train.isna()
+
+    if nan_locations.any().any():
+        logger.error("NaN values found in df_train:")
+
+        nan_rows = df_train[nan_locations.any(axis=1)]
+        logger.error(nan_rows)
+
+        nan_columns = nan_locations.sum()
+        logger.error(nan_columns[nan_columns > 0])
+
+        raise ValueError("NaN values detected in training data")
 
     df_train = df_train.fillna(df_train.median(numeric_only=True))
     df_test = df_test.fillna(df_train.median(numeric_only=True))
 
-    print("[PIPELINE] step 5 - numpy conversion")
-
-    values = df_train.astype(np.float32).values
-
-    print("[PIPELINE] step 6 - sequence split")
+    values = df_train.values.astype(np.float32)
 
     X, y = split_sequence(values, lag)
 
     X = np.asarray(X, dtype=np.float32)
     y = np.asarray(y, dtype=np.float32)
 
-    X = X.reshape(X.shape[0], lag, values.shape[1])
+    n_features = values.shape[1]
+
+    X = X.reshape(X.shape[0], lag, n_features)
     y = y.reshape(-1, 1)
 
-    print("[PIPELINE] data shape:", X.shape, y.shape)
+    model = build_transformer_model(lag, n_features)
 
-    print("[PIPELINE] step 7 - model build")
-
-    model = build_transformer_model(lag, values.shape[1])
-
-    model.summary()
-
-    print("[PIPELINE] step 8 - training start")
-
-    history = model.fit(
+    model.fit(
         X,
         y,
         epochs=model_architecture_params["epochs"],
@@ -193,30 +206,20 @@ def Transformer_forecast(
         verbose=1
     )
 
-    print("[PIPELINE] step 9 - training done")
-    print("[PIPELINE] final loss:", history.history["loss"][-1])
-
-    print("[PIPELINE] step 10 - inference prep")
-
     x_input = create_x_input(df_train.astype(np.float32), lag)
-    x_input = x_input.reshape(1, lag, values.shape[1])
+    x_input = x_input.reshape(1, lag, n_features)
 
-    print("[PIPELINE] step 11 - forecasting")
+    df_test_values = df_test.values.astype(np.float32)
 
     preds = make_predictions_lstm(
         x_input=x_input,
-        x_future=df_test[cols].values.astype(np.float32),
-        points_per_call=points_per_call,
-        model=model
+        x_future=df_test_values,
+        model=model,
+        points_per_call=points_per_call
     )
 
     preds = np.array(preds).flatten()
 
-    print("[PIPELINE] step 12 - result build")
+    df_test_pred[col_target] = preds
 
-    result = df_test[[time_column, col_target]].copy()
-    result[col_target] = preds
-
-    print("[PIPELINE] DONE")
-
-    return result
+    return df_test_pred
