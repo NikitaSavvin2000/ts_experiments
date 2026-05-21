@@ -26,7 +26,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import random
 import random
-
+import random
+import numpy as np
+from sklearn.feature_selection import mutual_info_regression
 
 
 MESSAGES = {
@@ -484,19 +486,302 @@ class TSExperimentPipeline:
 
         fig_graph.show()
 
+        import pandas as pd
 
-    def select_best_t2v_columns(self, population_size=15, generations=1, mutation_rate=0.15, elite_size=5):
 
+    def build_correlation_graph(
+            self,
+            df: pd.DataFrame,
+            target_col: str,
+            time_col: str,
+            all_cols: list,
+            method: str = "pearson",
+            min_abs_corr: float = 0.0
+    ) -> dict:
+
+        feature_cols = [
+            col for col in all_cols
+            if col not in [target_col, time_col]
+        ]
+
+        numeric_cols = []
+
+        for col in feature_cols + [target_col]:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                numeric_cols.append(col)
+
+        corr_df = df[numeric_cols].corr(method=method)
+
+        correlation_graph = {}
+
+        for feature in feature_cols:
+
+            if feature not in corr_df.columns:
+                continue
+
+            feature_corrs = {}
+
+            target_corr = corr_df.loc[feature, target_col]
+
+            if pd.notna(target_corr):
+                feature_corrs["target_correlation"] = float(target_corr)
+
+            correlated_features = {}
+
+            for other_feature in feature_cols:
+
+                if other_feature == feature:
+                    continue
+
+                if other_feature not in corr_df.columns:
+                    continue
+
+                corr_value = corr_df.loc[feature, other_feature]
+
+                if pd.isna(corr_value):
+                    continue
+
+                if abs(corr_value) >= min_abs_corr:
+                    correlated_features[other_feature] = float(corr_value)
+
+            feature_corrs["correlated_features"] = dict(
+                sorted(
+                    correlated_features.items(),
+                    key=lambda x: abs(x[1]),
+                    reverse=True
+                )
+            )
+
+            correlation_graph[feature] = feature_corrs
+
+        return correlation_graph
+
+
+    def select_best_t2v_columns(
+            self,
+            population_size=15,
+            generations=3,
+            mutation_rate=0.3,
+            elite_size=5,
+            cache_enabled=True,
+            preselect_k=50
+    ):
+    
         all_features = self.all_available_cols.copy()
+        cache = {}
+    
+        X = self.df_train[all_features].fillna(0)
+        y = self.df_train[self.col_target].fillna(0)
 
+        zero_var_cols = X.columns[X.nunique() <= 1]
+        X = X.drop(columns=zero_var_cols)
+        all_features = X.columns.tolist()
+    
+        corr_scores = X.corrwith(y).abs().fillna(0)
+    
+        mi_scores = mutual_info_regression(X, y)
+
+        mi_df = pd.DataFrame({
+            "feature": all_features,
+            "mi_score": mi_scores
+        }).sort_values("mi_score", ascending=False)
+        
+        print(mi_df)
+    
+        feature_scores = {
+            f: 0.5 * corr_scores[f] + 0.5 * mi_scores[i]
+            for i, f in enumerate(all_features)
+        }
+    
+        ranked_features = sorted(feature_scores, key=feature_scores.get, reverse=True)
+        ranked_features = ranked_features[:preselect_k]
+        
+        print(f"ranked_features = {ranked_features}")
+    
         def run_model(cols):
+            key = tuple(sorted(cols))
+    
+            if cache_enabled and key in cache:
+                return cache[key]
+    
             df_test_pred = self.forecast_func(
                 col_target=self.col_target,
                 time_column=self.col_time,
                 df_train=self.df_train,
                 df_test=self.df_test,
                 lag=self.pacf_lag,
-                col_for_train=cols,
+                col_for_train=list(cols),
+                logger=self.logger,
+            )
+    
+            true = self.df_eval[self.col_target].tolist()
+            pred = df_test_pred[self.col_target].tolist()
+    
+            metrics = regression_metrics(true=true, pred=pred)
+            score = metrics.get("mape", float("inf"))
+    
+            penalty = 0.001 * len(cols)
+            score = score + penalty
+    
+            res = (score, metrics, df_test_pred)
+    
+            if cache_enabled:
+                cache[key] = res
+    
+            return res
+    
+        def init_population():
+            pop = []
+    
+            for _ in range(population_size):
+                k = random.randint(max(3, len(ranked_features) // 10), max(5, len(ranked_features) // 3))
+                pop.append(random.sample(ranked_features, k))
+    
+            return pop
+    
+        def crossover(p1, p2):
+            inter = list(set(p1).intersection(set(p2)))
+            union = list(set(p1).union(set(p2)))
+    
+            child = inter
+    
+            if len(child) < 2:
+                child = union
+    
+            if len(child) < 2:
+                child = random.sample(ranked_features, 2)
+    
+            return child
+    
+        def mutate(ind):
+            ind = ind.copy()
+    
+            if random.random() < mutation_rate:
+                if len(ind) > 2 and random.random() < 0.4:
+                    ind.remove(random.choice(ind))
+                else:
+                    candidates = list(set(ranked_features) - set(ind))
+    
+                    if candidates:
+                        weights = np.linspace(1, 0.1, len(candidates))
+                        weights = weights / weights.sum()
+    
+                        ind.append(random.choices(candidates, weights=weights, k=1)[0])
+    
+            return ind
+    
+        def local_search(ind):
+            base_score, _, _ = run_model(ind)
+    
+            candidates = list(set(ranked_features) - set(ind))
+            random.shuffle(candidates)
+    
+            for f in candidates[:5]:
+                trial = ind + [f]
+                score, _, _ = run_model(trial)
+    
+                if score < base_score:
+                    return trial
+    
+            return ind
+    
+        def evaluate_population(population):
+            results = []
+    
+            for ind in population:
+                if len(ind) > preselect_k:
+                    continue
+    
+                ind = local_search(ind)
+                score, metrics, pred = run_model(ind)
+    
+                self.logger.info(f"SIZE={len(ind)} MAPE={score}")
+    
+                results.append((ind, score, metrics, pred))
+    
+            results.sort(key=lambda x: x[1])
+            return results
+    
+        population = init_population()
+    
+        best_individual = None
+        best_score = float("inf")
+        best_metrics = None
+        best_pred = None
+    
+        no_improve = 0
+    
+        for gen in range(generations):
+            self.logger.info(f"GEN {gen}")
+    
+            scored = evaluate_population(population)
+    
+            if scored[0][1] < best_score:
+                best_individual = scored[0][0]
+                best_score = scored[0][1]
+                best_metrics = scored[0][2]
+                best_pred = scored[0][3]
+                no_improve = 0
+            else:
+                no_improve += 1
+    
+            self.logger.info(f"BEST GEN {gen} MAPE = {best_score}")
+    
+            if no_improve >= 3:
+                break
+    
+            elite = [x[0] for x in scored[:elite_size]]
+    
+            new_population = elite.copy()
+    
+            while len(new_population) < population_size:
+                p1 = random.choice(elite)
+                p2 = random.choice(elite)
+    
+                child = crossover(p1, p2)
+                child = mutate(child)
+    
+                new_population.append(child)
+    
+            population = new_population
+    
+        final_cols = best_individual
+        final_score, final_metrics, final_pred = run_model(final_cols)
+    
+        self.logger.info(f"FINAL COLS = {final_cols}")
+        self.logger.info(f"FINAL MAPE = {final_score}")
+    
+        return final_cols, final_metrics, final_pred
+
+
+    def select_best_t2v_columns_сlassic_GA(
+            self,
+            population_size=15,
+            generations=3,
+            mutation_rate=0.3,
+            elite_size=5,
+            cache_enabled=True,
+            early_stopping_rounds=3,
+    ):
+        all_features = self.all_available_cols.copy()
+        cache = {}
+
+        X = self.df_train[all_features].fillna(0)
+        y = self.df_train[self.col_target].fillna(0)
+
+        def run_model(cols):
+            key = tuple(sorted(cols))
+
+            if cache_enabled and key in cache:
+                return cache[key]
+
+            df_test_pred = self.forecast_func(
+                col_target=self.col_target,
+                time_column=self.col_time,
+                df_train=self.df_train,
+                df_test=self.df_test,
+                lag=self.pacf_lag,
+                col_for_train=list(cols),
                 logger=self.logger,
             )
 
@@ -504,41 +789,62 @@ class TSExperimentPipeline:
             pred = df_test_pred[self.col_target].tolist()
 
             metrics = regression_metrics(true=true, pred=pred)
-            score = metrics.get("mape", float("inf"))
 
-            return score, metrics, df_test_pred
+            score = metrics.get("mape", float("inf"))
+            score += 0.001 * len(cols)
+
+            res = (score, metrics, df_test_pred)
+
+            if cache_enabled:
+                cache[key] = res
+
+            return res
 
         def init_population():
-            pop = []
+            population = []
+
             for _ in range(population_size):
-                ind = [f for f in all_features if random.random() > 0.5]
-                if len(ind) == 0:
-                    ind = random.sample(all_features, 1)
-                pop.append(ind)
-            return pop
+                k = random.randint(2, max(3, len(all_features) // 5))
+                individual = random.sample(all_features, k)
+                population.append(individual)
+
+            return population
 
         def crossover(p1, p2):
-            cut = random.randint(1, max(1, min(len(p1), len(p2)) - 1))
-            child = list(set(p1[:cut] + p2[cut:]))
-            if len(child) == 0:
-                child = random.sample(all_features, 1)
-            return child
+            if random.random() < 0.5:
+                cut = random.randint(1, min(len(p1), len(p2)))
+                child = p1[:cut] + p2[cut:]
+            else:
+                child = list(set(p1 + p2))
 
-        def mutate(ind):
-            ind = ind.copy()
+            return list(dict.fromkeys(child))
+
+        def mutate(individual):
+            individual = individual.copy()
 
             if random.random() < mutation_rate:
-                if random.random() < 0.5 and len(ind) > 1:
-                    ind.remove(random.choice(ind))
+
+                if len(individual) > 2 and random.random() < 0.5:
+                    individual.remove(random.choice(individual))
+
                 else:
-                    f = random.choice(all_features)
-                    if f not in ind:
-                        ind.append(f)
+                    candidates = list(set(all_features) - set(individual))
 
-            if len(ind) == 0:
-                ind = random.sample(all_features, 1)
+                    if candidates:
+                        individual.append(random.choice(candidates))
 
-            return ind
+            return list(dict.fromkeys(individual))
+
+        def evaluate_population(population):
+            results = []
+
+            for individual in population:
+                score, metrics, pred = run_model(individual)
+                results.append((individual, score, metrics, pred))
+
+            results.sort(key=lambda x: x[1])
+
+            return results
 
         population = init_population()
 
@@ -547,38 +853,37 @@ class TSExperimentPipeline:
         best_metrics = None
         best_pred = None
 
-        no_improve = 0
+        no_improve_rounds = 0
 
         for gen in range(generations):
 
-            self.logger.info(f"GEN {gen}")
+            scored = evaluate_population(population)
 
-            scored = []
-
-            for ind in population:
-                score, metrics, pred = run_model(ind)
-
-                self.logger.info(f"GEN {gen} SIZE={len(ind)} MAPE={score}")
-
-                scored.append((ind, score, metrics, pred))
-
-            scored.sort(key=lambda x: x[1])
-
+            current_best_individual = scored[0][0]
             current_best_score = scored[0][1]
+            current_best_metrics = scored[0][2]
+            current_best_pred = scored[0][3]
 
             if current_best_score < best_score:
-                best_individual = scored[0][0]
+
+                best_individual = current_best_individual
                 best_score = current_best_score
-                best_metrics = scored[0][2]
-                best_pred = scored[0][3]
-                no_improve = 0
+                best_metrics = current_best_metrics
+                best_pred = current_best_pred
+
+                no_improve_rounds = 0
+
             else:
-                no_improve += 1
+                no_improve_rounds += 1
 
-            self.logger.info(f"BEST GEN {gen} MAPE = {best_score}")
+            self.logger.info(
+                f"GEN={gen} BEST_MAPE={best_score} NO_IMPROVE={no_improve_rounds}"
+            )
 
-            if no_improve > 0:
-                self.logger.info("EARLY STOP: MIN NOT IMPROVED")
+            if no_improve_rounds >= early_stopping_rounds:
+                self.logger.info(
+                    f"EARLY STOPPING AT GENERATION {gen}"
+                )
                 break
 
             elite = [x[0] for x in scored[:elite_size]]
@@ -586,6 +891,7 @@ class TSExperimentPipeline:
             new_population = elite.copy()
 
             while len(new_population) < population_size:
+
                 p1 = random.choice(elite)
                 p2 = random.choice(elite)
 
@@ -597,10 +903,11 @@ class TSExperimentPipeline:
             population = new_population
 
         final_cols = best_individual
+
         final_score, final_metrics, final_pred = run_model(final_cols)
 
-        self.logger.info(f"FINAL COLS = {final_cols}")
-        self.logger.info(f"FINAL MAPE = {final_score}")
+        self.logger.info(f"FINAL_COLS={final_cols}")
+        self.logger.info(f"FINAL_MAPE={final_score}")
 
         return final_cols, final_metrics, final_pred
 
@@ -628,7 +935,7 @@ class TSExperimentPipeline:
 
             elif self.trajectory_cols == "stat_selected_features":
                 self.col_for_train = self.fetch_stat_select_features()
-            elif self.trajectory_cols in ["engineered_datetime_features", "horizon_selected_features"]:
+            elif self.trajectory_cols in ["engineered_datetime_features", "GA_horizon_selected_features", "сlassic_GA"]:
                 self.col_for_train = self.fetch_all_t2v_features()
             else:
                 raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
@@ -644,9 +951,12 @@ class TSExperimentPipeline:
                 logger=self.logger
             )
 
-            if self.trajectory_cols == "horizon_selected_features":
+            if self.trajectory_cols == "GA_horizon_selected_features":
                 self.all_available_cols = self.col_for_train
                 self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns()
+            elif self.trajectory_cols == "сlassic_GA":
+                self.all_available_cols = self.col_for_train
+                self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns_сlassic_GA()
             else:
                 self.df_test_pred = self.forecast_func (
                     col_target=self.col_target,

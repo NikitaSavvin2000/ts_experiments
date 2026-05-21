@@ -17,7 +17,7 @@ def load_and_merge(results_path):
     return pd.concat(dfs, ignore_index=True)
 
 
-results_path_init = "/Users/nikitasavvin/Desktop/PhD/ts_experiments/export/test_v30"
+results_path_init = "/Users/nikitasavvin/Desktop/PhD/ts_experiments/export/test_v35"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
 os.makedirs(article_materials_path, exist_ok=True)
@@ -111,11 +111,12 @@ best.to_csv(f"{article_materials_path}/best_table.csv")
 
 
 
-fig = plt.figure(figsize=(6 * (len(best["dataset"].unique()) + 1), 3 * len(order)))
 
 all_types = best["type"].unique()
 
 for current_type in all_types:
+    fig = plt.figure(figsize=(6 * (len(best["dataset"].unique()) + 1), 3 * len(order)))
+
 
     df_datasets = best[best["type"] == current_type].reset_index(drop=True)
 

@@ -87,7 +87,11 @@ class Time2Vec:
         df_with_meta['quarter_cos'] = np.cos(2 * np.pi * df_with_meta['quarter'] / 4)
         df_with_meta['moon_phase'] = df_with_meta.index.to_series().apply(lambda x: ephem.Moon(x).phase / 29.53)
 
-        df_with_meta['time_trend'] = (df_with_meta.index - df_with_meta.index.min()).total_seconds()
+        # df_with_meta['time_trend'] = (df_with_meta.index - df_with_meta.index.min()).total_seconds()
+        df_with_meta['time_trend'] = (
+                (df_with_meta.index - df_with_meta.index.min()).total_seconds()
+                / (df_with_meta.index.max() - df_with_meta.index.min()).total_seconds()
+        )
         df_with_meta['fourier_time'] = np.abs(fft(df_with_meta['hour_sin'].astype(float).to_numpy()))
 
         return df_with_meta

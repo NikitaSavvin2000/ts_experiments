@@ -14,8 +14,11 @@ datasets_csv_dict = {
     # 'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
 
     "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=403462504&single=true&output=csv",
-
-
+    "Istanbul_Traffic_Index": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ9NMpg8Uc_aVvKdhg6lOCxIHtZxpwoJL2oNSpN7iQzjCrCDXrwkx23CHivbcVLtZoy-dnD4TUcJac/pub?gid=113448001&single=true&output=csv",
+    "Air_Quality_India": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTTyEI6cJP1q0SIUlXa46vpBFGdCe6BuI4Y9RxvJ8ZCkSarq85wFAlox6qbcVvsZ3fdHdErmugSJ2l/pub?gid=1652276659&single=true&output=csv",
+    "Daily_Climate": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-YtMLu5kDfAfr4ISYnMOulJf4IU3RNAe6vRo7adY_A4Hot6K3vWtO0HKsrAZjNng0cMQkxIxvQbp/pub?gid=81811996&single=true&output=csv",
+    "NYC_Taxi_Traffic":"https://docs.google.com/spreadsheets/d/e/2PACX-1vQgq9c-tCaL3ZFDLoFvCaB-dvW1SPwO2u8RHYMGpNAzg4O0Bl-kjRaKatD2i-V2-uafFcNOKYcMytnZ/pub?gid=797724504&single=true&output=csv", # https://www.kaggle.com/datasets/julienjta/nyc-taxi-traffic
+    # "NYC_Taxi_Traffic": "", # https://www.kaggle.com/datasets/fedesoriano/traffic-prediction-dataset
 }
 
 # Климат
@@ -33,19 +36,25 @@ datasets_csv_dict = {
 datasets_col_mapping = {
     "morocco_zone_1": {
         "time": "Datetime",
-        "consumption": "consumption",
+        "target": "consumption",
         "temperature": "Temperature"
 
     },
     "italy": {
         "time": "time",
-        "consumption": "load_consumption",
+        "target": "load_consumption",
         "temperature": "temperature"
 
     },
     "russia_elista": {
         "time": "datetime",
-        "consumption": "value",
+        "target": "value",
+        "temperature": "temp"
+
+    },
+    "Istanbul_Traffic_Index":{
+        "time": "datetime",
+        "target": "average_traffic_index",
         "temperature": "temp"
 
     },

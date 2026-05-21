@@ -17,6 +17,10 @@ from src.ts_models.svr_service.svr_pred import SVR_forecast
 from src.ts_models.ARIMA_service.arima_pred import ARIMA_forecast
 from src.ts_models.SARIMA_service.sarima_pred import SARIMA_forecast
 from src.ts_models.PatchTST_service.PatchTST_pred import PatchTST_forecast
+from src.ts_models.DLinear_service.DLinear_pred import DLinear_forecast
+from src.ts_models.TCN_service.TCN_pred import TCN_forecast
+from src.ts_models.Transformer_service.Transformer_pred import Transformer_forecast
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -82,14 +86,14 @@ MESSAGES = {
 
 
 # trajectory_cols = ["baseline"]
-# trajectory_cols = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "horizon_selected_features"]
-trajectory_cols = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features" ]
-# trajectory_cols = ["horizon_selected_features"]
+trajectory_cols = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "GA_horizon_selected_features", "сlassic_GA"]
+# trajectory_cols = ["сlassic_GA", "GA_horizon_selected_features"]
+# trajectory_cols = ["GA_horizon_selected_features"]
 
 
 # model_to_test = ["ARIMA", "SARIMA"]
 
-model_to_test = ["ARIMA", "SARIMA"]
+model_to_test = ["XGBoost",]
 
 not_exogenous_models = ["ARIMA", "SARIMA"]
 
@@ -118,6 +122,55 @@ datasets = [
         "end_test_date": "2023-08-31",
         "predict_points": 300,
     },
+    # {
+    #     "dataset_name": "Istanbul_Traffic_Index",
+    #     "type": "Traffic",
+    #     "col_time": "datetime",
+    #     "col_target": "average_traffic_index",
+    #     "additional_cols": [],
+    #     "start_train_date": "2015-08-06",
+    #     "end_train_date": "2024-07-03",
+    #     "start_test_date": "2024-07-04",
+    #     "end_test_date": "2024-09-04",
+    #     "predict_points": 100,
+    # },
+    # {
+    #     "dataset_name": "NYC_Taxi_Traffic",
+    #     "type": "Traffic",
+    #     "col_time": "timestamp",
+    #     "col_target": "value",
+    #     "additional_cols": [],
+    #     "start_train_date": "2014-07-01",
+    #     "end_train_date": "2015-01-01",
+    #     "start_test_date": "2015-01-02",
+    #     "end_test_date": "2015-01-21",
+    #     "predict_points": 100,
+    # },
+    # {
+    #     "dataset_name": "Air_Quality_India",
+    #     "type": "Climate",
+    #     "col_time": "Timestamp",
+    #     "col_target": "PM2.5",
+    #     "additional_cols": [],
+    #     "start_train_date": "2017-11-07",
+    #     "end_train_date": "2022-05-03",
+    #     "start_test_date": "2022-05-04",
+    #     "end_test_date": "2022-06-04",
+    #     "predict_points": 300,
+    # },
+    # {
+    #     "dataset_name": "Daily_Climate",
+    #     "type": "Climate",
+    #     "col_time": "date",
+    #     "col_target": "meantemp",
+    #     "additional_cols": [],
+    #     "start_train_date": "2013-01-01",
+    #     "end_train_date": "2016-09-01",
+    #     "start_test_date": "2016-09-02",
+    #     "end_test_date": "2017-01-01",
+    #     "predict_points": 300,
+    # },
+
 ]
 
 
@@ -178,17 +231,20 @@ src/ts_models/xgboost_service/xgboost_pred.py
 time_series_models_funcs = {
     "LSTM": LSTM3_forecast,
     "XGBoost": XGBoost_forecast,
-    # "CatBoost": CatBoost_forecast,
+    "CatBoost": CatBoost_forecast,
     "LightGBM": LightGBM_forecast,
     "LinearRegression": LinearRegression_forecast,
     "RandomForest": RandomForest_forecast,
-    # "ARIMAX": ARIMAX_forecast,
     "SVR": SVR_forecast,
     "Prophet": Prophet_forecast,
     "ARIMA": ARIMA_forecast,
     "SARIMA": SARIMA_forecast,
     "PatchTST": PatchTST_forecast,
+    "DLinear": DLinear_forecast,
+    "TCN": TCN_forecast,
+    "Transformer": Transformer_forecast,
 }
+
 
 # BSTS (Bayesian Structural Time Series)
 # Prophet                                   ✘ ✔
@@ -200,7 +256,7 @@ time_series_models_funcs = {
 # XGBRegressor                              ✔
 # LGBMRegressor                             ✔
 # LSTM                                      ✔
-# DeepAR
+# DeepAR                                    ✘
 # TCN           
 # TFT                                       ✘ ✔
 # PatchTST                                  ✔
@@ -209,8 +265,8 @@ time_series_models_funcs = {
 # TimesFM                                   ✘
 # MambaTS
 # TimeNet
-# DLinear
-
+# DLinear                                   ✔
+# Transformer                               ✘ ✔
 
 
 def load_and_prepare_progress(progress_csv_path, columns):

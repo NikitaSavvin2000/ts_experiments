@@ -5,7 +5,7 @@
 groups = ["default"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:84a00c426f40ad44fb7089d2ea47086042d777011577bd6bbdd5d8f8784e06ee"
+content_hash = "sha256:34c07ca69e39d452fc8b586204fdc787655a32a5630b8bfc327ee68c9a22c01e"
 
 [[metadata.targets]]
 requires_python = "==3.12.*"
@@ -1153,6 +1153,20 @@ dependencies = [
 files = [
     {file = "keras-3.14.1-py3-none-any.whl", hash = "sha256:ebd2c14d2af3c9de18083604d408483996407fc7d2f9ebd1d565961f96608c29"},
     {file = "keras-3.14.1.tar.gz", hash = "sha256:ef479173102ad29db89b53c232efdc3fb5ad57c28bc27ead59f3e78a1eecd05b"},
+]
+
+[[package]]
+name = "keras-tcn"
+version = "3.5.6"
+summary = "Keras TCN"
+groups = ["default"]
+dependencies = [
+    "numpy",
+    "tensorflow",
+]
+files = [
+    {file = "keras_tcn-3.5.6-py3-none-any.whl", hash = "sha256:14e4abce58346245c432d3f66abe86c742932cce5b6db7a53585f912d18ea61c"},
+    {file = "keras_tcn-3.5.6.tar.gz", hash = "sha256:db487eaebcf0806967fce6427fb091b9634edfc91b5e766fad2f8454f0c1ca8b"},
 ]
 
 [[package]]

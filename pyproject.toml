@@ -42,6 +42,7 @@ dependencies = [
     "pmdarima>=2.1.1",
     "tfts>=0.0.19",
     "darts>=0.33.0",
+    "keras-tcn>=3.5.6",
 ]
 
 requires-python = "==3.12.*"
