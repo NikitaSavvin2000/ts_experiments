@@ -8,12 +8,21 @@ from darts import TimeSeries
 from darts.models import DLinearModel
 
 SEED = 42
-n_epochs = 1
 
 os.environ["PYTHONHASHSEED"] = str(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
+
+
+dlinear_params_easy = {
+    "output_chunk_length": 1,
+    "n_epochs": 10,
+    "batch_size": 16,
+    "optimizer_lr": 1e-3,
+    "hidden_size": 32,
+    "kernel_size": 3
+}
 
 
 def _get_pl_kwargs():
@@ -29,7 +38,6 @@ def _infer_freq(df, time_column):
     freq = pd.infer_freq(df[time_column])
     if freq is not None:
         return freq
-
     diffs = df[time_column].diff().dropna()
     return diffs.mode().iloc[0]
 
@@ -43,6 +51,8 @@ def DLinear_forecast(
         col_for_train,
         logger
 ):
+
+    params = dlinear_params_easy
 
     df_train = df_train.copy()
     df_test = df_test.copy()
@@ -81,11 +91,11 @@ def DLinear_forecast(
 
     model = DLinearModel(
         input_chunk_length=lag,
-        output_chunk_length=1,
-        n_epochs=n_epochs,
-        batch_size=32,
+        output_chunk_length=params["output_chunk_length"],
+        n_epochs=params["n_epochs"],
+        batch_size=params["batch_size"],
         random_state=SEED,
-        optimizer_kwargs={"lr": 1e-4},
+        optimizer_kwargs={"lr": params["optimizer_lr"]},
         pl_trainer_kwargs=_get_pl_kwargs()
     )
 

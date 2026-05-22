@@ -4,12 +4,14 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
 DEFAULT_SARIMA_PARAMS = {
-    "order": (1, 1, 1),
-    "seasonal_order": (0, 0, 0, 0),
-    "trend": "n",
-    "enforce_stationarity": False,
-    "enforce_invertibility": False,
-    "maxiter": 100
+    "p": 1,
+    "d": 1,
+    "q": 1,
+    "P": 0,
+    "D": 0,
+    "Q": 0,
+    "m": 12,
+    "trend": "n"
 }
 
 
@@ -53,6 +55,7 @@ def SARIMA_forecast(
         df_train = df_train[~df_train.index.duplicated(keep="last")]
 
         freq = pd.infer_freq(df_train.index) or "D"
+
         df_train = df_train.asfreq(freq)
         df_train[col_target] = df_train[col_target].ffill()
 
@@ -60,14 +63,26 @@ def SARIMA_forecast(
 
         model = SARIMAX(
             series,
-            order=params["order"],
-            seasonal_order=params["seasonal_order"],
+            order=(
+                params["p"],
+                params["d"],
+                params["q"]
+            ),
+            seasonal_order=(
+                params["P"],
+                params["D"],
+                params["Q"],
+                params["m"]
+            ),
             trend=params["trend"],
-            enforce_stationarity=params["enforce_stationarity"],
-            enforce_invertibility=params["enforce_invertibility"]
+            enforce_stationarity=False,
+            enforce_invertibility=False
         )
 
-        fitted = model.fit(disp=False, maxiter=params["maxiter"])
+        fitted = model.fit(
+            disp=False,
+            maxiter=100
+        )
 
         logger.info(f"AIC: {fitted.aic}")
 

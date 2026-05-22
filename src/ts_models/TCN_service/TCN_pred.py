@@ -35,21 +35,15 @@ if gpus:
         print("[DEVICE] GPU fallback active")
 
 
-model_cfg_light = {
-    "filters": 8,
-    "epochs": 1,
-    "dropout": 0.0
-}
-
-model_cfg_prod = {
-    "filters": 128,
+tcn_params_easy = {
+    "filters": 16,
     "kernel_size": 3,
-    "dilation_rates": [1, 2, 4, 8, 16],
-    "stacks": 2,
-    "dropout": 0.15,
-    "batch_size": 64,
-    "epochs": 10,
-    "learning_rate": 0.0003,
+    "dilation_rates": [1, 2, 4],
+    "stacks": 1,
+    "dropout": 0.1,
+    "batch_size": 16,
+    "epochs": 5,
+    "learning_rate": 1e-3,
     "clipnorm": 1.0,
     "use_layer_norm": True
 }
@@ -72,20 +66,22 @@ class EpochLogger(Callback):
         print(f"[EPOCH {epoch}] end loss={loss:.6f} mae={mae:.6f} time={dt:.2f}s", flush=True)
 
 
-def _build_tcn(lag, n_features, filters, dropout):
+def _build_tcn(lag, n_features, cfg):
     model = Sequential()
     model.add(Input(shape=(lag, n_features)))
 
-    model.add(Conv1D(filters, 3, padding="causal", activation="relu"))
-    model.add(Dropout(dropout))
+    model.add(Conv1D(cfg["filters"], cfg["kernel_size"], padding="causal", activation="relu"))
+    model.add(Dropout(cfg["dropout"]))
 
-    model.add(Conv1D(filters, 3, padding="causal", dilation_rate=2, activation="relu"))
-    model.add(Dropout(dropout))
+    model.add(Conv1D(cfg["filters"], cfg["kernel_size"], padding="causal", dilation_rate=2, activation="relu"))
+    model.add(Dropout(cfg["dropout"]))
 
-    model.add(Conv1D(filters, 3, padding="causal", dilation_rate=4, activation="relu"))
+    model.add(Conv1D(cfg["filters"], cfg["kernel_size"], padding="causal", dilation_rate=4, activation="relu"))
 
-    model.add(LayerNormalization())
-    model.add(Dense(1))
+    if cfg["use_layer_norm"]:
+        model.add(LayerNormalization())
+
+    model.add(Dense(points_per_call))
 
     model.compile(optimizer="adam", loss="mse", metrics=["mae"])
     return model
@@ -123,7 +119,7 @@ def TCN_forecast(
 ):
     print("PIPELINE START", flush=True)
 
-    cfg = model_cfg_light if light else model_cfg_prod
+    cfg = tcn_params_easy
 
     df_train = df_train.copy()
     df_test = df_test.copy()
@@ -173,8 +169,7 @@ def TCN_forecast(
     model = _build_tcn(
         lag=lag,
         n_features=n_features,
-        filters=cfg["filters"],
-        dropout=cfg["dropout"]
+        cfg=cfg
     )
 
     print("STEP 4 training", flush=True)
@@ -183,7 +178,7 @@ def TCN_forecast(
         X,
         y,
         epochs=cfg["epochs"],
-        batch_size=32,
+        batch_size=cfg["batch_size"],
         shuffle=False,
         verbose=1,
     )

@@ -87,6 +87,8 @@ class TSExperimentPipeline:
             experiment_path,
             logger,
             messages,
+            lag,
+            params,
             logger_language
     ):
         """
@@ -99,6 +101,8 @@ class TSExperimentPipeline:
         self.export_path = export_path
         self.experiment_path = experiment_path
         self.logger = logger
+        self.lag = lag,
+        self.params = params,
 
         self.msg = MESSAGES[logger_language]
 
@@ -110,7 +114,6 @@ class TSExperimentPipeline:
         self.df_t2v = None
         self.df_train = None
         self.df_test = None
-        self.pacf_lag = 1
         self.calendar_components_cols = ["year", "month", "day", "hour", "minute", "second"]
         self.time_series_models_funcs = time_series_models_funcs
         self.max_lag = 50
@@ -271,24 +274,24 @@ class TSExperimentPipeline:
         return self.all_t2v_cols
 
 
-    def run_lag_pacf(self):
-        """
-        RU: Выбор лага через PACF
-        EN: PACF lag selection
-        ZH: PACF 滞后选择
-        """
-        try:
-            self.pacf_lag = select_pacf_lag(
-                df=self.df_t2v,
-                col_target=self.col_target,
-                col_time=self.col_time,
-                logger=self.logger
-            )
-        except Exception as e:
-            self.logger.error(self.msg["pacf_error"].format(str(e)))
-            raise e
-
-        return self
+    # def run_lag_pacf(self):
+    #     """
+    #     RU: Выбор лага через PACF
+    #     EN: PACF lag selection
+    #     ZH: PACF 滞后选择
+    #     """
+    #     try:
+    #         self.pacf_lag = select_pacf_lag(
+    #             df=self.df_t2v,
+    #             col_target=self.col_target,
+    #             col_time=self.col_time,
+    #             logger=self.logger
+    #         )
+    #     except Exception as e:
+    #         self.logger.error(self.msg["pacf_error"].format(str(e)))
+    #         raise e
+    #
+    #     return self
 
     def fetch_stat_select_features(self):
         """
@@ -628,7 +631,8 @@ class TSExperimentPipeline:
                 time_column=self.col_time,
                 df_train=self.df_train,
                 df_test=self.df_test,
-                lag=self.pacf_lag,
+                lag=self.lag,
+                params=self.params,
                 col_for_train=list(cols),
                 logger=self.logger,
             )
@@ -839,7 +843,8 @@ class TSExperimentPipeline:
                 time_column=self.col_time,
                 df_train=self.df_train,
                 df_test=self.df_test,
-                lag=self.pacf_lag,
+                lag=self.lag,
+                params=self.params,
                 col_for_train=list(cols),
                 logger=self.logger,
             )
@@ -971,6 +976,8 @@ class TSExperimentPipeline:
         return final_cols, final_metrics, final_pred
 
 
+
+
     def run_test_predict(self):
         """
         RU: Статистический отбор признаков для временного ряда
@@ -1002,14 +1009,6 @@ class TSExperimentPipeline:
             self.forecast_func = time_series_models_funcs[self.model]
 
 
-            self.pacf_lag = select_pacf_lag(
-                df=self.df_t2v,
-                col_target=self.col_target,
-                col_time=self.col_time,
-                # max_lag=self.max_lag,
-                logger=self.logger
-            )
-
             if self.trajectory_cols == "GA_horizon_selected_features":
                 self.all_available_cols = self.col_for_train
                 self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns()
@@ -1022,9 +1021,11 @@ class TSExperimentPipeline:
                     time_column=self.col_time,
                     df_train=self.df_train,
                     df_test=self.df_test,
-                    lag=self.pacf_lag,
+                    lag=self.lag,
+                    params=self.params,
                     col_for_train=self.col_for_train,
                     logger=self.logger,
+
                 )
 
                 self.true =self.df_eval[self.col_target].tolist()

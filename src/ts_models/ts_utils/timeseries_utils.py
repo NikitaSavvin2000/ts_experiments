@@ -75,6 +75,7 @@ def make_predictions(x_input, x_future, n_features, model, lag, count_pred_point
     return predict_values
 
 
+
 def make_predictions_lstm(x_input, x_future, points_per_call, model):
     predict_values = []
     x_future_len = len(x_future)

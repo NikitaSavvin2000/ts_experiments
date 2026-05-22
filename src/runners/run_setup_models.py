@@ -105,6 +105,9 @@ if df_to_experiment is None or df_to_experiment.empty:
 # ============================================
 for _, experiment in tqdm(df_to_experiment.iterrows()):
 
+    model = experiment["model"]
+    dataset_name = experiment["dataset_name"]
+
     if experiment["model"] in not_exogenous_models:
         if experiment["trajectory_cols"] != "baseline":
             scip_not_exogenous_models(experiment)
@@ -171,34 +174,48 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     # ============================================
     # ts_pipeline.fetch_stat_select_features()
 
-    setups_pipeline.run_test_predict()
+
+    setups_pipeline.run_setup_lag_by_model()
 
 
-    iteration_results_path = os.path.join(results_path, experiment["result_dir_name"])
-    os.makedirs(iteration_results_path, exist_ok=True)
-
-    end = time.perf_counter()
-
-    elapsed_seconds = end - start
-
-    exp_result = experiment.copy()
-
-    exp_result["pacf_lag"] = ts_pipeline.pacf_lag
-    exp_result["col_for_train"] = ts_pipeline.col_for_train
-    exp_result["discreteness"] = ts_pipeline.discreteness_sec
-    exp_result["r2"] = ts_pipeline.metrix_dict["r2"]
-    exp_result["mae"] = ts_pipeline.metrix_dict["mae"]
-    exp_result["mape"] = ts_pipeline.metrix_dict["mape"]
-    exp_result["rmse"] = ts_pipeline.metrix_dict["rmse"]
-    exp_result["elapsed_seconds"] = elapsed_seconds
+    model = experiment["model"]
+    dataset_name = experiment["dataset_name"]
 
 
-    df_result = pd.DataFrame([exp_result])
+    best_lag = setups_pipeline.best_lag
+    best_score = setups_pipeline.best_score
+    best_pred = setups_pipeline.best_pred
 
-    df_result.to_csv(os.path.join(iteration_results_path, "line_result_table.csv"))
+    row_lag = {
+        "model": experiment["model"],
+        "dataset_name": experiment["dataset_name"],
+        "best_lag": setups_pipeline.best_lag,
+        "best_score": setups_pipeline.best_score
+    }
 
-    ts_pipeline.df_test_pred.to_csv(os.path.join(iteration_results_path, "test_pred_norm.csv"))
-    ts_pipeline.df_test_pred_not_norm.to_csv(os.path.join(iteration_results_path, "test_pred_not_norm.csv"))
+
+
+    # setups_pipeline.run_setup_models_params()
+
+    # best_params = setups_pipeline.best_params
+    # best_score_params = setups_pipeline.best_score
+
+    # row_params = {
+    #     "model": experiment["model"],
+    #     "dataset_name": experiment["dataset_name"],
+    #     "best_params": best_params,
+    #     "best_score": best_score_params
+    # }
+
+
+
+    df_lags = pd.DataFrame([row_lag])
+    # df_params = pd.DataFrame([row_params])
+
+
+    df_lags.to_csv(os.path.join(results_path, "setups_lag.csv"))
+    # df_params.to_csv(os.path.join(results_path, "setups_params.csv"))
+
 
     append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
 

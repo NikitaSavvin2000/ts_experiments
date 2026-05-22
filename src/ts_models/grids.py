@@ -161,3 +161,166 @@ models_grids = {
     "TCN": tcn_grid,
     "Transformer": transformer_grid,
 }
+
+
+lstm_params_easy = {
+    "lstm0_units": 16,
+    "lstm1_units": 16,
+    "lstm2_units": 8,
+    "activation": "tanh",
+    "recurrent_dropout_rate": 0.0,
+    "regularizers_l2": 0.0,
+    "optimizer": "adam",
+    "batch_size": 16,
+    "epochs": 5
+}
+
+xgb_params_easy = {
+    "learning_rate": 0.1,
+    "max_depth": 3,
+    "n_estimators": 100,
+    "subsample": 1.0,
+    "colsample_bytree": 1.0,
+    "min_child_weight": 5,
+    "gamma": 0.0,
+    "reg_lambda": 1.0,
+    "reg_alpha": 0.0,
+    "booster": "gbtree"
+}
+
+catboost_params_easy = {
+    "learning_rate": 0.1,
+    "depth": 4,
+    "iterations": 200,
+    "l2_leaf_reg": 3,
+    "subsample": 1.0,
+    "rsm": 1.0,
+    "bagging_temperature": 0.0,
+    "random_strength": 1,
+    "loss_function": "RMSE",
+    "boosting_type": "Plain"
+}
+
+lgbm_params_easy = {
+    "learning_rate": 0.1,
+    "n_estimators": 200,
+    "max_depth": 4,
+    "num_leaves": 15,
+    "subsample": 1.0,
+    "colsample_bytree": 1.0,
+    "min_child_samples": 20,
+    "reg_lambda": 0.0,
+    "reg_alpha": 0.0,
+    "boosting_type": "gbdt"
+}
+
+linear_regression_params_easy = {
+    "fit_intercept": True,
+    "positive": False,
+    "copy_X": True,
+    "n_jobs": -1
+}
+
+random_forest_params_easy = {
+    "n_estimators": 100,
+    "max_depth": 10,
+    "min_samples_split": 2,
+    "min_samples_leaf": 1,
+    "max_features": "sqrt",
+    "bootstrap": True
+}
+
+svr_params_easy = {
+    "kernel": "rbf",
+    "C": 1.0,
+    "epsilon": 0.1,
+    "gamma": "scale",
+    "shrinking": True
+}
+
+prophet_params_easy = {
+    "changepoint_prior_scale": 0.05,
+    "seasonality_prior_scale": 1.0,
+    "seasonality_mode": "additive",
+    "changepoint_range": 0.8,
+    "n_changepoints": 10
+}
+
+patchtst_params_easy = {
+    "max_steps": 100,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "hidden_size": 64,
+    "n_heads": 4,
+    "dropout": 0.1,
+    "patch_len": 4,
+    "stride": 4
+}
+
+arima_params_easy = {
+    "p": 1,
+    "d": 1,
+    "q": 1,
+    "trend": "n"
+}
+
+sarima_params_easy = {
+    "p": 1,
+    "d": 1,
+    "q": 1,
+    "P": 0,
+    "D": 0,
+    "Q": 0,
+    "m": 12,
+    "trend": "n"
+}
+
+dlinear_params_easy = {
+    "output_chunk_length": 1,
+    "n_epochs": 10,
+    "batch_size": 16,
+    "optimizer_lr": 1e-3,
+    "hidden_size": 32,
+    "kernel_size": 3
+}
+
+tcn_params_easy = {
+    "filters": 16,
+    "kernel_size": 3,
+    "dilation_rates": [1, 2, 4],
+    "stacks": 1,
+    "dropout": 0.1,
+    "batch_size": 16,
+    "epochs": 5,
+    "learning_rate": 1e-3,
+    "clipnorm": 1.0,
+    "use_layer_norm": True
+}
+
+transformer_params_easy = {
+    "embed_dim": 32,
+    "num_heads": 4,
+    "ff_dim": 64,
+    "dropout": 0.1,
+    "dense_units": 16,
+    "learning_rate": 1e-3,
+    "batch_size": 32,
+    "epochs": 5
+}
+
+models_easy = {
+    "LSTM": lstm_params_easy,
+    "XGBoost": xgb_params_easy,
+    "CatBoost": catboost_params_easy,
+    "LightGBM": lgbm_params_easy,
+    "LinearRegression": linear_regression_params_easy,
+    "RandomForest": random_forest_params_easy,
+    "SVR": svr_params_easy,
+    "Prophet": prophet_params_easy,
+    "ARIMA": arima_params_easy,
+    "SARIMA": sarima_params_easy,
+    "PatchTST": patchtst_params_easy,
+    "DLinear": dlinear_params_easy,
+    "TCN": tcn_params_easy,
+    "Transformer": transformer_params_easy
+}

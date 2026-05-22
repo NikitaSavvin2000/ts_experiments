@@ -1,7 +1,3 @@
-"""
-pdm run src/ts_models/PatchTST_service/runners.py
-"""
-
 import os
 import random
 import numpy as np
@@ -22,6 +18,18 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
+DEFAULT_PATCHTST_PARAMS = {
+    "max_steps": 100,
+    "batch_size": 16,
+    "learning_rate": 0.001,
+    "hidden_size": 64,
+    "n_heads": 4,
+    "dropout": 0.1,
+    "patch_len": 4,
+    "stride": 4
+}
+
+
 def PatchTST_forecast(
         col_target,
         time_column,
@@ -29,8 +37,11 @@ def PatchTST_forecast(
         df_test,
         lag,
         col_for_train,
-        logger
+        logger,
+        params=None
 ):
+    params = params or DEFAULT_PATCHTST_PARAMS
+
     df_train = df_train.copy()
     df_test = df_test.copy()
 
@@ -67,8 +78,14 @@ def PatchTST_forecast(
     model = PatchTST(
         h=h,
         input_size=lag,
-        max_steps=50,
-        batch_size=32,
+        max_steps=params["max_steps"],
+        batch_size=params["batch_size"],
+        learning_rate=params["learning_rate"],
+        hidden_size=params["hidden_size"],
+        n_heads=params["n_heads"],
+        dropout=params["dropout"],
+        patch_len=params["patch_len"],
+        stride=params["stride"],
         random_seed=SEED
     )
 

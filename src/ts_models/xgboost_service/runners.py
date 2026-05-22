@@ -10,6 +10,7 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      generate_time_series_df,
                                                      test_method_visualize)
 
+from src.ts_models.pacf_lag_selection import select_pacf_lag
 
 logger = logging.getLogger(__name__)
 
@@ -48,14 +49,20 @@ df_eval = df_test.copy()
 df_eval = df_eval[[col_time, col_target]]
 df_test[col_target] = None
 
-lag = 4
+# lag = 24
 
+lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
+
+print(f"lag = {lag}")
+# lag = 500
 col_for_train = stat_select_features(
     df=df_train,
     col_time=col_time,
     col_target=col_target,
     logger=logger
 )
+
+# col_for_train = []
 
 
 df_test_pred = XGBoost_forecast(

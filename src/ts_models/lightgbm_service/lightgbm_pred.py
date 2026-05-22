@@ -8,15 +8,17 @@ from src.ts_models.ts_utils.timeseries_utils import (
     make_predictions
 )
 
-model_architecture_params = {
-    "objective": "regression",
-    "n_estimators": 500,
-    "learning_rate": 0.05,
-    "max_depth": -1,
-    "num_leaves": 64,
-    "subsample": 0.9,
-    "colsample_bytree": 0.9,
-    "random_state": 42
+DEFAULT_LGBM_PARAMS = {
+    "learning_rate": 0.1,
+    "n_estimators": 200,
+    "max_depth": 4,
+    "num_leaves": 15,
+    "subsample": 1.0,
+    "colsample_bytree": 1.0,
+    "min_child_samples": 20,
+    "reg_lambda": 0.0,
+    "reg_alpha": 0.0,
+    "boosting_type": "gbdt"
 }
 
 
@@ -27,56 +29,79 @@ def LightGBM_forecast(
         df_test,
         lag,
         col_for_train,
-        logger
+        logger,
+        params=None
 ):
+    params = params or DEFAULT_LGBM_PARAMS
+
     df_train = df_train.copy()
     df_test = df_test.copy()
 
-    df_train[time_column] = pd.to_datetime(df_train[time_column], errors='coerce')
+    df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
 
-    col_for_train = [
-        col for col in col_for_train
-        if col not in [col_target, time_column]
-    ]
+    if col_for_train is None or len(col_for_train) == 0:
+        col_for_train = []
 
-    col_for_train = [col_target] + col_for_train
+    use_features = [col_target] + list(col_for_train)
 
-    df_train = df_train[col_for_train].copy()
+    df_train = df_train[use_features].copy()
     df_test_pred = df_test[[time_column, col_target]].copy()
-    df_test = df_test[col_for_train].copy()
+
+    if len(col_for_train) > 0:
+        df_test = df_test[use_features].copy()
+    else:
+        df_test = df_test[[col_target]].copy()
 
     df_train[col_target] = (
         df_train[col_target]
-        .replace('None', None)
+        .replace("None", None)
         .astype(float)
     )
 
-    nan_locations = df_train.isna()
-
-    if nan_locations.any().any():
-        logger.error("NaN values found in df_train:")
-
-        nan_rows = df_train[nan_locations.any(axis=1)]
-        logger.error(f"Rows with NaN:\n{nan_rows}")
-
-        nan_columns = nan_locations.sum()
-        logger.error(f"NaN counts per column:\n{nan_columns[nan_columns > 0]}")
-
+    if df_train.isna().any().any():
         raise ValueError("NaN values detected in training data")
 
-    values = df_train[col_for_train].values
-
-    x_input = create_x_input(df_train, lag)
+    values = df_train[use_features].astype(np.float32).values
 
     X, y = split_sequence(values, lag)
 
+    X = np.asarray(X).astype(np.float32)
+    y = np.asarray(y).astype(np.float32)
+
     n_features = values.shape[1]
 
-    model = LGBMRegressor(**model_architecture_params)
+    model = LGBMRegressor(
+        objective="regression",
+        learning_rate=params["learning_rate"],
+        n_estimators=params["n_estimators"],
+        max_depth=params["max_depth"],
+        num_leaves=params["num_leaves"],
+        subsample=params["subsample"],
+        colsample_bytree=params["colsample_bytree"],
+        min_child_samples=params["min_child_samples"],
+        reg_lambda=params["reg_lambda"],
+        reg_alpha=params["reg_alpha"],
+        boosting_type=params["boosting_type"],
+        random_state=42
+    )
 
     X_reshaped = X.reshape(X.shape[0], -1)
+
     model.fit(X_reshaped, y)
+
+    if len(col_for_train) == 0:
+        x_input = create_x_input(
+            df_train[[col_target]].astype(np.float32),
+            lag
+        ).astype(np.float32)
+
+        n_features = 1
+    else:
+        x_input = create_x_input(
+            df_train[use_features].astype(np.float32),
+            lag
+        ).astype(np.float32)
 
     x_input = x_input.reshape((1, lag, n_features))
 
