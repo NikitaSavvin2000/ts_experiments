@@ -98,6 +98,9 @@ if df_to_experiment is None or df_to_experiment.empty:
     logger.info("All experiments completed")
     sys.exit(0)
 
+
+model_not_support_lags = ["Prophet", "ARIMA", "SARIMA",]
+
 # ============================================
 # en: Experiment grid generation for models
 # ru: Генерация сетки экспериментов для моделей
@@ -174,23 +177,25 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     # ============================================
     # ts_pipeline.fetch_stat_select_features()
 
-
-    setups_pipeline.run_setup_lag_by_model()
-
-
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
 
+    if model in model_not_support_lags:
+        best_lag = 1
+        best_score = 1
+        best_pred = None
+    else:
+        setups_pipeline.run_setup_lag_by_model()
 
-    best_lag = setups_pipeline.best_lag
-    best_score = setups_pipeline.best_score
-    best_pred = setups_pipeline.best_pred
+        best_lag = setups_pipeline.best_lag
+        best_score = setups_pipeline.best_score
+        best_pred = setups_pipeline.best_pred
 
     row_lag = {
-        "model": experiment["model"],
-        "dataset_name": experiment["dataset_name"],
-        "best_lag": setups_pipeline.best_lag,
-        "best_score": setups_pipeline.best_score
+        "model": model,
+        "dataset_name": dataset_name,
+        "best_lag": best_lag,
+        "best_score": best_score
     }
 
 

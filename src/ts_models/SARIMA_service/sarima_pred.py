@@ -63,26 +63,15 @@ def SARIMA_forecast(
 
         model = SARIMAX(
             series,
-            order=(
-                params["p"],
-                params["d"],
-                params["q"]
-            ),
-            seasonal_order=(
-                params["P"],
-                params["D"],
-                params["Q"],
-                params["m"]
-            ),
+            exog=None,
+            order=(params["p"], params["d"], params["q"]),
+            seasonal_order=(params["P"], params["D"], params["Q"], params["m"]),
             trend=params["trend"],
             enforce_stationarity=False,
             enforce_invertibility=False
         )
 
-        fitted = model.fit(
-            disp=False,
-            maxiter=100
-        )
+        fitted = model.fit(disp=False, maxiter=100)
 
         logger.info(f"AIC: {fitted.aic}")
 
