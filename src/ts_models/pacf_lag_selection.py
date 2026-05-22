@@ -5,6 +5,7 @@ from statsmodels.tsa.stattools import pacf
 from config import logger_language
 from tqdm import tqdm
 
+
 MESSAGES = {
     "en": {
         "init": "Initializing PACF lag selection",
@@ -34,7 +35,7 @@ MESSAGES = {
 
 
 
-def select_pacf_lag(df, col_target, col_time=None, max_lag=100, logger=None):
+def select_pacf_lag(df, col_target, col_time=None, max_lag=12, logger=None):
     print(f"max_lag = {max_lag}")
 
     if logger is None:

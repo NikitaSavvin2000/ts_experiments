@@ -27,17 +27,19 @@ if gpus:
     for gpu in gpus:
         tf.config.experimental.set_memory_growth(gpu, True)
 
-model_architecture_params = {
+
+DEFAULT_LSTM_PARAMS = {
     "lstm0_units": 64,
     "lstm1_units": 64,
     "lstm2_units": 32,
     "activation": "swish",
     "recurrent_dropout_rate": 0.0,
-    "regularizers_l2": 0.001,
-    "optimizer": "adam"
+    "regularizers_l2": 1e-3,
+    "optimizer": "adam",
+    "batch_size": 32,
+    "epochs": 10
 }
 
-epochs = 10
 points_per_call = 1
 
 
@@ -48,70 +50,73 @@ def LSTM3_forecast(
         df_test,
         lag,
         col_for_train,
-        logger
+        logger,
+        params=None
 ):
+    params = params or DEFAULT_LSTM_PARAMS
+
+    df_train = df_train.copy()
+    df_test = df_test.copy()
+
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
 
-    col_for_train = [col_target] + list(col_for_train)
+    if col_for_train is None or len(col_for_train) == 0:
+        col_for_train = []
 
-    df_train = df_train[col_for_train].copy()
+    use_features = [col_target] + list(col_for_train)
+
+    df_train = df_train[use_features].copy()
     df_test_pred = df_test[[time_column, col_target]].copy()
-    df_test = df_test[col_for_train].copy()
+
+    if len(col_for_train) > 0:
+        df_test = df_test[use_features].copy()
+    else:
+        df_test = df_test[[col_target]].copy()
 
     df_train[col_target] = df_train[col_target].replace("None", None).astype(float)
 
-    nan_locations = df_train.isna()
-
-    if nan_locations.any().any():
-        logger.error("NaN values found in df_train")
-        nan_rows = df_train[nan_locations.any(axis=1)]
-        logger.error(nan_rows)
+    if df_train.isna().any().any():
         raise ValueError("NaN values detected in training data")
 
-    values = df_train[col_for_train].astype(np.float32).values
-
-    x_input = create_x_input(
-        df_train[col_for_train].astype(np.float32),
-        lag
-    ).astype(np.float32)
+    values = df_train[use_features].astype(np.float32).values
+    n_features = values.shape[1]
 
     X, y = split_sequence(values, lag)
 
     X = np.asarray(X).astype(np.float32)
     y = np.asarray(y).astype(np.float32)
 
-    n_features = values.shape[1]
     X = X.reshape((X.shape[0], lag, n_features))
 
     model = Sequential()
 
     model.add(
         LSTM(
-            model_architecture_params["lstm0_units"],
-            activation=model_architecture_params["activation"],
+            params["lstm0_units"],
+            activation=params["activation"],
             return_sequences=True,
-            recurrent_dropout=model_architecture_params["recurrent_dropout_rate"],
+            recurrent_dropout=params["recurrent_dropout_rate"],
             kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
         )
     )
 
     model.add(
         LSTM(
-            model_architecture_params["lstm1_units"],
-            activation=model_architecture_params["activation"],
+            params["lstm1_units"],
+            activation=params["activation"],
             return_sequences=True,
-            recurrent_dropout=model_architecture_params["recurrent_dropout_rate"],
+            recurrent_dropout=params["recurrent_dropout_rate"],
             kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
         )
     )
 
     model.add(
         LSTM(
-            model_architecture_params["lstm2_units"],
-            activation=model_architecture_params["activation"],
+            params["lstm2_units"],
+            activation=params["activation"],
             return_sequences=False,
-            recurrent_dropout=model_architecture_params["recurrent_dropout_rate"],
+            recurrent_dropout=params["recurrent_dropout_rate"],
             kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
         )
     )
@@ -120,15 +125,13 @@ def LSTM3_forecast(
         Dense(
             points_per_call,
             activation="linear",
-            kernel_regularizer=regularizers.l2(
-                model_architecture_params["regularizers_l2"]
-            ),
+            kernel_regularizer=regularizers.l2(params["regularizers_l2"]),
             kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
         )
     )
 
     model.compile(
-        optimizer=model_architecture_params["optimizer"],
+        optimizer=params["optimizer"],
         loss="mean_squared_error",
         metrics=["mae"]
     )
@@ -136,23 +139,33 @@ def LSTM3_forecast(
     model.fit(
         X,
         y,
-        epochs=epochs,
-        batch_size=32,
+        epochs=params["epochs"],
+        batch_size=params["batch_size"],
         shuffle=False,
         verbose=1
     )
+
+    if len(col_for_train) == 0:
+        x_input = create_x_input(
+            df_train[[col_target]].astype(np.float32),
+            lag
+        ).astype(np.float32)
+        n_features = 1
+    else:
+        x_input = create_x_input(
+            df_train[use_features].astype(np.float32),
+            lag
+        ).astype(np.float32)
 
     x_input = x_input.reshape((1, lag, n_features))
 
     predict_values = make_predictions_lstm(
         x_input=x_input,
-        x_future=df_test[col_for_train].values,
+        x_future=df_test[use_features].values,
         model=model,
         points_per_call=points_per_call
     )
 
-    predict_values = np.array(predict_values).flatten()
-
-    df_test_pred[col_target] = predict_values
+    df_test_pred[col_target] = np.array(predict_values).flatten()
 
     return df_test_pred

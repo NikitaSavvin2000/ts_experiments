@@ -17,7 +17,7 @@ def load_and_merge(results_path):
     return pd.concat(dfs, ignore_index=True)
 
 
-results_path_init = "/Users/nikitasavvin/Desktop/PhD/ts_experiments/export/test_v35"
+results_path_init = "/Users/nikitasavvin/Downloads"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
 os.makedirs(article_materials_path, exist_ok=True)
