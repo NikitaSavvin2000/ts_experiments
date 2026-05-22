@@ -70,7 +70,6 @@ def XGBoost_forecast(
 
     model = XGBRegressor(
         objective="reg:squarederror",
-        learning_rate=params["learning_rate"],
         max_depth=params["max_depth"],
         n_estimators=params["n_estimators"],
         subsample=params["subsample"],

@@ -53,8 +53,11 @@ df_test[col_target] = None
 
 lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
 
+lag = len(df_test)
+lag = 28
+
 print(f"lag = {lag}")
-# lag = 500
+
 col_for_train = stat_select_features(
     df=df_train,
     col_time=col_time,
@@ -62,7 +65,8 @@ col_for_train = stat_select_features(
     logger=logger
 )
 
-# col_for_train = []
+len(df_test)
+col_for_train = []
 
 
 df_test_pred = XGBoost_forecast(

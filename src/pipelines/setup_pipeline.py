@@ -321,6 +321,8 @@ class SetupModel:
                     params=params
                 )
 
+                print(df_pred)
+
                 true = self.df_eval[self.col_target].tolist()
                 pred = df_pred[self.col_target].tolist()
 
