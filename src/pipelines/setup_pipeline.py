@@ -376,11 +376,6 @@ class SetupModel:
 
 
     def run_setup_models_params(self):
-        """
-        RU: Статистический отбор признаков для временного ряда
-        EN: Statistical feature selection for time series
-        ZH: 时间序列统计特征选择
-        """
         try:
 
             if self.trajectory_cols == "baseline":
@@ -389,7 +384,6 @@ class SetupModel:
                 raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
 
             self.forecast_func = time_series_models_funcs[self.model]
-
             self.model_grid = models_grids[self.model]
 
             best_score = float("inf")
@@ -399,52 +393,55 @@ class SetupModel:
             keys = list(self.model_grid.keys())
             values = list(self.model_grid.values())
 
+            true = self.df_eval[self.col_target].tolist()
+
             for combo in tqdm(itertools.product(*values)):
                 params = dict(zip(keys, combo))
 
-                df_pred = self.forecast_func(
-                    col_target=self.col_target,
-                    time_column=self.col_time,
-                    df_train=self.df_train,
-                    df_test=self.df_test,
-                    lag=self.pacf_lag,
-                    col_for_train=self.col_for_train,
-                    logger=self.logger,
-                    params=params
-                )
+                try:
+                    df_pred = self.forecast_func(
+                        col_target=self.col_target,
+                        time_column=self.col_time,
+                        df_train=self.df_train,
+                        df_test=self.df_test,
+                        lag=self.pacf_lag,
+                        col_for_train=self.col_for_train,
+                        logger=self.logger,
+                        params=params
+                    )
 
-                true = self.df_eval[self.col_target].tolist()
-                pred = df_pred[self.col_target].tolist()
+                    pred = df_pred[self.col_target].tolist()
 
-                metrics = regression_metrics(true=true, pred=pred)
+                    if (
+                            len(pred) == 0
+                            or any(pd.isna(x) for x in pred)
+                            or len(pred) != len(true)
+                    ):
+                        score = float("inf")
+                    else:
+                        metrics = regression_metrics(true=true, pred=pred)
 
-                print("="*100)
-                print(f">>>>>> MODEL {self.model}")
-                print(f">>>>>> PARAMS {params}")
-                print(f">>>>>> METRIX {metrics}")
-                print("="*100)
+                        r2 = metrics.get("r2", 0)
+                        mape = metrics.get("mape", float("inf"))
+                        bp = metrics.get("bp", float("inf"))
 
+                        score = (1 - r2) + mape + bp
 
+                    if score < best_score:
+                        best_score = score
+                        best_params = params
+                        best_pred = pred
 
-                r2 = metrics.get("r2", 0)
-                mape = metrics.get("mape", 0)
-                bp = metrics.get("bp", 0)
-
-                score = (1 - r2) + mape + bp
-
-                if score < best_score:
-                    best_score = score
-                    best_params = params
-                    best_pred = pred
+                except Exception:
+                    score = float("inf")
 
             self.best_params = best_params
             self.best_score_params = best_score
             self.best_pred = best_pred
 
             print(self.best_params)
-            print(self.best_score)
+            print(self.best_score_params)
             print(self.best_pred)
-
 
         except Exception as e:
             self.logger.error(self.msg["stat_select_error"].format(str(e)))

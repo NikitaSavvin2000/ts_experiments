@@ -1187,7 +1187,7 @@ class TSExperimentPipeline:
             if self.trajectory_cols == "calendar_components":
                 self.col_for_train = self.calendar_components_cols
             elif self.trajectory_cols == "baseline":
-                self.col_for_train = []
+                self.col_for_train = self.calendar_components_cols
 
                 self.test_points = calculate_test_points_predict(
                     start_test_date=self.start_test_date,
