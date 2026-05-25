@@ -4,7 +4,7 @@ import pandas as pd
 from src.configs.data_config import datasets_csv_dict
 from src.calendar_encoder.temporal_encoding import Time2Vec
 from src.ts_models.feature_selection import stat_select_features
-from src.ts_models.lstm_service.lstm_pred import LSTM3_forecast
+from src.ts_models.lstm_service.lstm_pred import LSTM_forecast
 from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_discreteness_interval,
                                                      generate_time_series_df,
@@ -48,7 +48,7 @@ df_eval = df_test.copy()
 df_eval = df_eval[[col_time, col_target]]
 df_test[col_target] = None
 
-lag = 97
+lag = 22
 
 col_for_train = stat_select_features(
     df=df_train,
@@ -58,7 +58,7 @@ col_for_train = stat_select_features(
 )
 
 
-df_test_pred = LSTM3_forecast(
+df_test_pred = LSTM_forecast(
     col_target=col_target,
     time_column=col_time,
     df_train=df_train,
@@ -75,7 +75,7 @@ metrix_dict = regression_metrics(true=true, pred=pred)
 
 print(metrix_dict)
 
-df_real_pred = LSTM3_forecast(
+df_real_pred = LSTM_forecast(
     col_target=col_target,
     time_column=col_time,
     df_train=df_ts_t2v,
