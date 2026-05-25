@@ -501,6 +501,11 @@ class SetupModel:
                 pred=pred
             )
 
+            print("="*100)
+            print(metrics)
+            print("="*100)
+
+
             r2 = metrics.get("r2", 0)
             mape = metrics.get("mape", 0)
             bp = metrics.get("bp", 0)
