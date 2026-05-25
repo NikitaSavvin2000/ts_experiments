@@ -29,13 +29,13 @@ if gpus:
 
 
 DEFAULT_LSTM_PARAMS = {
-    "lstm_units": 512,
+    "lstm_units": 64,
     "activation": "swish",
     "recurrent_dropout_rate": 0.0,
     "regularizers_l2": 1e-3,
     "optimizer": "adam",
     "batch_size": 32,
-    "epochs": 10
+    "epochs": 25
 }
 
 points_per_call = 1
