@@ -29,9 +29,7 @@ if gpus:
 
 
 DEFAULT_LSTM_PARAMS = {
-    "lstm0_units": 64,
-    "lstm1_units": 64,
-    "lstm2_units": 32,
+    "lstm_units": 64,
     "activation": "swish",
     "recurrent_dropout_rate": 0.0,
     "regularizers_l2": 1e-3,
@@ -43,7 +41,7 @@ DEFAULT_LSTM_PARAMS = {
 points_per_call = 1
 
 
-def LSTM3_forecast(
+def LSTM_forecast(
         col_target,
         time_column,
         df_train,
@@ -93,27 +91,7 @@ def LSTM3_forecast(
 
     model.add(
         LSTM(
-            params["lstm0_units"],
-            activation=params["activation"],
-            return_sequences=True,
-            recurrent_dropout=params["recurrent_dropout_rate"],
-            kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
-        )
-    )
-
-    model.add(
-        LSTM(
-            params["lstm1_units"],
-            activation=params["activation"],
-            return_sequences=True,
-            recurrent_dropout=params["recurrent_dropout_rate"],
-            kernel_initializer=tf.keras.initializers.GlorotUniform(seed=SEED)
-        )
-    )
-
-    model.add(
-        LSTM(
-            params["lstm2_units"],
+            params["lstm_units"],
             activation=params["activation"],
             return_sequences=False,
             recurrent_dropout=params["recurrent_dropout_rate"],

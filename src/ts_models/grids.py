@@ -1,7 +1,5 @@
 lstm_grid = {
-    "lstm0_units": [32, 64],
-    "lstm1_units": [32, 64],
-    "lstm2_units": [16, 32],
+    "lstm_units": [32, 64],
     "activation": ["tanh", "swish"],
     "recurrent_dropout_rate": [0.0, 0.1],
     "regularizers_l2": [0.0, 1e-3],
