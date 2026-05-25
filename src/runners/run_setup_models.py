@@ -67,6 +67,8 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
 df_experiment_design = df_experiment_design[df_experiment_design["trajectory_cols"] == "baseline"]
+df_experiment_design = df_experiment_design[df_experiment_design["model"] == "LightGBM"]
+
 
 
 print(df_experiment_design)

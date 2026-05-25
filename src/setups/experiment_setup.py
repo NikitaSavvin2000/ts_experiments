@@ -40,7 +40,6 @@ time_series_models_funcs = {
 }
 
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

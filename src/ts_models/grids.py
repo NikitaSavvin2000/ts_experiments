@@ -69,8 +69,8 @@ linear_regression_grid = {
 }
 
 random_forest_grid = {
-    "n_estimators": [300, 500],
-    "max_depth": [10, 20],
+    "max_depth": [3, 5],
+    "n_estimators": [500, 1000],
     "min_samples_split": [2, 5],
     "min_samples_leaf": [1, 2],
     "max_features": ["sqrt", 0.7],

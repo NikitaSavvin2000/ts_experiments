@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input, Conv1D, Dropout, LayerNormalization
-from tensorflow.keras.callbacks import EarlyStopping, Callback
+from tensorflow.keras.callbacks import Callback
 
 from src.ts_models.ts_utils.timeseries_utils import (
     split_sequence,
@@ -35,7 +35,7 @@ if gpus:
         print("[DEVICE] GPU fallback active")
 
 
-tcn_params_easy = {
+DEFAULT_TCN_PARAMS = {
     "filters": 16,
     "kernel_size": 3,
     "dilation_rates": [1, 2, 4],
@@ -115,11 +115,11 @@ def TCN_forecast(
         lag,
         col_for_train,
         logger,
-        light=False
+        params=None
 ):
-    print("PIPELINE START", flush=True)
+    cfg = params or DEFAULT_TCN_PARAMS
 
-    cfg = tcn_params_easy
+    print("PIPELINE START", flush=True)
 
     df_train = df_train.copy()
     df_test = df_test.copy()
