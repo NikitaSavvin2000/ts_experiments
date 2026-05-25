@@ -54,12 +54,15 @@ df_ready_progress = load_and_prepare_progress(
     progress_csv_path=progress_csv_path,
     columns=df_experiment_design.columns
 )
+print("Уже готово")
+print(df_ready_progress)
 
 df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
     df_ready_progress=df_ready_progress
 )
 
+print(f"К расчетам = {len(df_to_experiment)} строк")
 print(df_to_experiment)
 
 
