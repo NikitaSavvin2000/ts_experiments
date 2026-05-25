@@ -549,8 +549,8 @@ class SetupModel:
 
             study.optimize(
                 lambda trial: self.objective(trial),
-                n_trials=50,
-                n_jobs=5
+                n_trials=30,
+                n_jobs=1
             )
 
             best_trial = study.best_trial
