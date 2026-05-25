@@ -57,6 +57,7 @@ col_for_train = stat_select_features(
     logger=logger
 )
 
+col_for_train = []
 
 df_test_pred = LSTM_forecast(
     col_target=col_target,
