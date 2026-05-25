@@ -47,8 +47,7 @@ df_experiment_design.to_csv(experiment_design_path)
 logger.info(msg["experiment_created"].format(experiment_design_path))
 
 df_experiment_design = df_experiment_design[
-    (df_experiment_design["trajectory_cols"] == "baseline") &
-    (df_experiment_design["model"] == "ARIMAX")
+    (df_experiment_design["trajectory_cols"] == "baseline")
     ]
 
 df_ready_progress = load_and_prepare_progress(
@@ -60,6 +59,9 @@ df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
     df_ready_progress=df_ready_progress
 )
+
+print(df_to_experiment)
+
 
 if df_to_experiment is None or df_to_experiment.empty:
     logger.info("All experiments completed")
