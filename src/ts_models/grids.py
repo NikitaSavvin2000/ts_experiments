@@ -1,12 +1,3 @@
-# lstm_grid = {
-#     "lstm_units": [32, 64],
-#     "activation": ["swish"],
-#     "recurrent_dropout_rate": [0.0],
-#     "regularizers_l2": [1e-3],
-#     "optimizer": ["adam"],
-#     "batch_size": [32],
-#     "epochs": [10, 20]
-# }
 
 lstm_grid = {
     "lstm_units": [32, 64],
@@ -100,7 +91,7 @@ patchtst_grid = {
 
 arima_grid = {
     "p": list(range(0, 8)),
-    "d": [0, 1, 2],
+    "d": [0, 1,],
     "q": list(range(0, 8)),
     "trend": ["n"]
 }
@@ -129,25 +120,25 @@ dlinear_grid = {
 tcn_grid = {
     "filters": [32, 64],
     "kernel_size": [3, 5],
-    "dilation_rates": [[1, 2, 4, 8]],
+    "dilation_rates": [[1, 2, 8]],
     "stacks": [1],
     "dropout": [0.1],
     "batch_size": [32],
-    "epochs": [10, 20],
-    "learning_rate": [1e-3, 3e-4],
+    "epochs": [3, 5, 10],
+    "learning_rate": [3e-4],
     "clipnorm": [1.0],
     "use_layer_norm": [True]
 }
 
 transformer_grid = {
     "embed_dim": [32, 64],
-    "num_heads": [4, 8],
+    "num_heads": [2, 4],
     "ff_dim": [128],
     "dropout": [0.1],
     "dense_units": [16],
-    "learning_rate": [5e-4, 1e-4],
+    "learning_rate": [1e-4],
     "batch_size": [64],
-    "epochs": [10, 20]
+    "epochs": [3, 5, 10]
 }
 
 models_grids = {

@@ -2,12 +2,17 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
-
 DEFAULT_SARIMA_PARAMS = {
-    "order": (2, 0, 2),
-    "seasonal_order": (1, 1, 1, 4),
+    "order": (0, 0, 2),
+    "seasonal_order": (1, 1, 1, 96),
     "trend": "c",
 }
+
+
+def _drop_constant_columns(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.shape[1] == 0:
+        return df
+    return df.loc[:, df.nunique(dropna=False) > 1]
 
 
 def SARIMA_forecast(
@@ -34,62 +39,44 @@ def SARIMA_forecast(
     df_train = df_train.sort_values(time_column).reset_index(drop=True)
     df_test = df_test.sort_values(time_column).reset_index(drop=True)
 
-    df_full = pd.concat([df_train, df_test], ignore_index=True)
-
-    lag_cols = []
-
-    if lag and lag > 0:
-
-        for i in range(1, lag + 1):
-
-            col = f"{col_target}_lag_{i}"
-
-            df_full[col] = df_full[col_target].shift(i)
-
-            lag_cols.append(col)
-
-    col_for_train = list(dict.fromkeys(col_for_train + lag_cols))
-
-    train_len = len(df_train)
-
-    df_train = df_full.iloc[:train_len].copy()
-    df_test = df_full.iloc[train_len:].copy()
-
     df_train = df_train[:-1000]
-
 
     y_train = pd.to_numeric(df_train[col_target], errors="coerce")
     y_train = y_train.replace([np.inf, -np.inf], np.nan)
-
-    valid_mask = ~y_train.isna()
-
-    y_train = y_train[valid_mask].reset_index(drop=True)
 
     exog_train = None
     exog_test = None
 
     if len(col_for_train) > 0:
 
-        exog_train = (
-            df_train.loc[valid_mask, col_for_train]
-            .apply(pd.to_numeric, errors="coerce")
-            .replace([np.inf, -np.inf], np.nan)
-            .fillna(0)
-        )
+        exog_train = df_train[col_for_train].apply(pd.to_numeric, errors="coerce")
+        exog_test = df_test[col_for_train].apply(pd.to_numeric, errors="coerce")
 
-        exog_test = (
-            df_test[col_for_train]
-            .apply(pd.to_numeric, errors="coerce")
-            .replace([np.inf, -np.inf], np.nan)
-            .fillna(0)
-        )
+        exog_train = exog_train.replace([np.inf, -np.inf], np.nan)
+        exog_test = exog_test.replace([np.inf, -np.inf], np.nan)
 
-        if exog_train.shape[1] == 0:
+        valid_mask = ~(y_train.isna() | exog_train.isna().any(axis=1))
+
+        y_train = y_train[valid_mask].reset_index(drop=True)
+        exog_train = exog_train[valid_mask].reset_index(drop=True)
+
+        exog_test = exog_test.ffill().bfill().fillna(0)
+
+        exog_train = _drop_constant_columns(exog_train)
+
+        if exog_train is not None:
+            exog_test = exog_test[exog_train.columns]
+
+        if exog_train is not None and exog_train.shape[1] == 0:
             exog_train = None
             exog_test = None
 
-    logger.info(f"train size: {len(y_train)}")
-    logger.info(f"exog features: {col_for_train}")
+    else:
+        y_train = y_train[~y_train.isna()].reset_index(drop=True)
+
+    logger.info(f"SARIMA order: {params['order']}")
+    logger.info(f"seasonal order: {params['seasonal_order']}")
+    logger.info(f"use exog: {exog_train is not None}")
 
     model = SARIMAX(
         endog=y_train,
@@ -101,8 +88,7 @@ def SARIMA_forecast(
         enforce_invertibility=False
     )
 
-    # model_fit = model.fit(disp=False)
-    model_fit = model.fit(method='powell', maxiter=30)
+    model_fit = model.fit(method="powell", maxiter=30)
 
     forecast = model_fit.forecast(
         steps=len(df_test),
@@ -110,6 +96,6 @@ def SARIMA_forecast(
     )
 
     df_test_pred = df_test[[time_column]].copy()
-    df_test_pred[col_target] = np.array(forecast).flatten()
+    df_test_pred[col_target] = np.array(forecast).ravel()
 
     return df_test_pred
