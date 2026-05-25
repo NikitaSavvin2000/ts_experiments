@@ -2,7 +2,7 @@
 lstm_grid = {
     "lstm_units": [32, 64],
     "activation": ["swish"],
-    "recurrent_dropout_rate": [0.0],
+    "recurrent_dropout_rate": [0.0, 0.2],
     "regularizers_l2": [1e-3],
     "optimizer": ["adam"],
     "batch_size": [32],
@@ -10,13 +10,18 @@ lstm_grid = {
 }
 
 
-xgb_grid = {
-    "max_depth": [3, 6],
-    "n_estimators": [500, 1000],
-    "subsample": [0.85, 1.0],
-    "colsample_bytree": [0.85, 1.0],
-    "min_child_weight": [5, 7],
-    "booster": ["gbtree"]
+catboost_grid = {
+    "learning_rate": [0.03, 0.05],
+    "depth": [6, 8],
+    "iterations": [500, 1000],
+    "l2_leaf_reg": [3, 5],
+    "subsample": [0.8, 1.0],
+
+    "rsm": [1.0],
+    "bagging_temperature": [0],
+    "random_strength": [1],
+    "loss_function": ["RMSE"],
+    "boosting_type": ["Plain"]
 }
 
 catboost_grid = {
@@ -24,9 +29,9 @@ catboost_grid = {
     "depth": [6, 8],
     "iterations": [500, 1000],
     "l2_leaf_reg": [3, 5],
-    "subsample": [0.8, 1.0],
-    "rsm": [0.8, 1.0],
-    "bagging_temperature": [0, 1],
+    "subsample": [1.0],
+    "rsm": [1.0],
+    "bagging_temperature": [0],
     "random_strength": [1],
     "loss_function": ["RMSE"],
     "boosting_type": ["Plain"]
@@ -37,11 +42,11 @@ lgbm_grid = {
     "n_estimators": [500, 1000],
     "max_depth": [6, 10],
     "num_leaves": [31, 64],
-    "subsample": [0.85, 1.0],
-    "colsample_bytree": [0.85, 1.0],
+    "subsample": [1.0],
+    "colsample_bytree": [1.0],
     "min_child_samples": [20],
-    "reg_lambda": [0.0, 1.0],
-    "reg_alpha": [0.0, 0.1],
+    "reg_lambda": [0.0],
+    "reg_alpha": [0.0],
     "boosting_type": ["gbdt"]
 }
 
@@ -56,17 +61,18 @@ random_forest_grid = {
     "n_estimators": [300, 500],
     "max_depth": [10, 20],
     "min_samples_split": [2, 5],
-    "min_samples_leaf": [1],
+    "min_samples_leaf": [1, 2],
     "max_features": ["sqrt", 0.7],
     "bootstrap": [True]
 }
 
 svr_grid = {
-    "kernel": ["rbf"],
+    "kernel": ["rbf", "poly"],
     "C": [1.0, 10.0],
     "epsilon": [0.05, 0.1],
     "gamma": ["scale", 0.1],
-    "shrinking": [True]
+    "shrinking": [True],
+    "tol": [1e-3, 1e-4]
 }
 
 prophet_grid = {
@@ -74,7 +80,7 @@ prophet_grid = {
     "seasonality_prior_scale": [0.1, 1.0],
     "seasonality_mode": ["additive", "multiplicative"],
     "changepoint_range": [0.8, 0.9],
-    "n_changepoints": [10, 25]
+    "n_changepoints": [25]
 }
 
 patchtst_grid = {
