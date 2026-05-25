@@ -92,24 +92,24 @@
 #
 #     return df_test_pred
 
+
+
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
-
-# DEFAULT_ARIMA_PARAMS = {
-#     "p": 5,
-#     "d": 0,
-#     "q": 5,
-#     "trend": "c",
-# }
-
 DEFAULT_ARIMA_PARAMS = {
-    "p": 4,
-    "d": 0,
-    "q": 8,
-    "trend": "c",
+    "p": 0,
+    "d": 1,
+    "q": 0,
+    "trend": "n",
 }
+
+
+def _drop_constant_columns(df: pd.DataFrame) -> pd.DataFrame:
+    if df is None or df.shape[1] == 0:
+        return df
+    return df.loc[:, df.nunique(dropna=False) > 1]
 
 
 def ARIMAX_forecast(
@@ -129,184 +129,53 @@ def ARIMAX_forecast(
 
     if col_for_train is None:
         col_for_train = []
-
     if not isinstance(col_for_train, list):
         col_for_train = list(col_for_train)
 
-    df_train[time_column] = pd.to_datetime(
-        df_train[time_column],
-        errors="coerce"
-    )
+    df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
+    df_test[time_column] = pd.to_datetime(df_test[time_column], errors="coerce")
 
-    df_test[time_column] = pd.to_datetime(
-        df_test[time_column],
-        errors="coerce"
-    )
+    df_train = df_train.sort_values(time_column).reset_index(drop=True)
+    df_test = df_test.sort_values(time_column).reset_index(drop=True)
 
-    df_train = (
-        df_train
-        .sort_values(time_column)
-        .reset_index(drop=True)
-    )
-
-    df_test = (
-        df_test
-        .sort_values(time_column)
-        .reset_index(drop=True)
-    )
-
-    use_exog = len(col_for_train) > 0 or (lag is not None and lag > 0)
-
-    if use_exog:
-
-        df_full = pd.concat(
-            [df_train, df_test],
-            ignore_index=True
-        )
-
-        lag_cols = []
-
-        if lag and lag > 0:
-
-            for i in range(1, lag + 1):
-
-                lag_col = f"{col_target}_lag_{i}"
-
-                df_full[lag_col] = (
-                    df_full[col_target]
-                    .shift(i)
-                )
-
-                lag_cols.append(lag_col)
-
-        col_for_train = list(
-            dict.fromkeys(
-                col_for_train + lag_cols
-            )
-        )
-
-        train_len = len(df_train)
-
-        df_train = (
-            df_full
-            .iloc[:train_len]
-            .copy()
-        )
-
-        df_test = (
-            df_full
-            .iloc[train_len:]
-            .copy()
-        )
-
-    y_train = pd.to_numeric(
-        df_train[col_target],
-        errors="coerce"
-    )
-
-    y_train = y_train.replace(
-        [np.inf, -np.inf],
-        np.nan
-    )
+    y_train = pd.to_numeric(df_train[col_target], errors="coerce").replace([np.inf, -np.inf], np.nan)
 
     exog_train = None
     exog_test = None
 
     if len(col_for_train) > 0:
+        exog_train = df_train[col_for_train].apply(pd.to_numeric, errors="coerce")
+        exog_test = df_test[col_for_train].apply(pd.to_numeric, errors="coerce")
 
-        exog_train = (
-            df_train[col_for_train]
-            .apply(pd.to_numeric, errors="coerce")
-        )
+        exog_train = exog_train.replace([np.inf, -np.inf], np.nan)
+        exog_test = exog_test.replace([np.inf, -np.inf], np.nan)
 
-        exog_test = (
-            df_test[col_for_train]
-            .apply(pd.to_numeric, errors="coerce")
-        )
+        valid_mask = ~(y_train.isna() | exog_train.isna().any(axis=1))
 
-        exog_train = exog_train.replace(
-            [np.inf, -np.inf],
-            np.nan
-        )
+        y_train = y_train[valid_mask].reset_index(drop=True)
+        exog_train = exog_train[valid_mask].reset_index(drop=True)
 
-        exog_test = exog_test.replace(
-            [np.inf, -np.inf],
-            np.nan
-        )
+        exog_test = exog_test.ffill().bfill().fillna(0)
 
-        valid_mask = ~(
-                y_train.isna()
-                |
-                exog_train.isna().any(axis=1)
-        )
+        exog_train = _drop_constant_columns(exog_train)
 
-        y_train = (
-            y_train[valid_mask]
-            .reset_index(drop=True)
-        )
+        if exog_train is not None:
+            exog_test = exog_test[exog_train.columns]
 
-        exog_train = (
-            exog_train[valid_mask]
-            .reset_index(drop=True)
-        )
-
-        exog_test = (
-            exog_test
-            .fillna(method="ffill")
-            .fillna(method="bfill")
-            .fillna(0)
-        )
-
-        if exog_train.shape[1] == 0:
+        if exog_train is not None and exog_train.shape[1] == 0:
             exog_train = None
             exog_test = None
 
     else:
+        y_train = y_train[~y_train.isna()].reset_index(drop=True)
 
-        valid_mask = ~y_train.isna()
+    p = int(params.get("p", DEFAULT_ARIMA_PARAMS["p"]))
+    d = int(params.get("d", DEFAULT_ARIMA_PARAMS["d"]))
+    q = int(params.get("q", DEFAULT_ARIMA_PARAMS["q"]))
+    trend = "n"
 
-        y_train = (
-            y_train[valid_mask]
-            .reset_index(drop=True)
-        )
-
-    p = int(
-        params.get(
-            "p",
-            DEFAULT_ARIMA_PARAMS["p"]
-        )
-    )
-
-    d = int(
-        params.get(
-            "d",
-            DEFAULT_ARIMA_PARAMS["d"]
-        )
-    )
-
-    q = int(
-        params.get(
-            "q",
-            DEFAULT_ARIMA_PARAMS["q"]
-        )
-    )
-
-    trend = params.get(
-        "trend",
-        DEFAULT_ARIMA_PARAMS["trend"]
-    )
-
-    logger.info(
-        f"ARIMA order: {(p, d, q)}"
-    )
-
-    logger.info(
-        f"lag: {lag}"
-    )
-
-    logger.info(
-        f"use exog: {exog_train is not None}"
-    )
+    logger.info(f"ARIMA order: {(p, d, q)}")
+    logger.info(f"use exog: {exog_train is not None}")
 
     model = ARIMA(
         endog=y_train,
@@ -322,14 +191,7 @@ def ARIMAX_forecast(
         exog=exog_test
     )
 
-    df_test_pred = (
-        df_test[[time_column]]
-        .copy()
-    )
-
-    df_test_pred[col_target] = (
-        np.array(forecast)
-        .flatten()
-    )
+    df_test_pred = df_test[[time_column]].copy()
+    df_test_pred[col_target] = np.array(forecast).ravel()
 
     return df_test_pred

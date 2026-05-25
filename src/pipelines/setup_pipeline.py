@@ -389,6 +389,7 @@ class SetupModel:
             best_score = float("inf")
             best_params = None
             best_pred = None
+            best_metrics = {}
 
             keys = list(self.model_grid.keys())
             values = list(self.model_grid.values())
@@ -431,6 +432,7 @@ class SetupModel:
                         best_score = score
                         best_params = params
                         best_pred = pred
+                        best_metrics = metrics
 
                 except Exception:
                     score = float("inf")
@@ -438,6 +440,7 @@ class SetupModel:
             self.best_params = best_params
             self.best_score_params = best_score
             self.best_pred = best_pred
+            self.best_metrics = best_metrics
 
             print(self.best_params)
             print(self.best_score_params)
