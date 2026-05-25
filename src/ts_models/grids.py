@@ -15,7 +15,7 @@ lstm_grid = {
     "regularizers_l2": [1e-3],
     "optimizer": ["adam"],
     "batch_size": [32],
-    "epochs": [2,3]
+    "epochs": [2, 3]
 }
 
 
