@@ -538,49 +538,49 @@ class SetupModel:
     #     except Exception:
     #         raise optuna.TrialPruned()
 
-    def run_setup_models_params(self):
-
-        try:
-
-            if self.trajectory_cols == "baseline":
-                self.col_for_train = []
-            else:
-                raise ValueError(
-                    "Non-existent experiment trajectory."
-                )
-
-            self.forecast_func = time_series_models_funcs[self.model]
-
-            self.model_grid = models_grids[self.model]
-
-            study = optuna.create_study(
-                direction="minimize"
-            )
-
-            study.optimize(
-                lambda trial: self.objective(trial),
-                n_trials=30,
-                n_jobs=1
-            )
-
-            best_trial = study.best_trial
-
-            self.best_params = best_trial.params
-            self.best_score_params = best_trial.value
-            self.best_metrics = best_trial.user_attrs["metrics"]
-            self.best_pred = best_trial.user_attrs["pred"]
-
-            print(self.best_params)
-            print(self.best_score_params)
-            print(self.best_metrics)
-
-        except Exception as e:
-
-            self.logger.error(
-                self.msg["stat_select_error"].format(str(e))
-            )
-
-            raise e
-
-        return self
+    # def run_setup_models_params(self):
+    #
+    #     try:
+    #
+    #         if self.trajectory_cols == "baseline":
+    #             self.col_for_train = []
+    #         else:
+    #             raise ValueError(
+    #                 "Non-existent experiment trajectory."
+    #             )
+    #
+    #         self.forecast_func = time_series_models_funcs[self.model]
+    #
+    #         self.model_grid = models_grids[self.model]
+    #
+    #         study = optuna.create_study(
+    #             direction="minimize"
+    #         )
+    #
+    #         study.optimize(
+    #             lambda trial: self.objective(trial),
+    #             n_trials=30,
+    #             n_jobs=1
+    #         )
+    #
+    #         best_trial = study.best_trial
+    #
+    #         self.best_params = best_trial.params
+    #         self.best_score_params = best_trial.value
+    #         self.best_metrics = best_trial.user_attrs["metrics"]
+    #         self.best_pred = best_trial.user_attrs["pred"]
+    #
+    #         print(self.best_params)
+    #         print(self.best_score_params)
+    #         print(self.best_metrics)
+    #
+    #     except Exception as e:
+    #
+    #         self.logger.error(
+    #             self.msg["stat_select_error"].format(str(e))
+    #         )
+    #
+    #         raise e
+    #
+    #     return self
 
