@@ -98,10 +98,16 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMA
 
+# DEFAULT_ARIMA_PARAMS = {
+#     "p": 4,
+#     "d": 1,
+#     "q": 8
+# }
+
 DEFAULT_ARIMA_PARAMS = {
     "p": 0,
-    "d": 1,
-    "q": 0,
+    "d": 0,
+    "q": 2,
     "trend": "n",
 }
 
@@ -125,6 +131,7 @@ def ARIMAX_forecast(
     params = params or DEFAULT_ARIMA_PARAMS
 
     df_train = df_train.copy()
+    df_train = df_train[:-1000]
     df_test = df_test.copy()
 
     if col_for_train is None:

@@ -1,11 +1,21 @@
+# lstm_grid = {
+#     "lstm_units": [32, 64],
+#     "activation": ["swish"],
+#     "recurrent_dropout_rate": [0.0],
+#     "regularizers_l2": [1e-3],
+#     "optimizer": ["adam"],
+#     "batch_size": [32],
+#     "epochs": [10, 20]
+# }
+
 lstm_grid = {
-    "lstm_units": [32, 64],
+    "lstm_units": [64],
     "activation": ["swish"],
     "recurrent_dropout_rate": [0.0],
     "regularizers_l2": [1e-3],
     "optimizer": ["adam"],
     "batch_size": [32],
-    "epochs": [10, 20]
+    "epochs": [10, 15]
 }
 
 

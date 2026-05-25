@@ -374,19 +374,20 @@ class SetupModel:
                 self.logger.error(self.msg["stat_select_error"].format(str(e)))
                 raise e
 
-
     def run_setup_models_params(self):
         try:
 
             if self.trajectory_cols == "baseline":
                 self.col_for_train = ["year", "month", "day", "hour", "minute", "second"]
             else:
-                raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
+                raise ValueError(
+                    "Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py"
+                )
 
             self.forecast_func = time_series_models_funcs[self.model]
             self.model_grid = models_grids[self.model]
 
-            best_score = float("inf")
+            best_score = float("-inf")
             best_params = None
             best_pred = None
             best_metrics = {}
@@ -398,6 +399,10 @@ class SetupModel:
 
             for combo in tqdm(itertools.product(*values)):
                 params = dict(zip(keys, combo))
+
+                metrics = None
+                pred = None
+                score = float("-inf")
 
                 try:
                     df_pred = self.forecast_func(
@@ -414,28 +419,34 @@ class SetupModel:
                     pred = df_pred[self.col_target].tolist()
 
                     if (
-                            len(pred) == 0
-                            or any(pd.isna(x) for x in pred)
-                            or len(pred) != len(true)
+                            len(pred) > 0
+                            and len(pred) == len(true)
+                            and not any(pd.isna(x) for x in pred)
                     ):
-                        score = float("inf")
-                    else:
                         metrics = regression_metrics(true=true, pred=pred)
+                        r2 = metrics.get("r2", float("-inf"))
 
-                        r2 = metrics.get("r2", 0)
-                        mape = metrics.get("mape", float("inf"))
-                        bp = metrics.get("bp", float("inf"))
+                        if np.isfinite(r2):
+                            score = r2
+                        else:
+                            score = float("-inf")
+                    else:
+                        score = float("-inf")
 
-                        score = (1 - r2) + mape + bp
+                    print("=" * 120)
+                    print(f" >>>>>>>> MODEL {self.model}")
+                    print(f" >>>>>>>> PARAMS {params}")
+                    print(f" >>>>>>>> METRICS {metrics}")
+                    print("=" * 120)
 
-                    if score < best_score:
+                    if score > best_score:
                         best_score = score
                         best_params = params
                         best_pred = pred
-                        best_metrics = metrics
+                        best_metrics = metrics or {}
 
                 except Exception:
-                    score = float("inf")
+                    score = float("-inf")
 
             self.best_params = best_params
             self.best_score_params = best_score
