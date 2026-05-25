@@ -48,7 +48,7 @@ df_eval = df_test.copy()
 df_eval = df_eval[[col_time, col_target]]
 df_test[col_target] = None
 
-lag = 220
+lag = 2
 
 col_for_train = stat_select_features(
     df=df_train,
