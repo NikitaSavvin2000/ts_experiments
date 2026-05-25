@@ -107,7 +107,7 @@ trajectory_cols = ["baseline", "engineered_datetime_features", "mi_features", "c
 
 model_to_test = list(time_series_models_funcs.keys())
 
-model_to_test = ["ARIMAX"]
+# model_to_test = ["ARIMAX"]
 # model_to_test = ["ARIMAX"]
 
 # not_exogenous_models = ["ARIMA", "SARIMA"]
