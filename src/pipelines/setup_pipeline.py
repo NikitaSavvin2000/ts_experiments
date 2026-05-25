@@ -384,7 +384,7 @@ class SetupModel:
         try:
 
             if self.trajectory_cols == "baseline":
-                self.col_for_train = []
+                self.col_for_train = ["year", "month", "day", "hour", "minute", "second"]
             else:
                 raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
 
