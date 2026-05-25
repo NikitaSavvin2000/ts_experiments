@@ -29,7 +29,7 @@ if gpus:
 
 
 DEFAULT_LSTM_PARAMS = {
-    "lstm_units": 64,
+    "lstm_units": 512,
     "activation": "swish",
     "recurrent_dropout_rate": 0.0,
     "regularizers_l2": 1e-3,
