@@ -417,7 +417,13 @@ class SetupModel:
                 pred = df_pred[self.col_target].tolist()
 
                 metrics = regression_metrics(true=true, pred=pred)
-                print(metrics)
+
+                print("="*100)
+                print(f">>>>>> MODEL {self.model}")
+                print(f">>>>>> PARAMS {params}")
+                print(f">>>>>> METRIX {metrics}")
+                print("="*100)
+
 
 
                 r2 = metrics.get("r2", 0)
