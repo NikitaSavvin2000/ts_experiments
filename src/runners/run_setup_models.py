@@ -11,32 +11,13 @@ from src.setups.experiment_setup import (init_experiment_setup,
                                          load_and_prepare_progress,
                                          get_pending_experiments,
                                          append_experiment_to_csv,
-                                         not_exogenous_models)
+                                         not_exogenous_models,
+                                         append_progress_to_csv)
 
 from config import logger_language
 from src.pipelines.setup_pipeline import SetupModel
 from tqdm import tqdm
 
-
-def scip_not_exogenous_models(experiment):
-
-    iteration_results_path = os.path.join(results_path, experiment["result_dir_name"])
-    os.makedirs(iteration_results_path, exist_ok=True)
-
-    exp_result["pacf_lag"] = None
-    exp_result["col_for_train"] = None
-    exp_result["discreteness"] = None
-    exp_result["r2"] = None
-    exp_result["mae"] = None
-    exp_result["mape"] = None
-    exp_result["rmse"] = None
-    exp_result["elapsed_seconds"] = None
-
-
-    df_result = pd.DataFrame([exp_result])
-
-    df_result.to_csv(os.path.join(iteration_results_path, "line_result_table.csv"))
-    append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
 
 
 # ============================================
@@ -67,6 +48,9 @@ msg = MESSAGES[logger_language]
 # ============================================
 home_path, export_path, experiment_path, logger = init_experiment_config()
 
+results_path = os.path.join(experiment_path, "results_setups")
+os.makedirs(results_path, exist_ok=True)
+
 # ============================================
 # en: Experiment design configuration initialization
 # ru: Инициализация конфигурации дизайна экспериментов
@@ -74,18 +58,17 @@ home_path, export_path, experiment_path, logger = init_experiment_config()
 # ============================================
 df_experiment_design = init_experiment_setup()
 
-experiment_design_path = os.path.join(experiment_path,"experiment_design_setups.csv")
-progress_csv_path = os.path.join(experiment_path, "progress_setups.csv")
-results_path = os.path.join(experiment_path, "results_setups")
-os.makedirs(results_path, exist_ok=True)
+experiment_design_path = os.path.join(results_path,"experiment_design_setups.csv")
+progress_csv_path = os.path.join(results_path, "progress_setups.csv")
+
 
 df_experiment_design.to_csv(experiment_design_path)
 logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
 
-df_experiment_design = df_experiment_design[df_experiment_design["trajectory_cols"] == "baseline"]
-df_experiment_design = df_experiment_design[df_experiment_design["model"] == "XGBoost"]
+# df_experiment_design = df_experiment_design[df_experiment_design["trajectory_cols"] == "baseline"]
+# df_experiment_design = df_experiment_design[df_experiment_design["model"] == "XGBoost"]
 
 
 print(df_experiment_design)
@@ -111,10 +94,6 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
 
-    if experiment["model"] in not_exogenous_models:
-        if experiment["trajectory_cols"] != "baseline":
-            scip_not_exogenous_models(experiment)
-            continue
     # ============================================
     # en: Initialize experiment pipeline instance
     # ru: Инициализация экземпляра пайплайна эксперимента
@@ -188,38 +167,35 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
         setups_pipeline.run_setup_lag_by_model()
 
         best_lag = setups_pipeline.best_lag
-        best_score = setups_pipeline.best_score
-        best_pred = setups_pipeline.best_pred
+        # best_score = setups_pipeline.best_score
+        # best_pred = setups_pipeline.best_pred
 
     row_lag = {
         "model": model,
         "dataset_name": dataset_name,
         "best_lag": best_lag,
-        "best_score": best_score
+        # "best_score": best_score
+    }
+
+    append_progress_to_csv(progress_row=row_lag, progress_csv_path=os.path.join(results_path, "setups_lag.csv"))
+
+
+    # setups_pipeline.pacf_lag = 25
+
+    setups_pipeline.run_setup_models_params()
+
+    best_params = setups_pipeline.best_params
+    best_metrics_params = setups_pipeline.best_metrics
+
+    row_params = {
+        "model": experiment["model"],
+        "dataset_name": experiment["dataset_name"],
+        "best_params": best_params,
+        "best_metrics": best_metrics_params
     }
 
 
-
-    # setups_pipeline.run_setup_models_params()
-
-    # best_params = setups_pipeline.best_params
-    # best_score_params = setups_pipeline.best_score
-
-    # row_params = {
-    #     "model": experiment["model"],
-    #     "dataset_name": experiment["dataset_name"],
-    #     "best_params": best_params,
-    #     "best_score": best_score_params
-    # }
-
-
-
-    df_lags = pd.DataFrame([row_lag])
-    # df_params = pd.DataFrame([row_params])
-
-
-    df_lags.to_csv(os.path.join(results_path, "setups_lag.csv"))
-    # df_params.to_csv(os.path.join(results_path, "setups_params.csv"))
+    append_progress_to_csv(progress_row=row_params, progress_csv_path=os.path.join(results_path, "setups_params.csv"))
 
 
     append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)

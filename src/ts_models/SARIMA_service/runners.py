@@ -4,7 +4,7 @@ import pandas as pd
 from src.configs.data_config import datasets_csv_dict
 from src.calendar_encoder.temporal_encoding import Time2Vec
 from src.ts_models.feature_selection import stat_select_features
-from src.ts_models.ARIMA_service.arima_pred import ARIMA_forecast
+from src.ts_models.SARIMA_service.sarima_pred import SARIMA_forecast
 from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_discreteness_interval,
                                                      generate_time_series_df,
@@ -57,8 +57,10 @@ col_for_train = stat_select_features(
     logger=logger
 )
 
+col_for_train = []
 
-df_test_pred = ARIMA_forecast(
+
+df_test_pred = SARIMA_forecast(
     col_target=col_target,
     time_column=col_time,
     df_train=df_train,
@@ -73,7 +75,7 @@ pred = df_test_pred[col_target].tolist()
 
 metrix_dict = regression_metrics(true=true, pred=pred)
 
-df_real_pred = ARIMA_forecast(
+df_real_pred = SARIMA_forecast(
     col_target=col_target,
     time_column=col_time,
     df_train=df_ts_t2v,

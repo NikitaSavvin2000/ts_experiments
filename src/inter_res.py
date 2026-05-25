@@ -17,7 +17,7 @@ def load_and_merge(results_path):
     return pd.concat(dfs, ignore_index=True)
 
 
-results_path_init = "/Users/nikitasavvin/Downloads"
+results_path_init = "/Users/nikitasavvin/Desktop/PhD/ts_experiments/export/test_optuna_v2"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
 os.makedirs(article_materials_path, exist_ok=True)
@@ -26,15 +26,19 @@ df = load_and_merge(results_path)
 
 cols_to_select = ["type", "dataset_name", "trajectory_cols", "r2" , "mape", "rmse" ,"mae", "model"]
 
+
 df = df[cols_to_select]
 
-trajectory = [
-    "baseline",
-    "calendar_components",
-    "engineered_datetime_features",
-    "stat_selected_features",
-    "horizon_selected_features"
-]
+# trajectory = [
+#     "baseline",
+#     "calendar_components",
+#     "engineered_datetime_features",
+#     "stat_selected_features",
+#     "horizon_selected_features"
+# ]
+
+trajectory = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "optuna", "сlassic_GA", "GA_horizon_selected_features"]
+
 
 order_list = df["trajectory_cols"].unique().tolist()
 

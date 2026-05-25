@@ -19,7 +19,7 @@ col_time = "Datetime"
 col_target = "consumption"
 
 df_ts = df_ts[["Datetime", "consumption"]]
-
+params = None
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()
 discreteness_sec = calculate_discreteness_interval(df=df_ts, time_column=col_time)
@@ -57,6 +57,7 @@ col_for_train = stat_select_features(
     logger=logger
 )
 
+col_for_train = []
 
 df_test_pred = ARIMAX_forecast(
     col_target=col_target,
@@ -66,6 +67,7 @@ df_test_pred = ARIMAX_forecast(
     lag=lag,
     col_for_train=col_for_train,
     logger=logger,
+    params=params
 )
 
 true =df_eval[col_target].tolist()
@@ -81,6 +83,8 @@ df_real_pred = ARIMAX_forecast(
     lag=lag,
     col_for_train=col_for_train,
     logger=logger,
+    params=params
+
 )
 
 

@@ -53,8 +53,8 @@ df_test[col_target] = None
 
 lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
 
-lag = len(df_test)
-lag = 28
+# lag = len(df_test)
+# lag = 28
 
 print(f"lag = {lag}")
 

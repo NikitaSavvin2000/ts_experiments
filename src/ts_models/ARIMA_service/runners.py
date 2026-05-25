@@ -52,7 +52,8 @@ df_eval = df_test.copy()
 df_eval = df_eval[[col_time, col_target]]
 df_test[col_target] = None
 
-lag = 4
+lag = 1
+# lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
 
 col_for_train = stat_select_features(
     df=df_train,

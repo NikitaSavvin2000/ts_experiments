@@ -9,14 +9,13 @@ from src.ts_models.ts_utils.timeseries_utils import (
 )
 
 DEFAULT_XGB_PARAMS = {
-    "learning_rate": 0.1,
     "max_depth": 3,
-    "n_estimators": 100,
+    "n_estimators": 1000,
     "subsample": 1.0,
     "colsample_bytree": 1.0,
-    "min_child_weight": 5,
+    "min_child_weight": 7,
     "gamma": 0.0,
-    "reg_lambda": 1.0,
+    # "reg_lambda": 1.0,
     "reg_alpha": 0.0,
     "booster": "gbtree"
 }
@@ -32,6 +31,8 @@ def XGBoost_forecast(
         logger,
         params=None
 ):
+
+
     params = params or DEFAULT_XGB_PARAMS
 
     df_train = df_train.copy()
@@ -75,9 +76,7 @@ def XGBoost_forecast(
         subsample=params["subsample"],
         colsample_bytree=params["colsample_bytree"],
         min_child_weight=params["min_child_weight"],
-        gamma=params["gamma"],
-        reg_lambda=params["reg_lambda"],
-        reg_alpha=params["reg_alpha"],
+        # gamma=params["gamma"],
         booster=params["booster"]
     )
 

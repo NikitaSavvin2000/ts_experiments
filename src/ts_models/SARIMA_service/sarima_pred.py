@@ -1,17 +1,12 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
 DEFAULT_SARIMA_PARAMS = {
-    "p": 1,
-    "d": 1,
-    "q": 1,
-    "P": 0,
-    "D": 0,
-    "Q": 0,
-    "m": 12,
-    "trend": "n"
+    "order": (2, 0, 2),
+    "seasonal_order": (1, 1, 1, 4),
+    "trend": "c",
 }
 
 
@@ -25,63 +20,96 @@ def SARIMA_forecast(
         logger,
         params=None
 ):
-    try:
-        params = params or DEFAULT_SARIMA_PARAMS
 
-        df_train = df_train.copy()
-        df_test = df_test.copy()
+    params = params or DEFAULT_SARIMA_PARAMS
 
-        common_time_keywords = ['date', 'time', 'datetime', 'timestamp', 'ds']
-        guessed_col = [
-            col for col in df_train.columns
-            if any(key in col.lower() for key in common_time_keywords)
-        ]
+    df_train = df_train.copy()
+    df_test = df_test.copy()
 
-        if time_column is None:
-            time_column = guessed_col[0] if guessed_col else None
+    col_for_train = list(col_for_train or [])
 
-        logger.info(f"time_column: {time_column}")
+    df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
+    df_test[time_column] = pd.to_datetime(df_test[time_column], errors="coerce")
 
-        df_train[time_column] = pd.to_datetime(df_train[time_column], errors='coerce')
-        df_train = df_train.dropna(subset=[time_column])
-        df_train = df_train.sort_values(by=time_column)
+    df_train = df_train.sort_values(time_column).reset_index(drop=True)
+    df_test = df_test.sort_values(time_column).reset_index(drop=True)
 
-        df_train[col_target] = df_train[col_target].replace("None", None).astype(float)
+    df_full = pd.concat([df_train, df_test], ignore_index=True)
 
-        if df_train[col_target].isna().any():
-            raise ValueError("NaN in target")
+    lag_cols = []
 
-        df_train = df_train.set_index(time_column)
-        df_train = df_train[~df_train.index.duplicated(keep="last")]
+    if lag and lag > 0:
 
-        freq = pd.infer_freq(df_train.index) or "D"
+        for i in range(1, lag + 1):
 
-        df_train = df_train.asfreq(freq)
-        df_train[col_target] = df_train[col_target].ffill()
+            col = f"{col_target}_lag_{i}"
 
-        series = df_train[col_target].dropna().tail(1000)
+            df_full[col] = df_full[col_target].shift(i)
 
-        model = SARIMAX(
-            series,
-            exog=None,
-            order=(params["p"], params["d"], params["q"]),
-            seasonal_order=(params["P"], params["D"], params["Q"], params["m"]),
-            trend=params["trend"],
-            enforce_stationarity=False,
-            enforce_invertibility=False
+            lag_cols.append(col)
+
+    col_for_train = list(dict.fromkeys(col_for_train + lag_cols))
+
+    train_len = len(df_train)
+
+    df_train = df_full.iloc[:train_len].copy()
+    df_test = df_full.iloc[train_len:].copy()
+
+    df_train = df_train[:-1000]
+
+
+    y_train = pd.to_numeric(df_train[col_target], errors="coerce")
+    y_train = y_train.replace([np.inf, -np.inf], np.nan)
+
+    valid_mask = ~y_train.isna()
+
+    y_train = y_train[valid_mask].reset_index(drop=True)
+
+    exog_train = None
+    exog_test = None
+
+    if len(col_for_train) > 0:
+
+        exog_train = (
+            df_train.loc[valid_mask, col_for_train]
+            .apply(pd.to_numeric, errors="coerce")
+            .replace([np.inf, -np.inf], np.nan)
+            .fillna(0)
         )
 
-        fitted = model.fit(disp=False, maxiter=100)
+        exog_test = (
+            df_test[col_for_train]
+            .apply(pd.to_numeric, errors="coerce")
+            .replace([np.inf, -np.inf], np.nan)
+            .fillna(0)
+        )
 
-        logger.info(f"AIC: {fitted.aic}")
+        if exog_train.shape[1] == 0:
+            exog_train = None
+            exog_test = None
 
-        forecast = fitted.forecast(steps=len(df_test))
+    logger.info(f"train size: {len(y_train)}")
+    logger.info(f"exog features: {col_for_train}")
 
-        df_test_pred = df_test[[time_column, col_target]].copy()
-        df_test_pred[col_target] = np.array(forecast)
+    model = SARIMAX(
+        endog=y_train,
+        exog=exog_train,
+        order=params["order"],
+        seasonal_order=params["seasonal_order"],
+        trend=params["trend"],
+        enforce_stationarity=False,
+        enforce_invertibility=False
+    )
 
-        return df_test_pred
+    # model_fit = model.fit(disp=False)
+    model_fit = model.fit(method='powell', maxiter=30)
 
-    except Exception as e:
-        logger.error(f"SARIMA failed: {str(e)}")
-        raise
+    forecast = model_fit.forecast(
+        steps=len(df_test),
+        exog=exog_test
+    )
+
+    df_test_pred = df_test[[time_column]].copy()
+    df_test_pred[col_target] = np.array(forecast).flatten()
+
+    return df_test_pred

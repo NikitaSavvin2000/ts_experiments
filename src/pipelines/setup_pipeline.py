@@ -13,6 +13,9 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_test_points_predict)
 
 from src.ts_models.grids import models_grids, models_easy
+
+import optuna
+import numpy as np
 import itertools
 
 from tqdm import tqdm
@@ -295,77 +298,65 @@ class SetupModel:
         return self
 
 
+    # def run_setup_lag_by_model(self):
+    #     try:
+    #         if self.trajectory_cols == "baseline":
+    #             self.col_for_train = []
+    #         else:
+    #             raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
+    #
+    #         self.forecast_func = time_series_models_funcs[self.model]
+    #         params = models_easy[self.model]
+    #
+    #         best_score = float("inf")
+    #         best_lag = None
+    #         best_pred = None
+    #
+    #         for lag in range(1, 36):
+    #             df_pred = self.forecast_func(
+    #                 col_target=self.col_target,
+    #                 time_column=self.col_time,
+    #                 df_train=self.df_train,
+    #                 df_test=self.df_test,
+    #                 lag=lag,
+    #                 col_for_train=self.col_for_train,
+    #                 logger=self.logger,
+    #                 params=params
+    #             )
+    #
+    #             print(df_pred)
+    #
+    #             true = self.df_eval[self.col_target].tolist()
+    #             pred = df_pred[self.col_target].tolist()
+    #
+    #             metrics = regression_metrics(true=true, pred=pred)
+    #
+    #             print(metrics)
+    #
+    #             r2 = metrics.get("r2", 0)
+    #             mape = metrics.get("mape", 0)
+    #             bp = metrics.get("bp", 0)
+    #
+    #             score = (1 - r2) + mape + bp
+    #
+    #             if score < best_score:
+    #                 best_score = score
+    #                 best_lag = lag
+    #                 best_pred = pred
+    #
+    #         self.best_lag = best_lag
+    #         self.best_score = best_score
+    #         self.best_pred = best_pred
+    #
+    #         return self
+    #
+    #     except Exception as e:
+    #         self.logger.error(self.msg["stat_select_error"].format(str(e)))
+    #         raise e
+
+
     def run_setup_lag_by_model(self):
         try:
-            if self.trajectory_cols == "baseline":
-                self.col_for_train = []
-            else:
-                raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
-
-            self.forecast_func = time_series_models_funcs[self.model]
-            params = models_easy[self.model]
-
-            best_score = float("inf")
-            best_lag = None
-            best_pred = None
-
-            for lag in range(1, 36):
-                df_pred = self.forecast_func(
-                    col_target=self.col_target,
-                    time_column=self.col_time,
-                    df_train=self.df_train,
-                    df_test=self.df_test,
-                    lag=lag,
-                    col_for_train=self.col_for_train,
-                    logger=self.logger,
-                    params=params
-                )
-
-                print(df_pred)
-
-                true = self.df_eval[self.col_target].tolist()
-                pred = df_pred[self.col_target].tolist()
-
-                metrics = regression_metrics(true=true, pred=pred)
-
-                print(metrics)
-
-                r2 = metrics.get("r2", 0)
-                mape = metrics.get("mape", 0)
-                bp = metrics.get("bp", 0)
-
-                score = (1 - r2) + mape + bp
-
-                if score < best_score:
-                    best_score = score
-                    best_lag = lag
-                    best_pred = pred
-
-            self.best_lag = best_lag
-            self.best_score = best_score
-            self.best_pred = best_pred
-
-            return self
-
-        except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
-            raise e
-
-    def run_setup_models_params(self):
-        """
-        RU: Статистический отбор признаков для временного ряда
-        EN: Statistical feature selection for time series
-        ZH: 时间序列统计特征选择
-        """
-        try:
-
-            if self.trajectory_cols == "baseline":
-                self.col_for_train = []
-            else:
-                raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
-
-            self.forecast_func = time_series_models_funcs[self.model]
-
 
             self.pacf_lag = select_pacf_lag(
                 df=self.df_t2v,
@@ -375,59 +366,210 @@ class SetupModel:
                 logger=self.logger
             )
 
+            self.best_lag = self.pacf_lag
+
+            return self.best_lag
+
+        except Exception as e:
+                self.logger.error(self.msg["stat_select_error"].format(str(e)))
+                raise e
+
+
+    # def run_setup_models_params(self):
+    #     """
+    #     RU: Статистический отбор признаков для временного ряда
+    #     EN: Statistical feature selection for time series
+    #     ZH: 时间序列统计特征选择
+    #     """
+    #     try:
+    #
+    #         if self.trajectory_cols == "baseline":
+    #             self.col_for_train = []
+    #         else:
+    #             raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
+    #
+    #         self.forecast_func = time_series_models_funcs[self.model]
+    #
+    #
+    #         self.model_grid = models_grids[self.model]
+    #
+    #         best_score = float("inf")
+    #         best_params = None
+    #         best_pred = None
+    #
+    #         keys = list(self.model_grid.keys())
+    #         values = list(self.model_grid.values())
+    #
+    #         for combo in tqdm(itertools.product(*values)):
+    #             params = dict(zip(keys, combo))
+    #
+    #             df_pred = self.forecast_func(
+    #                 col_target=self.col_target,
+    #                 time_column=self.col_time,
+    #                 df_train=self.df_train,
+    #                 df_test=self.df_test,
+    #                 lag=self.pacf_lag,
+    #                 col_for_train=self.col_for_train,
+    #                 logger=self.logger,
+    #                 params=params
+    #             )
+    #
+    #             true = self.df_eval[self.col_target].tolist()
+    #             pred = df_pred[self.col_target].tolist()
+    #
+    #             metrics = regression_metrics(true=true, pred=pred)
+    #             print(metrics)
+    #
+    #
+    #             r2 = metrics.get("r2", 0)
+    #             mape = metrics.get("mape", 0)
+    #             bp = metrics.get("bp", 0)
+    #
+    #             score = (1 - r2) + mape + bp
+    #
+    #             if score < best_score:
+    #                 best_score = score
+    #                 best_params = params
+    #                 best_pred = pred
+    #
+    #         self.best_params = best_params
+    #         self.best_score_params = best_score
+    #         self.best_pred = best_pred
+    #
+    #         print(self.best_params)
+    #         print(self.best_score)
+    #         print(self.best_pred)
+    #
+    #
+    #     except Exception as e:
+    #         self.logger.error(self.msg["stat_select_error"].format(str(e)))
+    #         raise e
+    #
+    #     return self
+
+
+
+    def objective(self, trial):
+
+        try:
+
+            params = {}
+
+            for param_name, param_values in self.model_grid.items():
+
+                first_value = param_values[0]
+
+                if isinstance(first_value, int):
+
+                    params[param_name] = trial.suggest_int(
+                        param_name,
+                        min(param_values),
+                        max(param_values)
+                    )
+
+                elif isinstance(first_value, float):
+
+                    params[param_name] = trial.suggest_float(
+                        param_name,
+                        min(param_values),
+                        max(param_values)
+                    )
+
+                else:
+
+                    params[param_name] = trial.suggest_categorical(
+                        param_name,
+                        param_values
+                    )
+
+            df_pred = self.forecast_func(
+                col_target=self.col_target,
+                time_column=self.col_time,
+                df_train=self.df_train,
+                df_test=self.df_test,
+                lag=self.pacf_lag,
+                col_for_train=self.col_for_train,
+                logger=self.logger,
+                params=params
+            )
+
+            true = self.df_eval[self.col_target].tolist()
+            pred = df_pred[self.col_target].tolist()
+
+            metrics = regression_metrics(
+                true=true,
+                pred=pred
+            )
+
+            r2 = metrics.get("r2", 0)
+            mape = metrics.get("mape", 0)
+            bp = metrics.get("bp", 0)
+
+            if (
+                    np.isnan(r2)
+                    or np.isinf(r2)
+                    or np.isnan(mape)
+                    or np.isinf(mape)
+                    or np.isnan(bp)
+                    or np.isinf(bp)
+            ):
+                raise optuna.TrialPruned()
+
+            if mape > 1e6:
+                raise optuna.TrialPruned()
+
+            score = (1 - r2) + mape + bp
+
+            trial.set_user_attr("metrics", metrics)
+            trial.set_user_attr("pred", pred)
+
+            return score
+
+        except Exception:
+            raise optuna.TrialPruned()
+
+    def run_setup_models_params(self):
+
+        try:
+
+            if self.trajectory_cols == "baseline":
+                self.col_for_train = []
+            else:
+                raise ValueError(
+                    "Non-existent experiment trajectory."
+                )
+
+            self.forecast_func = time_series_models_funcs[self.model]
 
             self.model_grid = models_grids[self.model]
 
-            best_score = float("inf")
-            best_params = None
-            best_pred = None
+            study = optuna.create_study(
+                direction="minimize"
+            )
 
-            keys = list(self.model_grid.keys())
-            values = list(self.model_grid.values())
+            study.optimize(
+                lambda trial: self.objective(trial),
+                n_trials=50,
+                n_jobs=5
+            )
 
-            for combo in tqdm(itertools.product(*values)):
-                params = dict(zip(keys, combo))
+            best_trial = study.best_trial
 
-                df_pred = self.forecast_func(
-                    col_target=self.col_target,
-                    time_column=self.col_time,
-                    df_train=self.df_train,
-                    df_test=self.df_test,
-                    lag=self.pacf_lag,
-                    col_for_train=self.col_for_train,
-                    logger=self.logger,
-                    params=params
-                )
-
-                true = self.df_eval[self.col_target].tolist()
-                pred = df_pred[self.col_target].tolist()
-
-                metrics = regression_metrics(true=true, pred=pred)
-                print(metrics)
-
-
-                r2 = metrics.get("r2", 0)
-                mape = metrics.get("mape", 0)
-                bp = metrics.get("bp", 0)
-
-                score = (1 - r2) + mape + bp
-
-                if score < best_score:
-                    best_score = score
-                    best_params = params
-                    best_pred = pred
-
-            self.best_params = best_params
-            self.best_score_params = best_score
-            self.best_pred = best_pred
+            self.best_params = best_trial.params
+            self.best_score_params = best_trial.value
+            self.best_metrics = best_trial.user_attrs["metrics"]
+            self.best_pred = best_trial.user_attrs["pred"]
 
             print(self.best_params)
-            print(self.best_score)
-            print(self.best_pred)
-
+            print(self.best_score_params)
+            print(self.best_metrics)
 
         except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
+
+            self.logger.error(
+                self.msg["stat_select_error"].format(str(e))
+            )
+
             raise e
 
         return self

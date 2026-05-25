@@ -11,6 +11,8 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      generate_time_series_df,
                                                      test_method_visualize,
                                                      calculate_test_points_predict)
+import time
+from src.setups.experiment_setup import append_progress_to_csv
 
 from itertools import combinations
 from tqdm import tqdm
@@ -29,6 +31,8 @@ import random
 import random
 import numpy as np
 from sklearn.feature_selection import mutual_info_regression
+import optuna
+
 
 
 MESSAGES = {
@@ -89,6 +93,7 @@ class TSExperimentPipeline:
             messages,
             lag,
             params,
+            trace_csv_path,
             logger_language
     ):
         """
@@ -101,8 +106,9 @@ class TSExperimentPipeline:
         self.export_path = export_path
         self.experiment_path = experiment_path
         self.logger = logger
-        self.lag = lag,
-        self.params = params,
+        self.lag = lag
+        self.params = params
+        self.trace_csv_path=trace_csv_path
 
         self.msg = MESSAGES[logger_language]
 
@@ -166,6 +172,8 @@ class TSExperimentPipeline:
         self.result_dir_name = experiment["result_dir_name"]
         self.predict_points = experiment["predict_points"]
         self.baseline_cols = [self.col_time, self.col_target]
+
+        self.traces_row = experiment.copy()
         return self
 
     def load_dataset(self):
@@ -626,6 +634,11 @@ class TSExperimentPipeline:
             if cache_enabled and key in cache:
                 return cache[key]
 
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
+            start_time = time.time()
+
             df_test_pred = self.forecast_func(
                 col_target=self.col_target,
                 time_column=self.col_time,
@@ -637,10 +650,20 @@ class TSExperimentPipeline:
                 logger=self.logger,
             )
 
+            execution_time = time.time() - start_time
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
+
             true = self.df_eval[self.col_target].tolist()
             pred = df_test_pred[self.col_target].tolist()
 
             metrics = regression_metrics(true=true, pred=pred)
+
+            predict_row = {**predict_row, **metrics}
+            trace_end = {**predict_row, **self.traces_row}
+            append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
+
             score = metrics.get("mape", float("inf"))
 
             # классическая регуляризация сложности модели
@@ -736,6 +759,8 @@ class TSExperimentPipeline:
         def evaluate_population(population):
             results = []
 
+            print(population)
+
             for ind in population:
                 if len(ind) > preselect_k:
                     continue
@@ -817,6 +842,118 @@ class TSExperimentPipeline:
         return final_cols, final_metrics, final_pred
 
 
+    def select_best_t2v_otuna(
+            self,
+            n_trials=50,
+            penalty=0.001,
+            cache_enabled=True,
+            sampler_seed=42,
+    ):
+
+        print(f"select_best_t2v_otuna lag = {self.lag}")
+
+        all_features = self.all_available_cols.copy()
+        cache = {}
+
+        def run_model(cols):
+            key = tuple(sorted(cols))
+
+            if cache_enabled and key in cache:
+                return cache[key]
+
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
+            start_time = time.time()
+
+            df_test_pred = self.forecast_func(
+                col_target=self.col_target,
+                time_column=self.col_time,
+                df_train=self.df_train,
+                df_test=self.df_test,
+                lag=self.lag,
+                params=self.params,
+                col_for_train=list(cols),
+                logger=self.logger,
+            )
+
+            execution_time = time.time() - start_time
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
+
+            true = self.df_eval[self.col_target].tolist()
+            pred = df_test_pred[self.col_target].tolist()
+
+            metrics = regression_metrics(true=true, pred=pred)
+
+            predict_row = {**predict_row, **metrics}
+            trace_end = {**predict_row, **self.traces_row}
+            append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
+            print(f"OPTINA {metrics}")
+
+            score = metrics.get("mape", float("inf"))
+            score += penalty * len(cols)
+
+            res = (score, metrics, df_test_pred)
+
+            if cache_enabled:
+                cache[key] = res
+
+            return res
+
+        def objective(trial):
+            selected_cols = []
+
+            for col in all_features:
+                use_col = trial.suggest_categorical(col, [True, False])
+
+                if use_col:
+                    selected_cols.append(col)
+
+            if len(selected_cols) == 0:
+                selected_cols = [random.choice(all_features)]
+
+            print(selected_cols)
+
+            score, metrics, pred = run_model(selected_cols)
+
+            trial.set_user_attr("selected_cols", selected_cols)
+            trial.set_user_attr("metrics", metrics)
+
+            return score
+
+        sampler = optuna.samplers.TPESampler(seed=sampler_seed)
+
+        study = optuna.create_study(
+            direction="minimize",
+            sampler=sampler,
+        )
+
+        default_features = {
+            col: True for col in all_features
+        }
+
+        study.enqueue_trial(default_features)
+
+        study.optimize(
+            objective,
+            n_trials=n_trials,
+        )
+
+        best_trial = study.best_trial
+
+        final_cols = best_trial.user_attrs["selected_cols"]
+
+        final_score, final_metrics, final_pred = run_model(final_cols)
+
+        self.logger.info(f"FINAL_COLS={final_cols}")
+        self.logger.info(f"FINAL_MAPE={final_score}")
+        self.logger.info(f"BEST_TRIAL={best_trial.number}")
+
+        return final_cols, final_metrics, final_pred
+
+
     def select_best_t2v_columns_сlassic_GA(
             self,
             population_size=15,
@@ -838,6 +975,11 @@ class TSExperimentPipeline:
             if cache_enabled and key in cache:
                 return cache[key]
 
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
+            start_time = time.time()
+
             df_test_pred = self.forecast_func(
                 col_target=self.col_target,
                 time_column=self.col_time,
@@ -849,10 +991,19 @@ class TSExperimentPipeline:
                 logger=self.logger,
             )
 
+            execution_time = time.time() - start_time
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
+
             true = self.df_eval[self.col_target].tolist()
             pred = df_test_pred[self.col_target].tolist()
 
             metrics = regression_metrics(true=true, pred=pred)
+
+            predict_row = {**predict_row, **metrics}
+            trace_end = {**predict_row, **self.traces_row}
+            append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
 
             score = metrics.get("mape", float("inf"))
             score += 0.001 * len(cols)
@@ -976,8 +1127,6 @@ class TSExperimentPipeline:
         return final_cols, final_metrics, final_pred
 
 
-
-
     def run_test_predict(self):
         """
         RU: Статистический отбор признаков для временного ряда
@@ -1001,12 +1150,18 @@ class TSExperimentPipeline:
 
             elif self.trajectory_cols == "stat_selected_features":
                 self.col_for_train = self.fetch_stat_select_features()
-            elif self.trajectory_cols in ["engineered_datetime_features", "GA_horizon_selected_features", "сlassic_GA"]:
+            elif self.trajectory_cols in ["engineered_datetime_features", "GA_horizon_selected_features", "сlassic_GA", "optuna"]:
                 self.col_for_train = self.fetch_all_t2v_features()
             else:
                 raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
 
             self.forecast_func = time_series_models_funcs[self.model]
+
+
+            if isinstance(self.lag, (tuple, list)):
+                self.lag = int(self.lag[0])
+            else:
+                self.lag = int(self.lag)
 
 
             if self.trajectory_cols == "GA_horizon_selected_features":
@@ -1015,8 +1170,16 @@ class TSExperimentPipeline:
             elif self.trajectory_cols == "сlassic_GA":
                 self.all_available_cols = self.col_for_train
                 self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns_сlassic_GA()
+            elif self.trajectory_cols == "optuna":
+                self.all_available_cols = self.col_for_train
+                self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_otuna()
             else:
-                self.df_test_pred = self.forecast_func (
+                predict_row = {}
+                predict_row["col_for_train"] = self.col_for_train
+
+                start_time = time.time()
+
+                self.df_test_pred = self.forecast_func(
                     col_target=self.col_target,
                     time_column=self.col_time,
                     df_train=self.df_train,
@@ -1025,13 +1188,24 @@ class TSExperimentPipeline:
                     params=self.params,
                     col_for_train=self.col_for_train,
                     logger=self.logger,
-
                 )
+
+                execution_time = time.time() - start_time
+                predict_row["pipeline_spend_time"] = execution_time
+                predict_row["model_params"] = self.params
+                predict_row["lag"] = self.lag
+
 
                 self.true =self.df_eval[self.col_target].tolist()
                 self.pred = self.df_test_pred[self.col_target].tolist()
 
                 self.metrix_dict = regression_metrics(true=self.true, pred=self.pred)
+
+                predict_row = {**predict_row, **self.metrix_dict}
+                trace_end = {**predict_row, **self.traces_row}
+                append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
+
+
 
 
             self.df_test_pred = self.df_test_pred.merge(

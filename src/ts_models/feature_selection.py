@@ -74,6 +74,7 @@ from sklearn.preprocessing import StandardScaler
 #
 #     return result
 
+
 def stat_select_features(
         df: pd.DataFrame,
         col_time: str,

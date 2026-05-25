@@ -11,15 +11,11 @@ lstm_grid = {
 }
 
 xgb_grid = {
-    "learning_rate": [0.05, 0.1],
     "max_depth": [3, 6],
-    "n_estimators": [300, 600],
+    "n_estimators": [500, 1000],
     "subsample": [0.85, 1.0],
     "colsample_bytree": [0.85, 1.0],
-    "min_child_weight": [3, 5],
-    "gamma": [0, 0.1],
-    "reg_lambda": [1.0],
-    "reg_alpha": [0.0, 0.1],
+    "min_child_weight": [5, 7],
     "booster": ["gbtree"]
 }
 
@@ -94,10 +90,10 @@ patchtst_grid = {
 }
 
 arima_grid = {
-    "p": [0, 1, 2],
-    "d": [0, 1],
-    "q": [0, 1, 2],
-    "trend": ["n", "c"]
+    "p": list(range(0, 8)),
+    "d": [0, 1, 2],
+    "q": list(range(0, 8)),
+    "trend": ["n", "c", "t", "ct"]
 }
 
 sarima_grid = {
@@ -154,7 +150,7 @@ models_grids = {
     "RandomForest": random_forest_grid,
     "SVR": svr_grid,
     "Prophet": prophet_grid,
-    "ARIMA": arima_grid,
+    "ARIMAX": arima_grid,
     "SARIMA": sarima_grid,
     "PatchTST": patchtst_grid,
     "DLinear": dlinear_grid,
@@ -317,7 +313,7 @@ models_easy = {
     "RandomForest": random_forest_params_easy,
     "SVR": svr_params_easy,
     "Prophet": prophet_params_easy,
-    "ARIMA": arima_params_easy,
+    "ARIMAX": arima_params_easy,
     "SARIMA": sarima_params_easy,
     "PatchTST": patchtst_params_easy,
     "DLinear": dlinear_params_easy,

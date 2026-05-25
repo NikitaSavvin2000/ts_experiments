@@ -23,6 +23,8 @@ def split_sequence(sequence, n_steps):
         tuple: Arrays of input samples (X) and targets (y).
     """
     X, y = [], []
+
+
     for i in range(len(sequence) - n_steps):
         seq_x, seq_y = sequence[i:i + n_steps, :], sequence[i + n_steps, 0]
         X.append(seq_x)
@@ -41,6 +43,7 @@ def create_x_input(df_train, n_steps):
     Returns:
         np.ndarray: Input array for predictions.
     """
+
     return df_train.iloc[-n_steps:].values
 
 
@@ -59,6 +62,7 @@ def make_predictions(x_input, x_future, n_features, model, lag, count_pred_point
     Returns:
         list: Predicted values.
     """
+
     predict_values = []
     for _ in range(count_pred_points):
         x_input_tensor = tf.convert_to_tensor(x_input.reshape((1, -1)), dtype=tf.float32)
