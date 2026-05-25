@@ -66,7 +66,6 @@ df_experiment_design.to_csv(experiment_design_path)
 logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
-
 # df_experiment_design = df_experiment_design[df_experiment_design["trajectory_cols"] == "baseline"]
 # df_experiment_design = df_experiment_design[df_experiment_design["model"] == "XGBoost"]
 
@@ -82,7 +81,10 @@ if df_to_experiment is None or df_to_experiment.empty:
     sys.exit(0)
 
 
-model_not_support_lags = ["Prophet", "ARIMA", "SARIMA"]
+# model_not_support_lags = ["Prophet", "ARIMA", "SARIMA"]
+
+model_not_support_lags = ["Prophet",]
+
 
 # ============================================
 # en: Experiment grid generation for models

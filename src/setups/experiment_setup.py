@@ -104,10 +104,10 @@ trajectory_cols = ["baseline", "calendar_components",  "engineered_datetime_feat
 
 
 
-# model_to_test = list(time_series_models_funcs.keys())
+model_to_test = list(time_series_models_funcs.keys())
 
 # model_to_test = ["XGBoost"]
-model_to_test = ["ARIMAX"]
+# model_to_test = ["ARIMAX"]
 
 # not_exogenous_models = ["ARIMA", "SARIMA"]
 
