@@ -100,7 +100,7 @@ MESSAGES = {
     }
 }
 
-trajectory_cols = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "GA_horizon_selected_features", "сlassic_GA"]
+trajectory_cols = ["baseline", "calendar_components", "engineered_datetime_features", "mi_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
 
 
 

@@ -37,7 +37,8 @@ df = df[cols_to_select]
 #     "horizon_selected_features"
 # ]
 
-trajectory = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "optuna", "сlassic_GA", "GA_horizon_selected_features"]
+# trajectory = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "optuna", "сlassic_GA", "GA_horizon_selected_features"]
+trajectory = ["baseline", "calendar_components", "engineered_datetime_features", "mi_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
 
 
 order_list = df["trajectory_cols"].unique().tolist()
