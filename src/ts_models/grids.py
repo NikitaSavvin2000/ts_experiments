@@ -1,12 +1,13 @@
 lstm_grid = {
     "lstm_units": [32, 64],
-    "activation": ["tanh", "swish"],
-    "recurrent_dropout_rate": [0.0, 0.1],
-    "regularizers_l2": [0.0, 1e-3],
+    "activation": ["swish"],
+    "recurrent_dropout_rate": [0.0],
+    "regularizers_l2": [1e-3],
     "optimizer": ["adam"],
     "batch_size": [32],
     "epochs": [10, 20]
 }
+
 
 xgb_grid = {
     "max_depth": [3, 6],
