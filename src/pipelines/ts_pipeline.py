@@ -1248,7 +1248,6 @@ class TSExperimentPipeline:
                 predict_row["model_params"] = self.params
                 predict_row["lag"] = self.lag
 
-
                 self.true =self.df_eval[self.col_target].tolist()
                 self.pred = self.df_test_pred[self.col_target].tolist()
 

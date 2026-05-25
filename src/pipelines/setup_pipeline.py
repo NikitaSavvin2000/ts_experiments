@@ -401,9 +401,6 @@ class SetupModel:
                 params = dict(zip(keys, combo))
 
                 metrics = None
-                pred = None
-                score = float("-inf")
-
                 try:
                     df_pred = self.forecast_func(
                         col_target=self.col_target,
@@ -453,9 +450,11 @@ class SetupModel:
             self.best_pred = best_pred
             self.best_metrics = best_metrics
 
+            print(" >>>>>>>>>> END <<<<<<<<<<<<<<<")
+
             print(self.best_params)
             print(self.best_score_params)
-            print(self.best_pred)
+            # print(self.best_pred)
 
         except Exception as e:
             self.logger.error(self.msg["stat_select_error"].format(str(e)))

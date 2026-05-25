@@ -102,7 +102,7 @@ arima_grid = {
     "p": list(range(0, 8)),
     "d": [0, 1, 2],
     "q": list(range(0, 8)),
-    "trend": ["n", "c", "t", "ct"]
+    "trend": ["n"]
 }
 
 sarima_grid = {
