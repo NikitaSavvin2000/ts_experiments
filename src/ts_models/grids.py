@@ -10,6 +10,17 @@ lstm_grid = {
 }
 
 
+xgb_grid = {
+    "max_depth": [3, 5],
+    "n_estimators": [500, 1000],
+    "subsample": [0.8, 1.0],
+    "colsample_bytree": [0.8, 1.0],
+    "min_child_weight": [3, 7],
+    "gamma": [0.0],
+    "reg_alpha": [0.0],
+    "booster": ["gbtree"]
+}
+
 catboost_grid = {
     "learning_rate": [0.03, 0.05],
     "depth": [6, 8],
