@@ -281,6 +281,19 @@ def load_and_prepare_progress(progress_csv_path, columns):
 
 
 def get_pending_experiments(df_experiment_design, df_ready_progress):
+
+    print(f"df_experiment_design df_experiment_design df_experiment_design ")
+    print(df_experiment_design)
+    print(f"df_experiment_design columns = {df_experiment_design.columns}")
+    print(f"df_experiment_design len = {len(df_experiment_design)}")
+    print("="*100)
+
+    print(f"df_ready_progress df_ready_progress df_ready_progress ")
+    print(df_ready_progress)
+    print(f"df_ready_progress columns = {df_ready_progress.columns}")
+    print(f"df_ready_progress len = {len(df_ready_progress)}")
+    print("="*100)
+
     df_design = df_experiment_design.copy()
 
     key_cols = df_design.columns.tolist()
@@ -299,6 +312,13 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
     ready_keys = set(df_ready["_key"])
 
     df_pending = df_design[~df_design["_key"].isin(ready_keys)].drop(columns=["_key"])
+
+
+    print(f"df_pending df_pending df_pending ")
+    print(df_pending)
+    print(f"df_pending columns = {df_pending.columns}")
+    print(f"df_pending len = {len(df_pending)}")
+    print("="*100)
 
     logger.info(f"Total: {len(df_design)}")
     logger.info(f"Processed: {len(df_ready)}")
