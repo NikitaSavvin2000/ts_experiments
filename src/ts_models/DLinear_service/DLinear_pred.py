@@ -218,15 +218,6 @@ def DLinear_forecast(
         df_train = df_train.drop_duplicates(subset=[time_column])
         df_test = df_test.drop_duplicates(subset=[time_column])
 
-        print(f"df_train = {df_train}")
-        print(f"df_test = {df_test}")
-
-        print("NaN train target:", df_train[col_target].isna().sum())
-        print("NaN test target:", df_test[col_target].isna().sum())
-
-        print("NaN train exog:", df_train[col_for_train].isna().sum().sum())
-        print("NaN test exog:", df_test[col_for_train].isna().sum().sum())
-
         cfg = params or DEFAULT_DLINEAR_PARAMS
 
         df_train = df_train.copy()
@@ -248,17 +239,13 @@ def DLinear_forecast(
 
         freq = _infer_freq(df_train, time_column)
 
-        print("freq:", freq)
-        print("time gaps:", df_train[time_column].diff().value_counts().head())
-
         try:
             target_series = TimeSeries.from_dataframe(
                 df_train,
                 time_col=time_column,
                 value_cols=col_target,
-                fill_missing_dates=True,
-                freq=freq
-            ).astype(np.float32)
+                fill_missing_dates=False
+            )
         except Exception as e:
             print(e)
 
@@ -266,8 +253,7 @@ def DLinear_forecast(
             df_train,
             time_col=time_column,
             value_cols=exog_cols,
-            fill_missing_dates=True,
-            freq=freq
+            fill_missing_dates=False,
         ).astype(np.float32)
 
         model = DLinearModel(
