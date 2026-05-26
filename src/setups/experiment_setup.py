@@ -146,9 +146,9 @@ datasets = [
         "col_target": "average_traffic_index",
         "additional_cols": [],
         "start_train_date": "2015-08-06",
-        "end_train_date": "2024-07-03",
-        "start_test_date": "2024-07-04",
-        "end_test_date": "2024-09-04",
+        "end_train_date": "2024-07-02",
+        "start_test_date": "2024-07-03",
+        "end_test_date": "2024-09-03",
         "predict_points": 100,
     },
     {
@@ -294,50 +294,87 @@ def build_key(df, key_cols):
     return tmp.agg("|".join, axis=1)
 
 
+# def get_pending_experiments(df_experiment_design, df_ready_progress):
+#
+#     ['id', 'model', 'trajectory_cols', 'dataset_name', 'type',
+#     'dataset_csv', 'col_time', 'col_target', 'additional_cols',
+#     'start_train_date', 'end_train_date', 'start_test_date',
+#     'predict_points', 'end_test_date', 'result_dir_name']
+#
+#     print(f"df_experiment_design df_experiment_design df_experiment_design ")
+#     print(df_experiment_design)
+#     print(f"df_experiment_design columns = {df_experiment_design.columns}")
+#     print(f"df_experiment_design len = {len(df_experiment_design)}")
+#     print("=" * 100)
+#
+#     print(f"df_ready_progress df_ready_progress df_ready_progress ")
+#     print(df_ready_progress)
+#     print(f"df_ready_progress columns = {df_ready_progress.columns}")
+#     print(f"df_ready_progress len = {len(df_ready_progress)}")
+#     print("=" * 100)
+#
+#     df_design = df_experiment_design.copy()
+#     key_cols = df_design.columns.tolist()
+#
+#     if df_ready_progress is None or df_ready_progress.empty:
+#         logger.info(f"Total: {len(df_design)}")
+#         logger.info("Processed: 0")
+#         logger.info(f"To process: {len(df_design)}")
+#         return df_design
+#
+#     df_ready = df_ready_progress.copy()
+#
+#     df_design["_key"] = build_key(df_design, key_cols)
+#     df_ready["_key"] = build_key(df_ready, key_cols)
+#
+#     ready_keys = set(df_ready["_key"])
+#
+#     df_pending = df_design[~df_design["_key"].isin(ready_keys)].drop(columns=["_key"])
+#
+#     print(f"df_pending df_pending df_pending ")
+#     print(df_pending)
+#     print(f"df_pending columns = {df_pending.columns}")
+#     print(f"df_pending len = {len(df_pending)}")
+#     print("=" * 100)
+#
+#     logger.info(f"Total: {len(df_design)}")
+#     logger.info(f"Processed: {len(df_ready)}")
+#     logger.info(f"To process: {len(df_pending)}")
+#
+#     return df_pending
+
 def get_pending_experiments(df_experiment_design, df_ready_progress):
-
-    print(f"df_experiment_design df_experiment_design df_experiment_design ")
-    print(df_experiment_design)
-    print(f"df_experiment_design columns = {df_experiment_design.columns}")
-    print(f"df_experiment_design len = {len(df_experiment_design)}")
-    print("=" * 100)
-
-    print(f"df_ready_progress df_ready_progress df_ready_progress ")
-    print(df_ready_progress)
-    print(f"df_ready_progress columns = {df_ready_progress.columns}")
-    print(f"df_ready_progress len = {len(df_ready_progress)}")
-    print("=" * 100)
+    required_cols = [
+        'id', 'model', 'trajectory_cols', 'dataset_name', 'type',
+        'dataset_csv', 'col_time', 'col_target', 'additional_cols',
+        'start_train_date', 'end_train_date', 'start_test_date',
+        'predict_points', 'end_test_date', 'result_dir_name'
+    ]
 
     df_design = df_experiment_design.copy()
-    key_cols = df_design.columns.tolist()
+    df_design = df_design[required_cols]
+
+    df_design = df_design.drop_duplicates(subset=required_cols).reset_index(drop=True)
 
     if df_ready_progress is None or df_ready_progress.empty:
-        logger.info(f"Total: {len(df_design)}")
-        logger.info("Processed: 0")
-        logger.info(f"To process: {len(df_design)}")
         return df_design
 
     df_ready = df_ready_progress.copy()
+    df_ready = df_ready[required_cols]
 
-    df_design["_key"] = build_key(df_design, key_cols)
-    df_ready["_key"] = build_key(df_ready, key_cols)
+    df_ready = df_ready.drop_duplicates(subset=required_cols).reset_index(drop=True)
+
+    df_design["_key"] = build_key(df_design, required_cols)
+    df_ready["_key"] = build_key(df_ready, required_cols)
 
     ready_keys = set(df_ready["_key"])
+    df_pending = df_design[~df_design["_key"].isin(ready_keys)]
 
-    df_pending = df_design[~df_design["_key"].isin(ready_keys)].drop(columns=["_key"])
-
-    print(f"df_pending df_pending df_pending ")
-    print(df_pending)
-    print(f"df_pending columns = {df_pending.columns}")
-    print(f"df_pending len = {len(df_pending)}")
-    print("=" * 100)
-
-    logger.info(f"Total: {len(df_design)}")
-    logger.info(f"Processed: {len(df_ready)}")
-    logger.info(f"To process: {len(df_pending)}")
+    df_pending = df_pending.drop(columns=["_key"])
+    df_pending = df_pending.reset_index(drop=True)
+    df_pending = df_pending[required_cols]
 
     return df_pending
-
 
 def append_experiment_to_csv(experiment, progress_csv_path):
     df_row = pd.DataFrame([experiment])
