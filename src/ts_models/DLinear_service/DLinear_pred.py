@@ -34,21 +34,36 @@ def _infer_freq(df, time_col):
     t = df[time_col].sort_values()
     freq = pd.infer_freq(t)
 
+    print("[DEBUG] infer_freq:", freq)
+
     if freq is not None:
         return freq
 
     diffs = t.diff().dropna()
-    return diffs.mode().iloc[0]
+    mode = diffs.mode().iloc[0]
+
+    print("[DEBUG] fallback freq:", mode)
+
+    return mode
 
 
 def _prepare(df, time_col, freq):
     df = df.copy()
     df[time_col] = pd.to_datetime(df[time_col])
     df = df.sort_values(time_col).drop_duplicates(time_col)
+
+    print("[DEBUG] PREPARE start rows:", len(df))
+
     df = df.set_index(time_col)
 
     full_index = pd.date_range(df.index.min(), df.index.max(), freq=freq)
+
+    print("[DEBUG] full index size:", len(full_index))
+
     df = df.reindex(full_index)
+
+    print("[DEBUG] NaN after reindex target:",
+          df.iloc[:, 0].isna().sum())
 
     df.index.name = time_col
     df = df.reset_index()
@@ -68,14 +83,22 @@ def DLinear_forecast(
 ):
     cfg = params or DEFAULT_DLINEAR_PARAMS
 
+    print("\n========== START DEBUG ==========\n")
+
     df_train = df_train.copy()
     df_test = df_test.copy()
 
     df_train[time_column] = pd.to_datetime(df_train[time_column])
     df_test[time_column] = pd.to_datetime(df_test[time_column])
 
+    print("[DEBUG] RAW TRAIN ROWS:", len(df_train))
+    print("[DEBUG] RAW TEST ROWS:", len(df_test))
+
     df_train = df_train.sort_values(time_column).drop_duplicates(time_column)
     df_test = df_test.sort_values(time_column).drop_duplicates(time_column)
+
+    print("[DEBUG] AFTER DROP DUP TRAIN:", len(df_train))
+    print("[DEBUG] AFTER DROP DUP TEST:", len(df_test))
 
     freq = _infer_freq(df_train, time_column)
 
@@ -87,8 +110,15 @@ def DLinear_forecast(
     df_train[col_target] = pd.to_numeric(df_train[col_target], errors="coerce")
     df_train[exog_cols] = df_train[exog_cols].astype(float)
 
+    print("[DEBUG] NaN target before drop:", df_train[col_target].isna().sum())
+
     df_train = df_train.dropna(subset=[col_target])
 
+    print("[DEBUG] AFTER DROPNA TRAIN:", len(df_train))
+
+    # =========================
+    # TARGET SERIES
+    # =========================
     target_series = TimeSeries.from_dataframe(
         df_train,
         time_col=time_column,
@@ -97,6 +127,9 @@ def DLinear_forecast(
         freq=freq
     ).astype(np.float32)
 
+    # =========================
+    # COVARIATES
+    # =========================
     past_cov = TimeSeries.from_dataframe(
         df_train,
         time_col=time_column,
@@ -105,6 +138,22 @@ def DLinear_forecast(
         freq=freq
     ).astype(np.float32)
 
+    print("[DEBUG] TARGET SERIES LENGTH:", len(target_series))
+    print("[DEBUG] COV SERIES LENGTH:", len(past_cov))
+
+    print("[DEBUG] TARGET NAN:", np.isnan(target_series.values()).sum())
+    print("[DEBUG] COV NAN:", np.isnan(past_cov.values()).sum())
+
+    print("[DEBUG] INPUT CHUNK:", lag)
+
+    assert len(target_series) > lag, "Too short series for lag"
+    assert len(target_series) == len(past_cov), "Target/Cov mismatch"
+    assert np.isnan(target_series.values()).sum() == 0, "NaN in target"
+    assert np.isnan(past_cov.values()).sum() == 0, "NaN in cov"
+
+    # =========================
+    # MODEL
+    # =========================
     model = DLinearModel(
         input_chunk_length=lag,
         output_chunk_length=cfg["output_chunk_length"],
@@ -115,7 +164,11 @@ def DLinear_forecast(
         pl_trainer_kwargs=_get_pl_kwargs()
     )
 
+    print("\n[DEBUG] START FIT\n")
+
     model.fit(target_series, past_covariates=past_cov)
+
+    print("\n[DEBUG] FIT DONE\n")
 
     preds = []
 
@@ -131,6 +184,9 @@ def DLinear_forecast(
         )
 
         val = float(pred.values().ravel()[0])
+
+        print(f"[DEBUG] step={i}, pred={val}")
+
         preds.append(val)
 
         next_time = df_test[time_column].iloc[i]
@@ -163,6 +219,8 @@ def DLinear_forecast(
 
         history_target = history_target.append(new_target_ts)
         history_cov = history_cov.append(new_cov_ts)
+
+    print("\n========== END DEBUG ==========\n")
 
     return pd.DataFrame({
         time_column: df_test[time_column].values,
