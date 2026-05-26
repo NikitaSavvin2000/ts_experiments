@@ -76,6 +76,18 @@ def to_list(x):
     return []
 
 experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
+
+# DLinear	russia_elista
+# DLinear	Istanbul_Traffic_Index
+# DLinear	Air_Quality_India
+
+to_test = ["russia_elista", "Istanbul_Traffic_Index", "Air_Quality_India"]
+
+experiment_retest = experiment_retest[experiment_retest["model"] == "DLinear"]
+experiment_retest = experiment_retest[
+    experiment_retest["dataset_name"].isin(to_test)
+]
+
 df_to_experiment = pd.read_csv(experiment_retest)
 
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
