@@ -93,7 +93,8 @@ df_to_experiment = pd.read_csv(experiment_retest)
 
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
 
-
+# "DLinear"
+df_to_experiment = df_to_experiment[df_to_experiment["model"] != "DLinear"]
 print(df_to_experiment)
 
 if df_to_experiment is None or df_to_experiment.empty:
