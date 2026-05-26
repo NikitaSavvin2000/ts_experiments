@@ -273,7 +273,8 @@ def DLinear_forecast(
                 df_train,
                 time_col=time_column,
                 value_cols=col_target,
-                fill_missing_dates=False
+                fill_missing_dates=True,
+                freq=freq
             )
         except Exception as e:
             print(e)
@@ -282,7 +283,8 @@ def DLinear_forecast(
             df_train,
             time_col=time_column,
             value_cols=exog_cols,
-            fill_missing_dates=False,
+            fill_missing_dates=True,
+            freq=freq
         ).astype(np.float32)
 
         model = DLinearModel(
@@ -328,7 +330,8 @@ def DLinear_forecast(
                 new_target,
                 time_col=time_column,
                 value_cols=col_target,
-                fill_missing_dates=False,
+                fill_missing_dates=True,
+                freq=freq
             ).astype(np.float32)
 
             history_target = history_target.append(new_target_ts)
@@ -343,7 +346,8 @@ def DLinear_forecast(
                     new_cov,
                     time_col=time_column,
                     value_cols=exog_cols,
-                    fill_missing_dates=False,
+                    fill_missing_dates=True,
+                    freq=freq
                 ).astype(np.float32)
 
                 history_cov = history_cov.append(new_cov_ts)
