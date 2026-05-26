@@ -218,6 +218,10 @@ def DLinear_forecast(
         df_train = df_train.drop_duplicates(subset=[time_column])
         df_test = df_test.drop_duplicates(subset=[time_column])
 
+        print(f"df_train = {df_train}")
+        print(f"df_test = {df_test}")
+
+
         cfg = params or DEFAULT_DLINEAR_PARAMS
 
         df_train = df_train.copy()
