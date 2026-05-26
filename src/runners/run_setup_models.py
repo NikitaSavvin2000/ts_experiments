@@ -78,7 +78,6 @@ print(df_experiment_design)
 df_ready_progress = load_and_prepare_progress(progress_csv_path=progress_csv_path, columns=df_experiment_design.columns)
 # df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
 
-experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
 
 def to_list(x):
     if isinstance(x, list):
@@ -89,20 +88,18 @@ def to_list(x):
         return ast.literal_eval(x)
     return []
 
+experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
 df_to_experiment = pd.read_csv(experiment_retest)
 
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
 
-# "DLinear"
-df_to_experiment = df_to_experiment[df_to_experiment["model"] != "DLinear"]
+
 print(df_to_experiment)
 
 if df_to_experiment is None or df_to_experiment.empty:
     logger.info("All experiments completed")
     sys.exit(0)
 
-
-# model_not_support_lags = ["Prophet", "ARIMA", "SARIMA"]
 
 model_not_support_lags = ["Prophet",]
 

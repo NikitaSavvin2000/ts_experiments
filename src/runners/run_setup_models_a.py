@@ -17,7 +17,7 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.setup_pipeline import SetupModel
 
-MAX_WORKERS = 4
+MAX_WORKERS = 2
 
 MESSAGES = {
     "en": {
@@ -57,10 +57,30 @@ df_ready_progress = load_and_prepare_progress(
 print("Уже готово")
 print(df_ready_progress)
 
-df_to_experiment = get_pending_experiments(
-    df_experiment_design=df_experiment_design,
-    df_ready_progress=df_ready_progress
-)
+# df_to_experiment = get_pending_experiments(
+#     df_experiment_design=df_experiment_design,
+#     df_ready_progress=df_ready_progress
+# )
+
+# df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
+
+
+def to_list(x):
+    if isinstance(x, list):
+        return x
+    if pd.isna(x) or x == "":
+        return []
+    if isinstance(x, str):
+        return ast.literal_eval(x)
+    return []
+
+experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
+df_to_experiment = pd.read_csv(experiment_retest)
+
+df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
+
+
+print(df_to_experiment)
 
 print(f"К расчетам = {len(df_to_experiment)} строк")
 print(df_to_experiment)
