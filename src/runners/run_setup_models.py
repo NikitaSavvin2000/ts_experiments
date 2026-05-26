@@ -4,6 +4,7 @@ pdm run src/runners/main.py
 import os
 import time
 import sys
+import ast
 import pandas as pd
 
 from src.configs.experiment_conf import init_experiment_config
