@@ -299,8 +299,7 @@ def DLinear_forecast(
                 new_target,
                 time_col=time_column,
                 value_cols=col_target,
-                fill_missing_dates=True,
-                freq=freq
+                fill_missing_dates=False,
             ).astype(np.float32)
 
             history_target = history_target.append(new_target_ts)
@@ -315,8 +314,7 @@ def DLinear_forecast(
                     new_cov,
                     time_col=time_column,
                     value_cols=exog_cols,
-                    fill_missing_dates=True,
-                    freq=freq
+                    fill_missing_dates=False,
                 ).astype(np.float32)
 
                 history_cov = history_cov.append(new_cov_ts)
