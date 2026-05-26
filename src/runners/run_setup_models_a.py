@@ -83,14 +83,16 @@ experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQ
 
 to_test = ["russia_elista", "Istanbul_Traffic_Index", "Air_Quality_India"]
 
-experiment_retest = experiment_retest[experiment_retest["model"] == "DLinear"]
-experiment_retest = experiment_retest[
-    experiment_retest["dataset_name"].isin(to_test)
-]
 
 df_to_experiment = pd.read_csv(experiment_retest)
 
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
+
+
+df_to_experiment = df_to_experiment[df_to_experiment["model"] == "DLinear"]
+df_to_experiment = df_to_experiment[
+    df_to_experiment["dataset_name"].isin(to_test)
+]
 
 
 print(df_to_experiment)
