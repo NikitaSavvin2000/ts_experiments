@@ -79,7 +79,6 @@ df_ready_progress = load_and_prepare_progress(progress_csv_path=progress_csv_pat
 
 experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
 
-print(experiment_retest["additional_cols"])
 def to_list(x):
     if isinstance(x, list):
         return x
@@ -89,9 +88,10 @@ def to_list(x):
         return ast.literal_eval(x)
     return []
 
-experiment_retest["additional_cols"] = experiment_retest["additional_cols"].apply(to_list)
-
 df_to_experiment = pd.read_csv(experiment_retest)
+
+df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
+
 
 print(df_to_experiment)
 
