@@ -171,6 +171,26 @@ from darts.models import DLinearModel
 
 SEED = 42
 
+def infer_and_reindex(df, time_col):
+    df = df.copy()
+    df[time_col] = pd.to_datetime(df[time_col])
+    df = df.sort_values(time_col).drop_duplicates(time_col)
+
+    freq = pd.infer_freq(df[time_col])
+
+    if freq is None:
+        diffs = df[time_col].diff().dropna()
+        freq = diffs.mode().iloc[0]
+
+    df = df.set_index(time_col)
+
+    if isinstance(freq, pd.Timedelta):
+        df = df.asfreq(freq)
+    else:
+        df = df.asfreq(freq)
+
+    return df, freq
+
 os.environ["PYTHONHASHSEED"] = str(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
@@ -217,6 +237,15 @@ def DLinear_forecast(
     try:
         df_train = df_train.drop_duplicates(subset=[time_column])
         df_test = df_test.drop_duplicates(subset=[time_column])
+
+        freq = pd.infer_freq(df_train[time_column])
+
+        if freq is None:
+            diffs = df_train[time_column].diff().dropna()
+            freq = diffs.mode().iloc[0]
+
+        df_train = df_train.set_index(time_column).asfreq(freq).reset_index()
+        df_test = df_test.set_index(time_column).asfreq(freq).reset_index()
 
         cfg = params or DEFAULT_DLINEAR_PARAMS
 
