@@ -214,7 +214,7 @@ def DLinear_forecast(
         logger,
         params=None
 ):
-
+    df_train = df_train.drop_duplicates(subset=[time_column])
     cfg = params or DEFAULT_DLINEAR_PARAMS
 
     df_train = df_train.copy()
@@ -236,13 +236,16 @@ def DLinear_forecast(
 
     freq = _infer_freq(df_train, time_column)
 
-    target_series = TimeSeries.from_dataframe(
-        df_train,
-        time_col=time_column,
-        value_cols=col_target,
-        fill_missing_dates=True,
-        freq=freq
-    ).astype(np.float32)
+    try:
+        target_series = TimeSeries.from_dataframe(
+            df_train,
+            time_col=time_column,
+            value_cols=col_target,
+            fill_missing_dates=True,
+            freq=freq
+        ).astype(np.float32)
+    except Exception as e:
+        print(e)
 
     past_cov = TimeSeries.from_dataframe(
         df_train,
