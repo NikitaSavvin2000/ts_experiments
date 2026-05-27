@@ -4,7 +4,7 @@ import pandas as pd
 from src.calendar_encoder.temporal_encoding import Time2Vec
 from src.ts_models.pacf_lag_selection import select_pacf_lag
 from src.ts_models.time_series_split import split_train_test
-from src.ts_models.feature_selection import stat_select_features, chi_select_features, pearson_select_features
+from src.ts_models.feature_selection import stat_select_features, chi_select_features, pearson_select_features, spearman_select_features
 from src.setups.experiment_setup import time_series_models_funcs, not_exogenous_models
 from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_discreteness_interval,
@@ -329,7 +329,7 @@ class TSExperimentPipeline:
 
         return self.stat_selected_features
 
-    def fetch_chi_features(self):
+    def fetch_spearman_features(self):
         """
         RU: Статистический отбор признаков для временного ряда
         EN: Statistical feature selection for time series
@@ -337,7 +337,7 @@ class TSExperimentPipeline:
         """
         try:
 
-            self.stat_selected_features = chi_select_features(
+            self.stat_selected_features = spearman_select_features(
                 df=self.df_t2v,
                 col_time=self.col_time,
                 col_target=self.col_target,
@@ -1536,8 +1536,8 @@ class TSExperimentPipeline:
 
             elif self.trajectory_cols == "mi_features":
                 self.col_for_train = self.fetch_stat_select_features()
-            elif self.trajectory_cols == "chi_features":
-                self.col_for_train = self.fetch_chi_features()
+            elif self.trajectory_cols == "spearman_features":
+                self.col_for_train = self.fetch_spearman_features()
             elif self.trajectory_cols == "pearson_features":
                 self.col_for_train = self.fetch_pearson_features()
             elif self.trajectory_cols in ["engineered_datetime_features", "GA_horizon_selected_features", "сlassic_GA", "optuna_features"]:

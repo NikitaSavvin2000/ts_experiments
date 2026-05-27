@@ -212,3 +212,41 @@ def pearson_select_features(
     logger.info(f"Selected Pearson features: {result}")
 
     return result
+
+def spearman_select_features(
+        df: pd.DataFrame,
+        col_time: str,
+        col_target: str,
+        top_k: int = 15,
+        logger=None
+) -> List[str]:
+
+    if logger is None:
+        import logging
+        logger = logging.getLogger(__name__)
+
+        if not logger.handlers:
+            logging.basicConfig(level=logging.INFO)
+
+    data = df.copy()
+
+    if col_time in data.columns:
+        data = data.drop(columns=[col_time])
+
+    if col_target not in data.columns:
+        raise ValueError("Target column not found")
+
+    numeric = data.select_dtypes(include=[np.number]).fillna(0)
+
+    X = numeric.drop(columns=[col_target])
+    y = numeric[col_target]
+
+    scores = X.apply(lambda col: abs(col.corr(y, method="spearman")))
+
+    scores = scores.fillna(0).sort_values(ascending=False)
+
+    result = scores.head(top_k).index.tolist()
+
+    logger.info(f"Selected Spearman features: {result}")
+
+    return result
