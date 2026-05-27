@@ -101,7 +101,9 @@ MESSAGES = {
 
 # trajectory_cols = ["baseline", "calendar_components", "engineered_datetime_features", "mi_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
 
-trajectory_cols = ["chi_features", "сlassic_GA", "GA_horizon_selected_features",]
+# trajectory_cols = ["chi_features", "сlassic_GA", "GA_horizon_selected_features",]
+trajectory_cols = ["chi_features",]
+
 
 
 model_to_test = list(time_series_models_funcs.keys())
