@@ -267,35 +267,43 @@ def run_experiment(
         logger,
         MESSAGES,
         logger_language,
-        # df_setups_lags,
-        # df_setups_params,
+        df_setups_lags,
+        df_setups_params,
 ):
 
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
 
 
-    # lag = df_setups_lags.loc[
-    #     (df_setups_lags["model"] == model) &
-    #     (df_setups_lags["dataset_name"] == dataset_name),
-    #     "best_lag"
-    # ].iloc[0]
+    lag_filtered = df_setups_lags.loc[
+        (df_setups_lags["model"] == model) &
+        (df_setups_lags["dataset_name"] == dataset_name),
+        "best_lag"
+    ]
+
+    lag = lag_filtered.iloc[0] if not lag_filtered.empty else None
 
 
+    params_filtered = df_setups_params.loc[
+        (df_setups_params["model"] == model) &
+        (df_setups_params["dataset_name"] == dataset_name),
+        "best_params"
+    ]
 
-    # params = df_setups_params.loc[
-    #     (df_setups_lags["model"] == model) &
-    #     (df_setups_lags["dataset_name"] == dataset_name),
-    #     "best_params"
-    # ].iloc[0]
+    params = params_filtered.iloc[0] if not params_filtered.empty else None
+
+    if params is not None:
+        print("="*100)
+        print(f"params = {params}")
+        print(f"params type = {type(params)}")
+
+        params = ast.literal_eval(params)
 
     if model in not_exogenous_models:
         if experiment["trajectory_cols"] != "baseline":
             scip_not_exogenous_models(experiment, results_path, progress_csv_path)
             return None
 
-    params = None
-    lag = 22
 
     ts_pipeline = TSExperimentPipeline(
         experiment=experiment,
@@ -408,6 +416,11 @@ if df_to_experiment is None or df_to_experiment.empty:
     sys.exit(0)
 
 
+setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=360674600&single=true&output=csv"
+setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=86420863&single=true&output=csv"
+df_setups_lags = pd.read_csv(setups_lags_csv)
+df_setups_params = pd.read_csv(setups_params_csv)
+
 def main():
     with ProcessPoolExecutor(
             max_workers=MAX_WORKERS,
@@ -432,8 +445,8 @@ def main():
                     logger,
                     MESSAGES,
                     logger_language,
-                    # df_setups_lags,
-                    # df_setups_params,
+                    df_setups_lags,
+                    df_setups_params,
                 )
             )
 
