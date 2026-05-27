@@ -120,6 +120,7 @@ def run_experiment(
         messages=MESSAGES,
         lag=lag,
         params=params,
+        trace_csv_path=trace_csv_path,
         logger_language=logger_language
     )
 
@@ -191,6 +192,7 @@ df_experiment_design = init_experiment_setup()
 experiment_design_path = os.path.join(experiment_path, "experiment_design.csv")
 progress_csv_path = os.path.join(experiment_path, "progress.csv")
 results_path = os.path.join(experiment_path, "results")
+trace_csv_path = os.path.join(experiment_path, "traces.csv")
 
 setups_path_csv = os.path.join(results_path, "setups_lag.csv")
 setups_params_csv = os.path.join(results_path, "setups_params.csv")
