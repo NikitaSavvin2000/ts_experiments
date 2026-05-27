@@ -343,14 +343,17 @@ def build_key(df, key_cols):
 #
 #     return df_pending
 
-def normalize_list_columns(df, cols):
-    df = df.copy()
-    for c in cols:
-        df[c] = df[c].apply(lambda x: tuple(x) if isinstance(x, list) else x)
-    return df
+
+def normalize_for_key(value):
+    if isinstance(value, list):
+        return tuple(value)
+    return value
 
 def build_key(df, cols):
-    return df[cols].astype(str).agg("|".join, axis=1)
+    tmp = df[cols].copy()
+    for c in cols:
+        tmp[c] = tmp[c].apply(normalize_for_key)
+    return tmp.astype(str).agg("|".join, axis=1)
 
 def get_pending_experiments(df_experiment_design, df_ready_progress):
     required_cols = [
@@ -360,26 +363,20 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
         'predict_points', 'end_test_date', 'result_dir_name'
     ]
 
-    list_cols = ["trajectory_cols", "additional_cols"]
+    df_design = df_experiment_design.copy()[required_cols]
+    df_ready = df_ready_progress.copy()[required_cols] if df_ready_progress is not None and not df_ready_progress.empty else None
 
-    df_design = df_experiment_design.copy()
-    df_design = df_design[required_cols]
-    df_design = normalize_list_columns(df_design, list_cols)
-    df_design = df_design.drop_duplicates(subset=required_cols).reset_index(drop=True)
+    df_design = df_design.drop_duplicates(subset="id").reset_index(drop=True)
 
-    if df_ready_progress is None or df_ready_progress.empty:
-        return df_design[required_cols]
+    if df_ready is None:
+        return df_design
 
-    df_ready = df_ready_progress.copy()
-    df_ready = df_ready[required_cols]
-    df_ready = normalize_list_columns(df_ready, list_cols)
-    df_ready = df_ready.drop_duplicates(subset=required_cols).reset_index(drop=True)
+    df_ready = df_ready.drop_duplicates(subset="id").reset_index(drop=True)
 
     df_design["_key"] = build_key(df_design, required_cols)
     df_ready["_key"] = build_key(df_ready, required_cols)
 
-    ready_keys = set(df_ready["_key"])
-    df_pending = df_design[~df_design["_key"].isin(ready_keys)]
+    df_pending = df_design[~df_design["_key"].isin(set(df_ready["_key"]))].copy()
 
     df_pending = df_pending.drop(columns=["_key"]).reset_index(drop=True)
 

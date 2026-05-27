@@ -183,6 +183,7 @@ class TSExperimentPipeline:
         ZH: 加载数据集
         """
         try:
+
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
             self.df_init = pd.read_csv(self.dataset_csv)
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
