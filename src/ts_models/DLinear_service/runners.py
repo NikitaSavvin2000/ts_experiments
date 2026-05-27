@@ -1,3 +1,7 @@
+"""
+pdm run src/ts_models/DLinear_service/runners.py
+"""
+
 import logging
 import pandas as pd
 
@@ -13,12 +17,15 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
 
-col_time = "Datetime"
-col_target = "consumption"
+df_ts = pd.read_csv(datasets_csv_dict["russia_elista"])
 
-df_ts = df_ts[["Datetime", "consumption"]]
+print(df_ts)
+
+col_time = "datetime"
+col_target = "value"
+
+df_ts = df_ts[[col_time, col_target]]
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()

@@ -232,6 +232,6 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     append_progress_to_csv(progress_row=row_params, progress_csv_path=os.path.join(results_path, "setups_params.csv"))
 
 
-    # append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
+    append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
 
 
