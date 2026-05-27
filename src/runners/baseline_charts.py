@@ -1,5 +1,5 @@
 """
-pdm run src/runners/main.py
+pdm run src/runners/baseline_charts.py
 """
 import os
 import ast

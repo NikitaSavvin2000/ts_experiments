@@ -343,6 +343,15 @@ def build_key(df, key_cols):
 #
 #     return df_pending
 
+def normalize_list_columns(df, cols):
+    df = df.copy()
+    for c in cols:
+        df[c] = df[c].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+    return df
+
+def build_key(df, cols):
+    return df[cols].astype(str).agg("|".join, axis=1)
+
 def get_pending_experiments(df_experiment_design, df_ready_progress):
     required_cols = [
         'id', 'model', 'trajectory_cols', 'dataset_name', 'type',
@@ -351,17 +360,19 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
         'predict_points', 'end_test_date', 'result_dir_name'
     ]
 
+    list_cols = ["trajectory_cols", "additional_cols"]
+
     df_design = df_experiment_design.copy()
     df_design = df_design[required_cols]
-
+    df_design = normalize_list_columns(df_design, list_cols)
     df_design = df_design.drop_duplicates(subset=required_cols).reset_index(drop=True)
 
     if df_ready_progress is None or df_ready_progress.empty:
-        return df_design
+        return df_design[required_cols]
 
     df_ready = df_ready_progress.copy()
     df_ready = df_ready[required_cols]
-
+    df_ready = normalize_list_columns(df_ready, list_cols)
     df_ready = df_ready.drop_duplicates(subset=required_cols).reset_index(drop=True)
 
     df_design["_key"] = build_key(df_design, required_cols)
@@ -370,9 +381,7 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
     ready_keys = set(df_ready["_key"])
     df_pending = df_design[~df_design["_key"].isin(ready_keys)]
 
-    df_pending = df_pending.drop(columns=["_key"])
-    df_pending = df_pending.reset_index(drop=True)
-    df_pending = df_pending[required_cols]
+    df_pending = df_pending.drop(columns=["_key"]).reset_index(drop=True)
 
     return df_pending
 
