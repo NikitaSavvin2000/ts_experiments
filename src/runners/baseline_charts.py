@@ -141,13 +141,10 @@ if df_to_experiment is None or df_to_experiment.empty:
 models_to_vis = ["XGBoost", "CatBoost", "LightGBM"]
 
 df_to_experiment = df_to_experiment[df_to_experiment["trajectory_cols"] == "baseline"]
-df_to_experiment = df_to_experiment[
-    df_to_experiment["model"].isin(models_to_vis)
-].copy()
 
 
-setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vScblgsTUcuMNc25aQEIaLo15opoliZ74lr8jP-8FshSWcEhTJ2PWdFXmb2JWQfJ8yZW7cVtdMifefO/pub?gid=2109584392&single=true&output=csv"
-setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSw-QUfBICgyp1r6PhThNyD-gpdiLOED8m7Sqh8uknA_XV89ADALiUe3U0SXoIbqSHKMMqmIs7QpEWd/pub?gid=1796048363&single=true&output=csv"
+setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=360674600&single=true&output=csv"
+setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=86420863&single=true&output=csv"
 df_setups_lags = pd.read_csv(setups_lags_csv)
 df_setups_params = pd.read_csv(setups_params_csv)
 
