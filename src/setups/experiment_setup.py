@@ -357,6 +357,7 @@ def build_key(df, cols):
         tmp[c] = tmp[c].apply(normalize_for_key)
     return tmp.astype(str).agg("|".join, axis=1)
 
+
 def get_pending_experiments(df_experiment_design, df_ready_progress):
     required_cols = [
         'id', 'model', 'trajectory_cols', 'dataset_name', 'type',
@@ -381,6 +382,10 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
     df_pending = df_design[~df_design["_key"].isin(set(df_ready["_key"]))].copy()
 
     df_pending = df_pending.drop(columns=["_key"]).reset_index(drop=True)
+
+    logger.info(f"Total: {len(df_design)}")
+    logger.info(f"Processed: {len(df_ready)}")
+    logger.info(f"To process: {len(df_pending)}")
 
     return df_pending
 

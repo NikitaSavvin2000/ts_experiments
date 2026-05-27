@@ -942,6 +942,9 @@ class TSExperimentPipeline:
             if cache_enabled and key in cache:
                 return cache[key]
 
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
             start_time = time.time()
 
             df_test_pred = self.forecast_func(
@@ -956,11 +959,24 @@ class TSExperimentPipeline:
             )
 
             execution_time = time.time() - start_time
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
 
             true = self.df_eval[self.col_target].tolist()
             pred = df_test_pred[self.col_target].tolist()
 
             metrics = regression_metrics(true=true, pred=pred)
+
+            print(f">> сlassic_GA metrics {metrics}")
+
+            predict_row = {**predict_row, **metrics}
+
+            trace_end = {**predict_row, **self.traces_row}
+            append_progress_to_csv(
+                progress_row=trace_end,
+                progress_csv_path=self.trace_csv_path
+            )
 
             score = metrics.get("mape", float("inf"))
             score = score + 0.001 * len(cols)
@@ -1137,6 +1153,7 @@ class TSExperimentPipeline:
             predict_row = {**predict_row, **metrics}
             trace_end = {**predict_row, **self.traces_row}
             append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
+
             print(f"OPTINA {metrics}")
 
             score = metrics.get("mape", float("inf"))
@@ -1391,6 +1408,9 @@ class TSExperimentPipeline:
             if cache_enabled and key in cache:
                 return cache[key]
 
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
             start_time = time.time()
 
             df_test_pred = self.forecast_func(
@@ -1405,11 +1425,24 @@ class TSExperimentPipeline:
             )
 
             execution_time = time.time() - start_time
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
 
             true = self.df_eval[self.col_target].tolist()
             pred = df_test_pred[self.col_target].tolist()
 
             metrics = regression_metrics(true=true, pred=pred)
+
+            print(f">> сlassic_GA metrics {metrics}")
+
+            predict_row = {**predict_row, **metrics}
+
+            trace_end = {**predict_row, **self.traces_row}
+            append_progress_to_csv(
+                progress_row=trace_end,
+                progress_csv_path=self.trace_csv_path
+            )
 
             score = metrics.get("mape", float("inf"))
             score += 0.001 * len(cols)
@@ -1486,12 +1519,9 @@ class TSExperimentPipeline:
                 best_metrics = current_best_metrics
                 best_pred = current_best_pred
 
-            self.logger.info(
-                f"GEN={gen} BEST_MAPE={best_score}"
-            )
+            self.logger.info(f"GEN={gen} BEST_MAPE={best_score}")
 
             elite = [x[0] for x in scored[:elite_size]]
-
             new_population = elite.copy()
 
             while len(new_population) < population_size:
@@ -1513,6 +1543,7 @@ class TSExperimentPipeline:
         self.logger.info(f"FINAL_MAPE={final_score}")
 
         return final_cols, final_metrics, final_pred
+
     def run_test_predict(self):
         """
         RU: Статистический отбор признаков для временного ряда
@@ -1532,7 +1563,6 @@ class TSExperimentPipeline:
                     discreteness=self.discreteness_sec)
 
                 self.max_lag = self.test_points
-
 
             elif self.trajectory_cols == "mi_features":
                 self.col_for_train = self.fetch_stat_select_features()
