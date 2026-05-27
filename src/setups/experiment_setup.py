@@ -385,7 +385,6 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
 
     df_design = (
         df_experiment_design.copy()[required_cols]
-        .drop_duplicates()
         .reset_index(drop=True)
     )
 
@@ -397,19 +396,20 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
 
     df_ready = (
         df_ready_progress.copy()[required_cols]
-        .drop_duplicates()
         .reset_index(drop=True)
     )
 
+    for col in compare_cols:
+        df_design[col] = df_design[col].astype(str)
+        df_ready[col] = df_ready[col].astype(str)
+
     df_ready_keys = (
         df_ready[compare_cols]
-        .astype(str)
         .agg("||".join, axis=1)
     )
 
     df_design_keys = (
         df_design[compare_cols]
-        .astype(str)
         .agg("||".join, axis=1)
     )
 
