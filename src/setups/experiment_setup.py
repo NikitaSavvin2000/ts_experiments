@@ -360,28 +360,65 @@ def build_key(df, cols):
 
 def get_pending_experiments(df_experiment_design, df_ready_progress):
     required_cols = [
-        'id', 'model', 'trajectory_cols', 'dataset_name', 'type',
-        'dataset_csv', 'col_time', 'col_target', 'additional_cols',
-        'start_train_date', 'end_train_date', 'start_test_date',
-        'predict_points', 'end_test_date', 'result_dir_name'
+        'id',
+        'model',
+        'trajectory_cols',
+        'dataset_name',
+        'type',
+        'dataset_csv',
+        'col_time',
+        'col_target',
+        'additional_cols',
+        'start_train_date',
+        'end_train_date',
+        'start_test_date',
+        'predict_points',
+        'end_test_date',
+        'result_dir_name'
     ]
 
-    df_design = df_experiment_design.copy()[required_cols]
-    df_ready = df_ready_progress.copy()[required_cols] if df_ready_progress is not None and not df_ready_progress.empty else None
+    compare_cols = [
+        "model",
+        "trajectory_cols",
+        "dataset_name"
+    ]
 
-    df_design = df_design.drop_duplicates(subset="id").reset_index(drop=True)
+    df_design = (
+        df_experiment_design.copy()[required_cols]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
 
-    if df_ready is None:
+    if df_ready_progress is None or df_ready_progress.empty:
+        logger.info(f"Total: {len(df_design)}")
+        logger.info("Processed: 0")
+        logger.info(f"To process: {len(df_design)}")
         return df_design
 
-    df_ready = df_ready.drop_duplicates(subset="id").reset_index(drop=True)
+    df_ready = (
+        df_ready_progress.copy()[required_cols]
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
 
-    df_design["_key"] = build_key(df_design, required_cols)
-    df_ready["_key"] = build_key(df_ready, required_cols)
+    df_ready_keys = (
+        df_ready[compare_cols]
+        .astype(str)
+        .agg("||".join, axis=1)
+    )
 
-    df_pending = df_design[~df_design["_key"].isin(set(df_ready["_key"]))].copy()
+    df_design_keys = (
+        df_design[compare_cols]
+        .astype(str)
+        .agg("||".join, axis=1)
+    )
 
-    df_pending = df_pending.drop(columns=["_key"]).reset_index(drop=True)
+    df_pending = (
+        df_design[
+            ~df_design_keys.isin(set(df_ready_keys))
+        ]
+        .reset_index(drop=True)
+    )
 
     logger.info(f"Total: {len(df_design)}")
     logger.info(f"Processed: {len(df_ready)}")
