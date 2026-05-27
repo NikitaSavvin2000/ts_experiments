@@ -81,7 +81,7 @@ experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQ
 # DLinear	Istanbul_Traffic_Index
 # DLinear	Air_Quality_India
 
-to_test = ["russia_elista", "Istanbul_Traffic_Index", "Air_Quality_India"]
+to_test = ["russia_elista", "Air_Quality_India"]
 
 
 df_to_experiment = pd.read_csv(experiment_retest)
