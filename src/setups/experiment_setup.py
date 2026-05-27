@@ -101,8 +101,8 @@ MESSAGES = {
 
 # trajectory_cols = ["baseline", "calendar_components", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
 
-# trajectory_cols = ["spearman_features", "сlassic_GA", "GA_horizon_selected_features",]
-trajectory_cols = ["spearman_features",]
+trajectory_cols = ["spearman_features", "сlassic_GA", "GA_horizon_selected_features",]
+# trajectory_cols = ["spearman_features",]
 
 
 
