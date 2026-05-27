@@ -33,6 +33,10 @@ import numpy as np
 from sklearn.feature_selection import mutual_info_regression
 import optuna
 
+import random
+import time
+import numpy as np
+import pandas as pd
 
 
 MESSAGES = {
@@ -618,6 +622,280 @@ class TSExperimentPipeline:
         return correlation_graph
 
 
+    # def select_best_t2v_columns(
+    #         self,
+    #         population_size=15,
+    #         generations=3,
+    #         mutation_rate=0.3,
+    #         elite_size=5,
+    #         cache_enabled=True,
+    #         preselect_k=50
+    # ):
+    #
+    #     # ============================================================
+    #     # BASE FEATURE SPACE PREPARATION
+    #     # (классическая предобработка данных для GA)
+    #     # ============================================================
+    #     all_features = self.all_available_cols.copy()
+    #     cache = {}
+    #
+    #     X = self.df_train[all_features].fillna(0)
+    #     y = self.df_train[self.col_target].fillna(0)
+    #
+    #     zero_var_cols = X.columns[X.nunique() <= 1]
+    #     X = X.drop(columns=zero_var_cols)
+    #     all_features = X.columns.tolist()
+    #
+    #     # ============================================================
+    #     # INNOVATION BLOCK 1 — HYBRID STATISTICAL PRE-FILTERING
+    #     # (научная новизна: предварительное сужение поискового пространства
+    #     # перед GA через корреляцию + mutual information)
+    #     #
+    #     # Это НЕ классический GA элемент — это hybrid GA + feature selection
+    #     # ============================================================
+    #     corr_scores = X.corrwith(y).abs().fillna(0)
+    #     mi_scores = mutual_info_regression(X, y)
+    #
+    #     mi_df = pd.DataFrame({
+    #         "feature": all_features,
+    #         "mi_score": mi_scores
+    #     }).sort_values("mi_score", ascending=False)
+    #
+    #     print(mi_df)
+    #
+    #     feature_scores = {
+    #         f: 0.5 * corr_scores[f] + 0.5 * mi_scores[i]
+    #         for i, f in enumerate(all_features)
+    #     }
+    #
+    #     ranked_features = sorted(feature_scores, key=feature_scores.get, reverse=True)
+    #
+    #     # ============================================================
+    #     # INNOVATION BLOCK 2 — SEARCH SPACE REDUCTION (TOP-K PRUNING)
+    #     # (научная новизна: ограничение пространства поиска GA
+    #     # через preselection, повышает стабильность и сходимость)
+    #     # ============================================================
+    #     ranked_features = ranked_features[:preselect_k]
+    #
+    #     print(f"ranked_features = {ranked_features}")
+    #
+    #     # ============================================================
+    #     # FITNESS FUNCTION (классический GA + ML forecasting pipeline)
+    #     # ============================================================
+    #     def run_model(cols):
+    #         key = tuple(sorted(cols))
+    #
+    #         if cache_enabled and key in cache:
+    #             return cache[key]
+    #
+    #         predict_row = {}
+    #         predict_row["col_for_train"] = cols
+    #
+    #         start_time = time.time()
+    #
+    #         df_test_pred = self.forecast_func(
+    #             col_target=self.col_target,
+    #             time_column=self.col_time,
+    #             df_train=self.df_train,
+    #             df_test=self.df_test,
+    #             lag=self.lag,
+    #             params=self.params,
+    #             col_for_train=list(cols),
+    #             logger=self.logger,
+    #         )
+    #
+    #         execution_time = time.time() - start_time
+    #         predict_row["pipeline_spend_time"] = execution_time
+    #         predict_row["model_params"] = self.params
+    #         predict_row["lag"] = self.lag
+    #
+    #         true = self.df_eval[self.col_target].tolist()
+    #         pred = df_test_pred[self.col_target].tolist()
+    #
+    #         metrics = regression_metrics(true=true, pred=pred)
+    #
+    #         predict_row = {**predict_row, **metrics}
+    #         trace_end = {**predict_row, **self.traces_row}
+    #         append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
+    #
+    #         score = metrics.get("mape", float("inf"))
+    #
+    #         # классическая регуляризация сложности модели
+    #         penalty = 0.001 * len(cols)
+    #         score = score + penalty
+    #
+    #         res = (score, metrics, df_test_pred)
+    #
+    #         if cache_enabled:
+    #             cache[key] = res
+    #
+    #         return res
+    #
+    #     # ============================================================
+    #     # INNOVATION BLOCK 3 — ADAPTIVE INITIAL POPULATION SEEDING
+    #     # (научная новизна: инициализация популяции не случайная,
+    #     # а смещённая в сторону ranked_features distribution)
+    #     # ============================================================
+    #     def init_population():
+    #         pop = []
+    #
+    #         for _ in range(population_size):
+    #             k = random.randint(
+    #                 max(3, len(ranked_features) // 10),
+    #                 max(5, len(ranked_features) // 3)
+    #             )
+    #             pop.append(random.sample(ranked_features, k))
+    #
+    #         return pop
+    #
+    #     # ============================================================
+    #     # CROSSOVER (классический GA оператор)
+    #     # ============================================================
+    #     def crossover(p1, p2):
+    #         inter = list(set(p1).intersection(set(p2)))
+    #         union = list(set(p1).union(set(p2)))
+    #
+    #         child = inter
+    #
+    #         if len(child) < 2:
+    #             child = union
+    #
+    #         if len(child) < 2:
+    #             child = random.sample(ranked_features, 2)
+    #
+    #         return child
+    #
+    #     # ============================================================
+    #     # INNOVATION BLOCK 4 — PROBABILISTIC WEIGHTED MUTATION
+    #     # (научная новизна: направленная мутация через soft ranking bias,
+    #     # вместо равномерного random choice)
+    #     # ============================================================
+    #     def mutate(ind):
+    #         ind = ind.copy()
+    #
+    #         if random.random() < mutation_rate:
+    #
+    #             if len(ind) > 2 and random.random() < 0.4:
+    #                 ind.remove(random.choice(ind))
+    #             else:
+    #                 candidates = list(set(ranked_features) - set(ind))
+    #
+    #                 if candidates:
+    #                     weights = np.linspace(1, 0.1, len(candidates))
+    #                     weights = weights / weights.sum()
+    #
+    #                     ind.append(random.choices(candidates, weights=weights, k=1)[0])
+    #
+    #         return ind
+    #
+    #     # ============================================================
+    #     # INNOVATION BLOCK 5 — LOCAL SEARCH HYBRIDIZATION (memetic GA)
+    #     # (научная новизна: GA + greedy hill-climbing refinement)
+    #     # ============================================================
+    #     def local_search(ind):
+    #         base_score, _, _ = run_model(ind)
+    #
+    #         candidates = list(set(ranked_features) - set(ind))
+    #         random.shuffle(candidates)
+    #
+    #         for f in candidates[:5]:
+    #             trial = ind + [f]
+    #             score, _, _ = run_model(trial)
+    #
+    #             if score < base_score:
+    #                 return trial
+    #
+    #         return ind
+    #
+    #     # ============================================================
+    #     # EVALUATION (hybrid GA evaluation with local search)
+    #     # ============================================================
+    #     def evaluate_population(population):
+    #         results = []
+    #
+    #         print(population)
+    #
+    #         for ind in population:
+    #             if len(ind) > preselect_k:
+    #                 continue
+    #
+    #             ind = local_search(ind)
+    #             score, metrics, pred = run_model(ind)
+    #
+    #             self.logger.info(f"SIZE={len(ind)} MAPE={score}")
+    #
+    #             results.append((ind, score, metrics, pred))
+    #
+    #         results.sort(key=lambda x: x[1])
+    #         return results
+    #
+    #     # ============================================================
+    #     # GA INITIALIZATION
+    #     # ============================================================
+    #     population = init_population()
+    #
+    #     best_individual = None
+    #     best_score = float("inf")
+    #     best_metrics = None
+    #     best_pred = None
+    #
+    #     no_improve = 0
+    #
+    #     # ============================================================
+    #     # EVOLUTION LOOP
+    #     # ============================================================
+    #     for gen in range(generations):
+    #
+    #         scored = evaluate_population(population)
+    #
+    #         if scored[0][1] < best_score:
+    #             best_individual = scored[0][0]
+    #             best_score = scored[0][1]
+    #             best_metrics = scored[0][2]
+    #             best_pred = scored[0][3]
+    #             no_improve = 0
+    #         else:
+    #             no_improve += 1
+    #
+    #         self.logger.info(f"BEST GEN {gen} MAPE = {best_score}")
+    #
+    #         if no_improve >= 3:
+    #             break
+    #
+    #         # ========================================================
+    #         # SELECTION (elitism — классический GA)
+    #         # ========================================================
+    #         elite = [x[0] for x in scored[:elite_size]]
+    #
+    #         new_population = elite.copy()
+    #
+    #         # ========================================================
+    #         # REPRODUCTION (classic GA recombination)
+    #         # ========================================================
+    #         while len(new_population) < population_size:
+    #
+    #             p1 = random.choice(elite)
+    #             p2 = random.choice(elite)
+    #
+    #             child = crossover(p1, p2)
+    #             child = mutate(child)
+    #
+    #             new_population.append(child)
+    #
+    #         population = new_population
+    #
+    #     # ============================================================
+    #     # FINAL MODEL SELECTION
+    #     # ============================================================
+    #     final_cols = best_individual
+    #     final_score, final_metrics, final_pred = run_model(final_cols)
+    #
+    #     self.logger.info(f"FINAL COLS = {final_cols}")
+    #     self.logger.info(f"FINAL MAPE = {final_score}")
+    #
+    #     return final_cols, final_metrics, final_pred
+
+
     def select_best_t2v_columns(
             self,
             population_size=15,
@@ -628,10 +906,6 @@ class TSExperimentPipeline:
             preselect_k=50
     ):
 
-        # ============================================================
-        # BASE FEATURE SPACE PREPARATION
-        # (классическая предобработка данных для GA)
-        # ============================================================
         all_features = self.all_available_cols.copy()
         cache = {}
 
@@ -642,42 +916,23 @@ class TSExperimentPipeline:
         X = X.drop(columns=zero_var_cols)
         all_features = X.columns.tolist()
 
-        # ============================================================
-        # INNOVATION BLOCK 1 — HYBRID STATISTICAL PRE-FILTERING
-        # (научная новизна: предварительное сужение поискового пространства
-        # перед GA через корреляцию + mutual information)
-        #
-        # Это НЕ классический GA элемент — это hybrid GA + feature selection
-        # ============================================================
-        corr_scores = X.corrwith(y).abs().fillna(0)
-        mi_scores = mutual_info_regression(X, y)
+        numeric = self.df_train[all_features + [self.col_target]].copy()
 
-        mi_df = pd.DataFrame({
-            "feature": all_features,
-            "mi_score": mi_scores
-        }).sort_values("mi_score", ascending=False)
+        numeric = numeric.select_dtypes(include=[np.number]).fillna(0)
 
-        print(mi_df)
+        if self.col_target not in numeric.columns:
+            raise ValueError("Target column not found in numeric data")
 
-        feature_scores = {
-            f: 0.5 * corr_scores[f] + 0.5 * mi_scores[i]
-            for i, f in enumerate(all_features)
-        }
+        X_num = numeric.drop(columns=[self.col_target])
+        y_num = numeric[self.col_target]
 
-        ranked_features = sorted(feature_scores, key=feature_scores.get, reverse=True)
+        corr_scores = X_num.apply(lambda col: abs(col.corr(y_num))).fillna(0)
+        corr_scores = corr_scores.sort_values(ascending=False)
 
-        # ============================================================
-        # INNOVATION BLOCK 2 — SEARCH SPACE REDUCTION (TOP-K PRUNING)
-        # (научная новизна: ограничение пространства поиска GA
-        # через preselection, повышает стабильность и сходимость)
-        # ============================================================
-        ranked_features = ranked_features[:preselect_k]
+        ranked_features = corr_scores.head(preselect_k).index.tolist()
 
         print(f"ranked_features = {ranked_features}")
 
-        # ============================================================
-        # FITNESS FUNCTION (классический GA + ML forecasting pipeline)
-        # ============================================================
         def run_model(cols):
             key = tuple(sorted(cols))
 
@@ -715,10 +970,7 @@ class TSExperimentPipeline:
             append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
 
             score = metrics.get("mape", float("inf"))
-
-            # классическая регуляризация сложности модели
-            penalty = 0.001 * len(cols)
-            score = score + penalty
+            score = score + 0.001 * len(cols)
 
             res = (score, metrics, df_test_pred)
 
@@ -727,11 +979,6 @@ class TSExperimentPipeline:
 
             return res
 
-        # ============================================================
-        # INNOVATION BLOCK 3 — ADAPTIVE INITIAL POPULATION SEEDING
-        # (научная новизна: инициализация популяции не случайная,
-        # а смещённая в сторону ranked_features distribution)
-        # ============================================================
         def init_population():
             pop = []
 
@@ -744,9 +991,6 @@ class TSExperimentPipeline:
 
             return pop
 
-        # ============================================================
-        # CROSSOVER (классический GA оператор)
-        # ============================================================
         def crossover(p1, p2):
             inter = list(set(p1).intersection(set(p2)))
             union = list(set(p1).union(set(p2)))
@@ -761,11 +1005,6 @@ class TSExperimentPipeline:
 
             return child
 
-        # ============================================================
-        # INNOVATION BLOCK 4 — PROBABILISTIC WEIGHTED MUTATION
-        # (научная новизна: направленная мутация через soft ranking bias,
-        # вместо равномерного random choice)
-        # ============================================================
         def mutate(ind):
             ind = ind.copy()
 
@@ -784,10 +1023,6 @@ class TSExperimentPipeline:
 
             return ind
 
-        # ============================================================
-        # INNOVATION BLOCK 5 — LOCAL SEARCH HYBRIDIZATION (memetic GA)
-        # (научная новизна: GA + greedy hill-climbing refinement)
-        # ============================================================
         def local_search(ind):
             base_score, _, _ = run_model(ind)
 
@@ -803,9 +1038,6 @@ class TSExperimentPipeline:
 
             return ind
 
-        # ============================================================
-        # EVALUATION (hybrid GA evaluation with local search)
-        # ============================================================
         def evaluate_population(population):
             results = []
 
@@ -825,9 +1057,6 @@ class TSExperimentPipeline:
             results.sort(key=lambda x: x[1])
             return results
 
-        # ============================================================
-        # GA INITIALIZATION
-        # ============================================================
         population = init_population()
 
         best_individual = None
@@ -837,9 +1066,6 @@ class TSExperimentPipeline:
 
         no_improve = 0
 
-        # ============================================================
-        # EVOLUTION LOOP
-        # ============================================================
         for gen in range(generations):
 
             scored = evaluate_population(population)
@@ -858,16 +1084,9 @@ class TSExperimentPipeline:
             if no_improve >= 3:
                 break
 
-            # ========================================================
-            # SELECTION (elitism — классический GA)
-            # ========================================================
             elite = [x[0] for x in scored[:elite_size]]
-
             new_population = elite.copy()
 
-            # ========================================================
-            # REPRODUCTION (classic GA recombination)
-            # ========================================================
             while len(new_population) < population_size:
 
                 p1 = random.choice(elite)
@@ -880,9 +1099,6 @@ class TSExperimentPipeline:
 
             population = new_population
 
-        # ============================================================
-        # FINAL MODEL SELECTION
-        # ============================================================
         final_cols = best_individual
         final_score, final_metrics, final_pred = run_model(final_cols)
 
@@ -890,7 +1106,6 @@ class TSExperimentPipeline:
         self.logger.info(f"FINAL MAPE = {final_score}")
 
         return final_cols, final_metrics, final_pred
-
 
     def select_best_t2v_otuna(
             self,

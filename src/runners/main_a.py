@@ -141,7 +141,7 @@ def run_experiment(
 
     exp_result = experiment.copy()
 
-    exp_result["pacf_lag"] = ts_pipeline.pacf_lag
+    exp_result["pacf_lag"] = lag
     exp_result["col_for_train"] = ts_pipeline.col_for_train
     exp_result["discreteness"] = ts_pipeline.discreteness_sec
     exp_result["r2"] = ts_pipeline.metrix_dict["r2"]
