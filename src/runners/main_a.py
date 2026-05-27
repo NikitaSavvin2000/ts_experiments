@@ -26,7 +26,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-MAX_WORKERS = 2
+MAX_WORKERS = 4
 
 
 
@@ -215,9 +215,6 @@ df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
     df_ready_progress=df_ready_progress
 )
-
-df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "morocco_zone_1"]
-df_to_experiment = df_to_experiment[df_to_experiment["model"] == "XGBoost"]
 
 if df_to_experiment is None or df_to_experiment.empty:
     logger.info("All experiments completed")
