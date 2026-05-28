@@ -27,7 +27,7 @@ from tqdm import tqdm
 from src.ts_models.ts_utils.timeseries_utils import plot_predictions
 
 
-MAX_WORKERS = 1
+MAX_WORKERS = 12
 
 
 def init_worker():
