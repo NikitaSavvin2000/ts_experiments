@@ -362,8 +362,7 @@ def plot_predictions(
     plt.plot(
         [],
         [],
-        color="white",
-        alpha=0,
+        linestyle="",
         label=metrics_text
     )
 
@@ -373,11 +372,12 @@ def plot_predictions(
 
     legend = plt.legend(
         loc="upper right",
-        framealpha=1
+        framealpha=0.75,
+        fancybox=True
     )
 
-    legend.get_frame().set_facecolor("#EAEAF2")
-    legend.get_frame().set_edgecolor("#B0B0B0")
+    legend.get_frame().set_facecolor("white")
+    legend.get_frame().set_edgecolor("lightgray")
 
     plt.grid(True)
 
