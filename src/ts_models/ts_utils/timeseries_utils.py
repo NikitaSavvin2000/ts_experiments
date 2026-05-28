@@ -331,76 +331,70 @@ def plot_predictions(
         pred_col,
         real_col,
         title,
+        xlabel,
+        ylabel,
+        title_pred,
+        title_real,
         metrix_dict,
         save_filename,
         figsize=(16, 6)
 ):
 
-    print(">>>>>> WORK 1")
-
     plt.figure(figsize=figsize)
-    print(">>>>>> WORK 2")
-
 
     metrics_text = "\n".join(
         [f"{k}: {round(v, 3)}" for k, v in metrix_dict.items()]
     )
 
-    print(">>>>>> WORK 3")
-
     plt.plot(
         df[time_col],
         df[real_col],
-        label="Real",
+        label=title_real,
         color="blue"
     )
-    print(">>>>>> WORK 4")
 
     plt.plot(
         df[time_col],
         df[pred_col],
-        label=f"Prediction\n{metrics_text}",
+        label=title_pred,
         color="orange"
     )
-    print(">>>>>> WORK 5")
 
     plt.title(title)
-    plt.xlabel(time_col)
-    plt.ylabel("Value")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
 
-    print(">>>>>> WORK 6")
+    plt.legend(
+        loc="upper right",
+        bbox_to_anchor=(1.0, 1.0)
+    )
 
-    plt.legend()
+    plt.gcf().text(
+        0.99,
+        0.5,
+        metrics_text,
+        fontsize=10,
+        va="center",
+        ha="right",
+        bbox=dict(
+            facecolor="white",
+            alpha=0.8
+        )
+    )
+
     plt.grid(True)
 
-    print(">>>>>> WORK 7")
-
-    plt.tight_layout()
-    print(">>>>>> WORK 8")
-
-
-    print("=" * 200)
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(f" SAVE TO {save_filename}")
-    print(f" SAVE TO {save_filename}")
-    print("=" * 200)
-
+    plt.tight_layout(
+        rect=[0, 0, 0.9, 1]
+    )
 
     try:
-        print(">>>>>> WORK 9")
+        plt.savefig(
+            save_filename,
+            dpi=300,
+            bbox_inches="tight"
+        )
+    except Exception:
+        pass
 
-        plt.savefig(save_filename, dpi=300, bbox_inches="tight")
-    except Excepttion as e:
-        print(e)
-        print(">>>>>> WORK 10")
-
-
-    print("=" * 200)
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(f" SAVE TO {save_filename}")
-    print(f" SAVE TO {save_filename}")
-    print("=" * 200)
-
-    # plt.show()
+    plt.close()

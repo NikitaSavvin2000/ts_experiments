@@ -165,9 +165,17 @@ def run_experiment(
         os.path.join(iteration_results_path, "test_pred_not_norm.csv")
     )
 
-    charts_path = os.path.join(charts_dir, f"{dataset_name}_{model}_{trajectory}.png")
+    charts_path_ru = os.path.join(charts_dir_ru, f"{dataset_name}_{model}_{trajectory}.png")
+    charts_path_en = os.path.join(charts_dir_en, f"{dataset_name}_{model}_{trajectory}.png")
 
-    title = f"{dataset_name} {model} {trajectory}\n"
+
+    title_en = f"Dataset - {dataset_name} | Model - {model} | Trajectory - {trajectory}"
+
+    title_ru = (
+        f"Датасет - {dataset_name} | "
+        f"Модель - {model} | "
+        f"Траектория - {trajectory}"
+    )
 
     time_col = "datetime"
     pred_col = "pred"
@@ -178,9 +186,28 @@ def run_experiment(
         time_col=time_col,
         pred_col=pred_col,
         real_col=real_col,
-        title=title,
+        title=title_en,
+        xlabel="Datetime",
+        ylabel="Value",
+        title_pred="Prediction",
+        title_real="Real",
         metrix_dict=ts_pipeline.metrix_dict,
-        save_filename=charts_path,
+        save_filename=charts_path_en,
+        figsize=(16, 6)
+    )
+
+    plot_predictions(
+        df=ts_pipeline.df_test_pred,
+        time_col=time_col,
+        pred_col=pred_col,
+        real_col=real_col,
+        title=title_ru,
+        xlabel="Время",
+        ylabel="Значение",
+        title_pred="Предсказанное",
+        title_real="Действительное",
+        metrix_dict=ts_pipeline.metrix_dict,
+        save_filename=charts_path_ru,
         figsize=(16, 6)
     )
 
@@ -215,6 +242,9 @@ experiment_design_path = os.path.join(experiment_path, "experiment_design.csv")
 progress_csv_path = os.path.join(experiment_path, "progress.csv")
 results_path = os.path.join(experiment_path, "results")
 charts_dir = os.path.join(experiment_path, "charts")
+charts_dir_ru = os.path.join(charts_dir, "ru")
+charts_dir_en = os.path.join(charts_dir, "en"
+                                         "")
 trace_csv_path = os.path.join(experiment_path, "traces.csv")
 
 setups_path_csv = os.path.join(results_path, "setups_lag.csv")
@@ -225,6 +255,8 @@ setups_params_csv = os.path.join(results_path, "setups_params.csv")
 
 os.makedirs(results_path, exist_ok=True)
 os.makedirs(charts_dir, exist_ok=True)
+os.makedirs(charts_dir_ru, exist_ok=True)
+os.makedirs(charts_dir_en, exist_ok=True)
 
 df_experiment_design.to_csv(experiment_design_path)
 
