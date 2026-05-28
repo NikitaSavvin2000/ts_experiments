@@ -378,6 +378,14 @@ def plot_predictions(
     plt.tight_layout()
     print(">>>>>> WORK 8")
 
+
+    print("=" * 200)
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(f" SAVE TO {save_filename}")
+    print(f" SAVE TO {save_filename}")
+    print("=" * 200)
+
     plt.savefig(save_filename, dpi=300, bbox_inches="tight")
     print(">>>>>> WORK 9")
 
