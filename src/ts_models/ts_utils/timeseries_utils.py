@@ -336,11 +336,17 @@ def plot_predictions(
         figsize=(16, 6)
 ):
 
+    print(">>>>>> WORK 1")
+
     plt.figure(figsize=figsize)
+    print(">>>>>> WORK 2")
+
 
     metrics_text = "\n".join(
         [f"{k}: {round(v, 3)}" for k, v in metrix_dict.items()]
     )
+
+    print(">>>>>> WORK 3")
 
     plt.plot(
         df[time_col],
@@ -348,6 +354,7 @@ def plot_predictions(
         label="Real",
         color="blue"
     )
+    print(">>>>>> WORK 4")
 
     plt.plot(
         df[time_col],
@@ -355,17 +362,25 @@ def plot_predictions(
         label=f"Prediction\n{metrics_text}",
         color="orange"
     )
+    print(">>>>>> WORK 5")
 
     plt.title(title)
     plt.xlabel(time_col)
     plt.ylabel("Value")
 
+    print(">>>>>> WORK 6")
+
     plt.legend()
     plt.grid(True)
 
+    print(">>>>>> WORK 7")
+
     plt.tight_layout()
+    print(">>>>>> WORK 8")
 
     plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+    print(">>>>>> WORK 9")
+
 
     print("=" * 200)
     print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
