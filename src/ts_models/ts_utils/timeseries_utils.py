@@ -331,23 +331,16 @@ def plot_predictions(
         pred_col,
         real_col,
         title,
+        metrix_dict,
         save_filename,
         figsize=(16, 6)
 ):
-    print("="*200)
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
-
-    print("="*200)
 
     plt.figure(figsize=figsize)
+
+    metrics_text = "\n".join(
+        [f"{k}: {round(v, 3)}" for k, v in metrix_dict.items()]
+    )
 
     plt.plot(
         df[time_col],
@@ -359,7 +352,7 @@ def plot_predictions(
     plt.plot(
         df[time_col],
         df[pred_col],
-        label="Prediction",
+        label=f"Prediction\n{metrics_text}",
         color="orange"
     )
 
@@ -373,5 +366,12 @@ def plot_predictions(
     plt.tight_layout()
 
     plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+
+    print("=" * 200)
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(f" SAVE TO {save_filename}")
+    print(f" SAVE TO {save_filename}")
+    print("=" * 200)
 
     # plt.show()

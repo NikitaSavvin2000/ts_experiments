@@ -167,7 +167,7 @@ def run_experiment(
 
     charts_path = os.path.join(charts_dir, f"{dataset_name}_{model}_{trajectory}.png")
 
-    title = f"{dataset_name} {model} {trajectory}\n metrics {ts_pipeline.metrix_dict}"
+    title = f"{dataset_name} {model} {trajectory}\n"
 
     time_col = "datetime"
     pred_col = "pred"
@@ -179,6 +179,7 @@ def run_experiment(
         pred_col=pred_col,
         real_col=real_col,
         title=title,
+        metrix_dict=ts_pipeline.metrix_dict,
         save_filename=charts_path,
         figsize=(16, 6)
     )
