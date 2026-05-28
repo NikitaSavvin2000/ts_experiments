@@ -386,8 +386,14 @@ def plot_predictions(
     print(f" SAVE TO {save_filename}")
     print("=" * 200)
 
-    plt.savefig(save_filename, dpi=300, bbox_inches="tight")
-    print(">>>>>> WORK 9")
+
+    try:
+        print(">>>>>> WORK 9")
+
+        plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+    except Excepttion as e:
+        print(e)
+        print(">>>>>> WORK 10")
 
 
     print("=" * 200)
