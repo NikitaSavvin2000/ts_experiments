@@ -324,7 +324,6 @@ def test_method_visualize_m(
 
     print("[VIS] done")
 
-
 def plot_predictions(
         df,
         time_col,
@@ -360,33 +359,29 @@ def plot_predictions(
         color="orange"
     )
 
+    plt.plot(
+        [],
+        [],
+        color="white",
+        alpha=0,
+        label=metrics_text
+    )
+
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-    plt.legend(
+    legend = plt.legend(
         loc="upper right",
-        bbox_to_anchor=(1.0, 1.0)
+        framealpha=1
     )
 
-    plt.gcf().text(
-        0.99,
-        0.5,
-        metrics_text,
-        fontsize=10,
-        va="center",
-        ha="right",
-        bbox=dict(
-            facecolor="white",
-            alpha=0.8
-        )
-    )
+    legend.get_frame().set_facecolor("#EAEAF2")
+    legend.get_frame().set_edgecolor("#B0B0B0")
 
     plt.grid(True)
 
-    plt.tight_layout(
-        rect=[0, 0, 0.9, 1]
-    )
+    plt.tight_layout()
 
     try:
         plt.savefig(
