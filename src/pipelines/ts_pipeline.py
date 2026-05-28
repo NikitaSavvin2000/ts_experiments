@@ -43,7 +43,7 @@ MESSAGES = {
     "en": {
         "experiment_created": "Experiment design created. Available at {}",
         "experiment_exists": "Experiment design already exists and will not be overwritten: {}",
-                             "dataset_load_success": "Dataset loaded: id={}, name={}",
+        "dataset_load_success": "Dataset loaded: id={}, name={}",
         "dataset_load_error": "Dataset load error: id={}, name={}, path={}",
         "t2v_start": "Time2Vec start",
         "t2v_success": "Time2Vec success",
@@ -57,7 +57,7 @@ MESSAGES = {
     "ru": {
         "experiment_created": "Дизайн экспериментов создан. Путь: {}",
         "experiment_exists": "Дизайн экспериментов уже существует и не будет перезаписан: {}",
-                             "dataset_load_success": "Датасет загружен: id={}, имя={}",
+        "dataset_load_success": "Датасет загружен: id={}, имя={}",
         "dataset_load_error": "Ошибка загрузки: id={}, имя={}, путь={}",
         "t2v_start": "Time2Vec старт",
         "t2v_success": "Time2Vec готов",
@@ -135,24 +135,24 @@ class TSExperimentPipeline:
         ZH: 保存实验设计
         """
         self.df_experiment_design = df_experiment_design
-    
+
         path = os.path.join(
             self.experiment_path,
             "experiment_design.csv"
         )
-    
+
         if os.path.exists(path):
             self.logger.info(
                 self.msg["experiment_exists"].format(path)
             )
             return self
-    
+
         self.df_experiment_design.to_csv(path, index=False)
-    
+
         self.logger.info(
             self.msg["experiment_created"].format(path)
         )
-    
+
         return self
 
     def set_row(self, experiment):
@@ -622,280 +622,6 @@ class TSExperimentPipeline:
         return correlation_graph
 
 
-    # def select_best_t2v_columns(
-    #         self,
-    #         population_size=15,
-    #         generations=3,
-    #         mutation_rate=0.3,
-    #         elite_size=5,
-    #         cache_enabled=True,
-    #         preselect_k=50
-    # ):
-    #
-    #     # ============================================================
-    #     # BASE FEATURE SPACE PREPARATION
-    #     # (классическая предобработка данных для GA)
-    #     # ============================================================
-    #     all_features = self.all_available_cols.copy()
-    #     cache = {}
-    #
-    #     X = self.df_train[all_features].fillna(0)
-    #     y = self.df_train[self.col_target].fillna(0)
-    #
-    #     zero_var_cols = X.columns[X.nunique() <= 1]
-    #     X = X.drop(columns=zero_var_cols)
-    #     all_features = X.columns.tolist()
-    #
-    #     # ============================================================
-    #     # INNOVATION BLOCK 1 — HYBRID STATISTICAL PRE-FILTERING
-    #     # (научная новизна: предварительное сужение поискового пространства
-    #     # перед GA через корреляцию + mutual information)
-    #     #
-    #     # Это НЕ классический GA элемент — это hybrid GA + feature selection
-    #     # ============================================================
-    #     corr_scores = X.corrwith(y).abs().fillna(0)
-    #     mi_scores = mutual_info_regression(X, y)
-    #
-    #     mi_df = pd.DataFrame({
-    #         "feature": all_features,
-    #         "mi_score": mi_scores
-    #     }).sort_values("mi_score", ascending=False)
-    #
-    #     print(mi_df)
-    #
-    #     feature_scores = {
-    #         f: 0.5 * corr_scores[f] + 0.5 * mi_scores[i]
-    #         for i, f in enumerate(all_features)
-    #     }
-    #
-    #     ranked_features = sorted(feature_scores, key=feature_scores.get, reverse=True)
-    #
-    #     # ============================================================
-    #     # INNOVATION BLOCK 2 — SEARCH SPACE REDUCTION (TOP-K PRUNING)
-    #     # (научная новизна: ограничение пространства поиска GA
-    #     # через preselection, повышает стабильность и сходимость)
-    #     # ============================================================
-    #     ranked_features = ranked_features[:preselect_k]
-    #
-    #     print(f"ranked_features = {ranked_features}")
-    #
-    #     # ============================================================
-    #     # FITNESS FUNCTION (классический GA + ML forecasting pipeline)
-    #     # ============================================================
-    #     def run_model(cols):
-    #         key = tuple(sorted(cols))
-    #
-    #         if cache_enabled and key in cache:
-    #             return cache[key]
-    #
-    #         predict_row = {}
-    #         predict_row["col_for_train"] = cols
-    #
-    #         start_time = time.time()
-    #
-    #         df_test_pred = self.forecast_func(
-    #             col_target=self.col_target,
-    #             time_column=self.col_time,
-    #             df_train=self.df_train,
-    #             df_test=self.df_test,
-    #             lag=self.lag,
-    #             params=self.params,
-    #             col_for_train=list(cols),
-    #             logger=self.logger,
-    #         )
-    #
-    #         execution_time = time.time() - start_time
-    #         predict_row["pipeline_spend_time"] = execution_time
-    #         predict_row["model_params"] = self.params
-    #         predict_row["lag"] = self.lag
-    #
-    #         true = self.df_eval[self.col_target].tolist()
-    #         pred = df_test_pred[self.col_target].tolist()
-    #
-    #         metrics = regression_metrics(true=true, pred=pred)
-    #
-    #         predict_row = {**predict_row, **metrics}
-    #         trace_end = {**predict_row, **self.traces_row}
-    #         append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
-    #
-    #         score = metrics.get("mape", float("inf"))
-    #
-    #         # классическая регуляризация сложности модели
-    #         penalty = 0.001 * len(cols)
-    #         score = score + penalty
-    #
-    #         res = (score, metrics, df_test_pred)
-    #
-    #         if cache_enabled:
-    #             cache[key] = res
-    #
-    #         return res
-    #
-    #     # ============================================================
-    #     # INNOVATION BLOCK 3 — ADAPTIVE INITIAL POPULATION SEEDING
-    #     # (научная новизна: инициализация популяции не случайная,
-    #     # а смещённая в сторону ranked_features distribution)
-    #     # ============================================================
-    #     def init_population():
-    #         pop = []
-    #
-    #         for _ in range(population_size):
-    #             k = random.randint(
-    #                 max(3, len(ranked_features) // 10),
-    #                 max(5, len(ranked_features) // 3)
-    #             )
-    #             pop.append(random.sample(ranked_features, k))
-    #
-    #         return pop
-    #
-    #     # ============================================================
-    #     # CROSSOVER (классический GA оператор)
-    #     # ============================================================
-    #     def crossover(p1, p2):
-    #         inter = list(set(p1).intersection(set(p2)))
-    #         union = list(set(p1).union(set(p2)))
-    #
-    #         child = inter
-    #
-    #         if len(child) < 2:
-    #             child = union
-    #
-    #         if len(child) < 2:
-    #             child = random.sample(ranked_features, 2)
-    #
-    #         return child
-    #
-    #     # ============================================================
-    #     # INNOVATION BLOCK 4 — PROBABILISTIC WEIGHTED MUTATION
-    #     # (научная новизна: направленная мутация через soft ranking bias,
-    #     # вместо равномерного random choice)
-    #     # ============================================================
-    #     def mutate(ind):
-    #         ind = ind.copy()
-    #
-    #         if random.random() < mutation_rate:
-    #
-    #             if len(ind) > 2 and random.random() < 0.4:
-    #                 ind.remove(random.choice(ind))
-    #             else:
-    #                 candidates = list(set(ranked_features) - set(ind))
-    #
-    #                 if candidates:
-    #                     weights = np.linspace(1, 0.1, len(candidates))
-    #                     weights = weights / weights.sum()
-    #
-    #                     ind.append(random.choices(candidates, weights=weights, k=1)[0])
-    #
-    #         return ind
-    #
-    #     # ============================================================
-    #     # INNOVATION BLOCK 5 — LOCAL SEARCH HYBRIDIZATION (memetic GA)
-    #     # (научная новизна: GA + greedy hill-climbing refinement)
-    #     # ============================================================
-    #     def local_search(ind):
-    #         base_score, _, _ = run_model(ind)
-    #
-    #         candidates = list(set(ranked_features) - set(ind))
-    #         random.shuffle(candidates)
-    #
-    #         for f in candidates[:5]:
-    #             trial = ind + [f]
-    #             score, _, _ = run_model(trial)
-    #
-    #             if score < base_score:
-    #                 return trial
-    #
-    #         return ind
-    #
-    #     # ============================================================
-    #     # EVALUATION (hybrid GA evaluation with local search)
-    #     # ============================================================
-    #     def evaluate_population(population):
-    #         results = []
-    #
-    #         print(population)
-    #
-    #         for ind in population:
-    #             if len(ind) > preselect_k:
-    #                 continue
-    #
-    #             ind = local_search(ind)
-    #             score, metrics, pred = run_model(ind)
-    #
-    #             self.logger.info(f"SIZE={len(ind)} MAPE={score}")
-    #
-    #             results.append((ind, score, metrics, pred))
-    #
-    #         results.sort(key=lambda x: x[1])
-    #         return results
-    #
-    #     # ============================================================
-    #     # GA INITIALIZATION
-    #     # ============================================================
-    #     population = init_population()
-    #
-    #     best_individual = None
-    #     best_score = float("inf")
-    #     best_metrics = None
-    #     best_pred = None
-    #
-    #     no_improve = 0
-    #
-    #     # ============================================================
-    #     # EVOLUTION LOOP
-    #     # ============================================================
-    #     for gen in range(generations):
-    #
-    #         scored = evaluate_population(population)
-    #
-    #         if scored[0][1] < best_score:
-    #             best_individual = scored[0][0]
-    #             best_score = scored[0][1]
-    #             best_metrics = scored[0][2]
-    #             best_pred = scored[0][3]
-    #             no_improve = 0
-    #         else:
-    #             no_improve += 1
-    #
-    #         self.logger.info(f"BEST GEN {gen} MAPE = {best_score}")
-    #
-    #         if no_improve >= 3:
-    #             break
-    #
-    #         # ========================================================
-    #         # SELECTION (elitism — классический GA)
-    #         # ========================================================
-    #         elite = [x[0] for x in scored[:elite_size]]
-    #
-    #         new_population = elite.copy()
-    #
-    #         # ========================================================
-    #         # REPRODUCTION (classic GA recombination)
-    #         # ========================================================
-    #         while len(new_population) < population_size:
-    #
-    #             p1 = random.choice(elite)
-    #             p2 = random.choice(elite)
-    #
-    #             child = crossover(p1, p2)
-    #             child = mutate(child)
-    #
-    #             new_population.append(child)
-    #
-    #         population = new_population
-    #
-    #     # ============================================================
-    #     # FINAL MODEL SELECTION
-    #     # ============================================================
-    #     final_cols = best_individual
-    #     final_score, final_metrics, final_pred = run_model(final_cols)
-    #
-    #     self.logger.info(f"FINAL COLS = {final_cols}")
-    #     self.logger.info(f"FINAL MAPE = {final_score}")
-    #
-    #     return final_cols, final_metrics, final_pred
-
-
     def select_best_t2v_columns(
             self,
             population_size=15,
@@ -1105,6 +831,175 @@ class TSExperimentPipeline:
         return final_cols, final_metrics, final_pred
 
 
+    # def select_best_t2v_tpe_manual(
+    #         self,
+    #         n_trials=50,
+    #         penalty=0.001,
+    #         cache_enabled=True,
+    #         sampler_seed=42,
+    #         startup_trials=10,
+    # ):
+    #     import random
+    #     import time
+    #     import math
+    #     from collections import defaultdict
+    #
+    #     random.seed(sampler_seed)
+    #
+    #     print(f"select_best_t2v_tpe_manual lag = {self.lag}")
+    #
+    #     all_features = self.all_available_cols.copy()
+    #     cache = {}
+    #
+    #     corr_graph = self.build_correlation_graph(
+    #         self.df_train,
+    #         self.col_target,
+    #         self.col_time,
+    #         all_features,
+    #         method="pearson",
+    #         min_abs_corr=0.0
+    #     )
+    #
+    #     def run_model(cols):
+    #         key = tuple(sorted(cols))
+    #
+    #         if cache_enabled and key in cache:
+    #             return cache[key]
+    #
+    #         predict_row = {}
+    #         predict_row["col_for_train"] = cols
+    #
+    #         start_time = time.time()
+    #
+    #         df_test_pred = self.forecast_func(
+    #             col_target=self.col_target,
+    #             time_column=self.col_time,
+    #             df_train=self.df_train,
+    #             df_test=self.df_test,
+    #             lag=self.lag,
+    #             params=self.params,
+    #             col_for_train=list(cols),
+    #             logger=self.logger,
+    #         )
+    #
+    #         execution_time = time.time() - start_time
+    #
+    #         predict_row["pipeline_spend_time"] = execution_time
+    #         predict_row["model_params"] = self.params
+    #         predict_row["lag"] = self.lag
+    #
+    #         true = self.df_eval[self.col_target].tolist()
+    #         pred = df_test_pred[self.col_target].tolist()
+    #
+    #         metrics = regression_metrics(true=true, pred=pred)
+    #
+    #         predict_row = {**predict_row, **metrics}
+    #         trace_end = {**predict_row, **self.traces_row}
+    #
+    #         append_progress_to_csv(
+    #             progress_row=trace_end,
+    #             progress_csv_path=self.trace_csv_path
+    #         )
+    #
+    #         score = metrics.get("mape", float("inf"))
+    #         score += penalty * len(cols)
+    #
+    #         res = (score, metrics, df_test_pred)
+    #
+    #         cache[key] = res
+    #
+    #         print(f"TPE-MANUAL {metrics}")
+    #
+    #         return res
+    #
+    #     feature_stats = {
+    #         f: {"good": 1, "bad": 1}
+    #         for f in all_features
+    #     }
+    #
+    #     def sample_random():
+    #         cols = []
+    #         for f in all_features:
+    #             if random.random() < 0.5:
+    #                 cols.append(f)
+    #         if not cols:
+    #             cols = [random.choice(all_features)]
+    #         return cols
+    #
+    #     def sample_tpe():
+    #         scores = {}
+    #
+    #         for f in all_features:
+    #             good = feature_stats[f]["good"]
+    #             bad = feature_stats[f]["bad"]
+    #
+    #             prior = abs(corr_graph.get(f, {}).get("target_correlation", 0.0))
+    #
+    #             score = math.log(good) - math.log(bad) + 0.7 * prior
+    #
+    #             scores[f] = score
+    #
+    #         cols = []
+    #
+    #         for f, s in scores.items():
+    #             p = 1 / (1 + math.exp(-s))
+    #
+    #             if random.random() < p:
+    #                 cols.append(f)
+    #
+    #         if not cols:
+    #             cols = [random.choice(all_features)]
+    #
+    #         return cols
+    #
+    #     trials = []
+    #     best_global = None
+    #
+    #     for i in range(n_trials):
+    #
+    #         if i < startup_trials:
+    #             cols = sample_random()
+    #         else:
+    #             cols = sample_tpe()
+    #
+    #         score, metrics, pred = run_model(cols)
+    #
+    #         trials.append((score, cols, metrics))
+    #
+    #         if best_global is None or score < best_global[0]:
+    #             best_global = (score, cols, metrics)
+    #
+    #         ranked = sorted(trials, key=lambda x: x[0])
+    #
+    #         good_cut = max(1, len(ranked) // 3)
+    #         bad_cut = max(1, len(ranked) // 3)
+    #
+    #         good = ranked[:good_cut]
+    #         bad = ranked[-bad_cut:]
+    #
+    #         for _, cols_g, _ in good:
+    #             for f in cols_g:
+    #                 feature_stats[f]["good"] += 1
+    #
+    #         for _, cols_b, _ in bad:
+    #             for f in cols_b:
+    #                 feature_stats[f]["bad"] += 1
+    #
+    #         print(f"ITER {i} BEST {best_global[0]}")
+    #
+    #         self.logger.info(
+    #             f"ITER={i} BEST_SCORE={best_global[0]} COLS={best_global[1]}"
+    #         )
+    #
+    #     final_cols = best_global[1]
+    #
+    #     final_score, final_metrics, final_pred = run_model(final_cols)
+    #
+    #     self.logger.info(f"FINAL_COLS={final_cols}")
+    #     self.logger.info(f"FINAL_MAPE={final_score}")
+    #
+    #     return final_cols, final_metrics, final_pred
+
     def select_best_t2v_otuna(
             self,
             n_trials=50,
@@ -1218,6 +1113,200 @@ class TSExperimentPipeline:
         return final_cols, final_metrics, final_pred
 
 
+    def select_best_t2v_tpe_manual(
+            self,
+            n_trials=50,
+            penalty=0.001,
+            cache_enabled=True,
+            sampler_seed=42,
+            startup_trials=10,
+    ):
+        import random
+        import time
+        import math
+        from collections import defaultdict
+
+        random.seed(sampler_seed)
+
+        print(f"select_best_t2v_tpe_manual lag = {self.lag}")
+
+        all_features = self.all_available_cols.copy()
+        cache = {}
+
+        corr_graph = self.build_correlation_graph(
+            self.df_train,
+            self.col_target,
+            self.col_time,
+            all_features,
+            method="pearson",
+            min_abs_corr=0.0
+        )
+
+        pair_stats = defaultdict(lambda: {"good": 0, "bad": 0})
+
+        def run_model(cols):
+            key = (tuple(sorted(cols)), self.lag, str(self.params))
+
+            if cache_enabled and key in cache:
+                return cache[key]
+
+            predict_row = {}
+            predict_row["col_for_train"] = cols
+
+            start_time = time.time()
+
+            df_test_pred = self.forecast_func(
+                col_target=self.col_target,
+                time_column=self.col_time,
+                df_train=self.df_train,
+                df_test=self.df_test,
+                lag=self.lag,
+                params=self.params,
+                col_for_train=list(cols),
+                logger=self.logger,
+            )
+
+            execution_time = time.time() - start_time
+
+            predict_row["pipeline_spend_time"] = execution_time
+            predict_row["model_params"] = self.params
+            predict_row["lag"] = self.lag
+
+            true = self.df_eval[self.col_target].tolist()
+            pred = df_test_pred[self.col_target].tolist()
+
+            metrics = regression_metrics(true=true, pred=pred)
+
+            predict_row = {**predict_row, **metrics}
+            trace_end = {**predict_row, **self.traces_row}
+
+            append_progress_to_csv(
+                progress_row=trace_end,
+                progress_csv_path=self.trace_csv_path
+            )
+
+            mape = metrics.get("mape", float("inf"))
+            rmse = metrics.get("rmse", float("inf"))
+
+            score = 0.7 * mape + 0.3 * rmse
+            score += penalty * abs(len(cols) - int(len(all_features) * 0.3))
+
+            res = (score, metrics, df_test_pred)
+
+            cache[key] = res
+
+            print(f"TPE-MANUAL {metrics}")
+
+            return res
+
+        feature_stats = {
+            f: {"good": 1.0, "bad": 1.0}
+            for f in all_features
+        }
+
+        def sigmoid(x):
+            return 1 / (1 + math.exp(-x))
+
+        def sample_beam_mutation(top_k=5, mutation_rate=0.3):
+            if not trials:
+                base = random.sample(all_features, k=max(1, len(all_features) // 3))
+                return base
+
+            top = sorted(trials, key=lambda x: x[0])[:top_k]
+            base_cols = random.choice(top)[1]
+
+            cols = set(base_cols)
+
+            for f in all_features:
+                if random.random() < mutation_rate:
+                    if f in cols:
+                        cols.remove(f)
+                    else:
+                        cols.add(f)
+
+            if not cols:
+                cols = {random.choice(all_features)}
+
+            return list(cols)
+
+        def sample_tpe():
+            scores = {}
+
+            for f in all_features:
+                g = feature_stats[f]["good"]
+                b = feature_stats[f]["bad"]
+
+                p_good = g / (g + b)
+
+                corr = corr_graph.get(f, {}).get("target_correlation", 0.0)
+
+                score = p_good + 0.3 * math.tanh(corr)
+                scores[f] = score
+
+            cols = []
+
+            for f, s in scores.items():
+                p = sigmoid((s - 0.5) * 6)
+
+                if random.random() < p:
+                    cols.append(f)
+
+            if not cols:
+                cols = [random.choice(all_features)]
+
+            return cols
+
+        trials = []
+        best_global = None
+
+        for i in range(n_trials):
+
+            if i < startup_trials:
+                cols = sample_beam_mutation()
+            else:
+                if random.random() < 0.4:
+                    cols = sample_beam_mutation()
+                else:
+                    cols = sample_tpe()
+
+            score, metrics, pred = run_model(cols)
+
+            trials.append((score, cols, metrics))
+
+            if best_global is None or score < best_global[0]:
+                best_global = (score, cols, metrics)
+
+            ranked = sorted(trials, key=lambda x: x[0])
+            elite_cut = max(1, len(ranked) // 3)
+
+            elite = ranked[:elite_cut]
+            bad = ranked[-elite_cut:]
+
+            for _, cols_g, _ in elite:
+                for f in cols_g:
+                    feature_stats[f]["good"] += 1
+
+            for _, cols_b, _ in bad:
+                for f in cols_b:
+                    feature_stats[f]["bad"] += 1
+                    for f2 in cols_b:
+                        if f != f2:
+                            pair_stats[(f, f2)]["bad"] += 1
+
+            print(f"ITER {i} BEST {best_global[0]}")
+
+            self.logger.info(
+                f"ITER={i} BEST_SCORE={best_global[0]} COLS={best_global[1]}"
+            )
+
+        final_cols = best_global[1]
+
+        final_score, final_metrics, final_pred = run_model(final_cols)
+
+        self.logger.info(f"FINAL_COLS={final_cols}")
+        self.logger.info(f"FINAL_MAPE={final_score}")
+
+        return final_cols, final_metrics, final_pred
     # def select_best_t2v_columns_сlassic_GA(
     #             self,
     #             population_size=15,
@@ -1570,7 +1659,7 @@ class TSExperimentPipeline:
                 self.col_for_train = self.fetch_spearman_features()
             elif self.trajectory_cols == "pearson_features":
                 self.col_for_train = self.fetch_pearson_features()
-            elif self.trajectory_cols in ["engineered_datetime_features", "GA_horizon_selected_features", "сlassic_GA", "optuna_features"]:
+            elif self.trajectory_cols in ["engineered_datetime_features", "horizon_selected_features", "сlassic_GA", "optuna_features"]:
                 self.col_for_train = self.fetch_all_t2v_features()
             else:
                 raise ValueError("Non-existent experiment trajectory. Please implement the logic for it or remove it from src/setups/experiment_setup.py")
@@ -1584,9 +1673,10 @@ class TSExperimentPipeline:
                 self.lag = int(self.lag)
 
 
-            if self.trajectory_cols == "GA_horizon_selected_features":
+            if self.trajectory_cols == "horizon_selected_features":
                 self.all_available_cols = self.col_for_train
-                self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns()
+                # self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns()
+                self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_tpe_manual()
             elif self.trajectory_cols == "сlassic_GA":
                 self.all_available_cols = self.col_for_train
                 self.col_for_train, self.metrix_dict, self.df_test_pred = self.select_best_t2v_columns_сlassic_GA()

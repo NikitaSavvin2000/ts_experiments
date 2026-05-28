@@ -99,20 +99,11 @@ MESSAGES = {
     }
 }
 
-# trajectory_cols = ["baseline", "calendar_components", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
-
-trajectory_cols = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
-
-# trajectory_cols = ["spearman_features",]
-
+trajectory_cols = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "horizon_selected_features",]
 
 
 model_to_test = list(time_series_models_funcs.keys())
 
-# model_to_test = ["ARIMAX"]
-# model_to_test = ["ARIMAX"]
-
-# not_exogenous_models = ["ARIMA", "SARIMA"]
 
 not_exogenous_models = [""]
 
@@ -129,66 +120,66 @@ datasets = [
         "end_test_date": "2017-12-30",
         "predict_points": 300,
     },
-    {
-        "dataset_name": "russia_elista",
-        "type": "Energy",
-        "col_time": "datetime",
-        "col_target": "value",
-        "additional_cols": [],
-        "start_train_date": "2017-12-01",
-        "end_train_date": "2023-07-28",
-        "start_test_date": "2023-07-29",
-        "end_test_date": "2023-08-31",
-        "predict_points": 300,
-    },
-    {
-        "dataset_name": "Istanbul_Traffic_Index",
-        "type": "Traffic",
-        "col_time": "datetime",
-        "col_target": "average_traffic_index",
-        "additional_cols": [],
-        "start_train_date": "2015-08-06",
-        "end_train_date": "2024-07-02",
-        "start_test_date": "2024-07-03",
-        "end_test_date": "2024-09-03",
-        "predict_points": 100,
-    },
-    {
-        "dataset_name": "NYC_Taxi_Traffic",
-        "type": "Traffic",
-        "col_time": "timestamp",
-        "col_target": "value",
-        "additional_cols": [],
-        "start_train_date": "2014-07-01",
-        "end_train_date": "2015-01-01",
-        "start_test_date": "2015-01-02",
-        "end_test_date": "2015-01-21",
-        "predict_points": 100,
-    },
-    {
-        "dataset_name": "Air_Quality_India",
-        "type": "Climate",
-        "col_time": "Timestamp",
-        "col_target": "PM2.5",
-        "additional_cols": [],
-        "start_train_date": "2017-11-07",
-        "end_train_date": "2022-05-03",
-        "start_test_date": "2022-05-04",
-        "end_test_date": "2022-06-04",
-        "predict_points": 300,
-    },
-    {
-        "dataset_name": "Daily_Climate",
-        "type": "Climate",
-        "col_time": "date",
-        "col_target": "meantemp",
-        "additional_cols": [],
-        "start_train_date": "2013-01-01",
-        "end_train_date": "2016-09-01",
-        "start_test_date": "2016-09-02",
-        "end_test_date": "2017-01-01",
-        "predict_points": 300,
-    },
+    # {
+    #     "dataset_name": "russia_elista",
+    #     "type": "Energy",
+    #     "col_time": "datetime",
+    #     "col_target": "value",
+    #     "additional_cols": [],
+    #     "start_train_date": "2017-12-01",
+    #     "end_train_date": "2023-07-28",
+    #     "start_test_date": "2023-07-29",
+    #     "end_test_date": "2023-08-31",
+    #     "predict_points": 300,
+    # },
+    # {
+    #     "dataset_name": "Istanbul_Traffic_Index",
+    #     "type": "Traffic",
+    #     "col_time": "datetime",
+    #     "col_target": "average_traffic_index",
+    #     "additional_cols": [],
+    #     "start_train_date": "2015-08-06",
+    #     "end_train_date": "2024-07-02",
+    #     "start_test_date": "2024-07-03",
+    #     "end_test_date": "2024-09-03",
+    #     "predict_points": 100,
+    # },
+    # {
+    #     "dataset_name": "NYC_Taxi_Traffic",
+    #     "type": "Traffic",
+    #     "col_time": "timestamp",
+    #     "col_target": "value",
+    #     "additional_cols": [],
+    #     "start_train_date": "2014-07-01",
+    #     "end_train_date": "2015-01-01",
+    #     "start_test_date": "2015-01-02",
+    #     "end_test_date": "2015-01-21",
+    #     "predict_points": 100,
+    # },
+    # {
+    #     "dataset_name": "Air_Quality_India",
+    #     "type": "Climate",
+    #     "col_time": "Timestamp",
+    #     "col_target": "PM2.5",
+    #     "additional_cols": [],
+    #     "start_train_date": "2017-11-07",
+    #     "end_train_date": "2022-05-03",
+    #     "start_test_date": "2022-05-04",
+    #     "end_test_date": "2022-06-04",
+    #     "predict_points": 300,
+    # },
+    # {
+    #     "dataset_name": "Daily_Climate",
+    #     "type": "Climate",
+    #     "col_time": "date",
+    #     "col_target": "meantemp",
+    #     "additional_cols": [],
+    #     "start_train_date": "2013-01-01",
+    #     "end_train_date": "2016-09-01",
+    #     "start_test_date": "2016-09-02",
+    #     "end_test_date": "2017-01-01",
+    #     "predict_points": 300,
+    # },
 
 ]
 

@@ -26,8 +26,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-MAX_WORKERS = 4
-
+MAX_WORKERS = 8
 
 
 def init_worker():
