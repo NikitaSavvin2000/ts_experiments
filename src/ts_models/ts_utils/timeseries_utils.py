@@ -9,6 +9,8 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 
 def split_sequence(sequence, n_steps):
@@ -321,3 +323,42 @@ def test_method_visualize_m(
     plt.show()
 
     print("[VIS] done")
+
+
+def plot_predictions(
+        df,
+        time_col,
+        pred_col,
+        real_col,
+        title,
+        save_filename,
+        figsize=(16, 6)
+):
+    plt.figure(figsize=figsize)
+
+    plt.plot(
+        df[time_col],
+        df[real_col],
+        label="Real",
+        color="blue"
+    )
+
+    plt.plot(
+        df[time_col],
+        df[pred_col],
+        label="Prediction",
+        color="orange"
+    )
+
+    plt.title(title)
+    plt.xlabel(time_col)
+    plt.ylabel("Value")
+
+    plt.legend()
+    plt.grid(True)
+
+    plt.tight_layout()
+
+    plt.savefig(save_filename, dpi=300, bbox_inches="tight")
+
+    # plt.show()

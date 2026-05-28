@@ -24,6 +24,7 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
+from src.ts_models.ts_utils.timeseries_utils import plot_predictions
 
 
 MAX_WORKERS = 8
@@ -78,6 +79,8 @@ def run_experiment(
 
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
+    trajectory = experiment["trajectory_cols"]
+
 
 
     lag_filtered = df_setups_lags.loc[
@@ -161,6 +164,25 @@ def run_experiment(
         os.path.join(iteration_results_path, "test_pred_not_norm.csv")
     )
 
+
+    charts_path = os.path.join(charts_dir, f"{dataset_name}_{model}_{trajectory}.png")
+
+    title = f"{dataset_name} {model} {trajectory}\n metrics {ts_pipeline.metrix_dict}"
+
+    time_col = "datetime"
+    pred_col = "pred"
+    real_col = "true"
+
+    plot_predictions(
+        df=ts_pipeline.df_test_pred,
+        time_col=time_col,
+        pred_col=pred_col,
+        real_col=real_col,
+        title=title,
+        save_filename=charts_path,
+        figsize=(16, 6)
+    )
+
     append_experiment_to_csv(
         experiment=experiment,
         progress_csv_path=progress_csv_path
@@ -191,6 +213,7 @@ df_experiment_design = init_experiment_setup()
 experiment_design_path = os.path.join(experiment_path, "experiment_design.csv")
 progress_csv_path = os.path.join(experiment_path, "progress.csv")
 results_path = os.path.join(experiment_path, "results")
+charts_dir = os.path.join(experiment_path, "charts")
 trace_csv_path = os.path.join(experiment_path, "traces.csv")
 
 setups_path_csv = os.path.join(results_path, "setups_lag.csv")
@@ -224,6 +247,7 @@ setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a
 setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=86420863&single=true&output=csv"
 df_setups_lags = pd.read_csv(setups_lags_csv)
 df_setups_params = pd.read_csv(setups_params_csv)
+
 def main():
     with ProcessPoolExecutor(
             max_workers=MAX_WORKERS,
