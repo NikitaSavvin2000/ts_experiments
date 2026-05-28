@@ -224,6 +224,7 @@ setups_params_csv = os.path.join(results_path, "setups_params.csv")
 # df_setups_params = pd.read_csv(setups_params_csv)
 
 os.makedirs(results_path, exist_ok=True)
+os.makedirs(charts_dir, exist_ok=True)
 
 df_experiment_design.to_csv(experiment_design_path)
 
