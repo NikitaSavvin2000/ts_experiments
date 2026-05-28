@@ -27,7 +27,7 @@ from tqdm import tqdm
 from src.ts_models.ts_utils.timeseries_utils import plot_predictions
 
 
-MAX_WORKERS = 8
+MAX_WORKERS = 1
 
 
 def init_worker():
@@ -164,7 +164,6 @@ def run_experiment(
     ts_pipeline.df_test_pred_not_norm.to_csv(
         os.path.join(iteration_results_path, "test_pred_not_norm.csv")
     )
-
 
     charts_path = os.path.join(charts_dir, f"{dataset_name}_{model}_{trajectory}.png")
 

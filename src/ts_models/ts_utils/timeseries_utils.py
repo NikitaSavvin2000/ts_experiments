@@ -334,6 +334,19 @@ def plot_predictions(
         save_filename,
         figsize=(16, 6)
 ):
+    print("="*200)
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+    print(" plot_predictions plot_predictions WORK plot_predictions plot_predictions")
+
+    print("="*200)
+
     plt.figure(figsize=figsize)
 
     plt.plot(
