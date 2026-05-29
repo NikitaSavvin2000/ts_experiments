@@ -5,6 +5,8 @@ pdm run src/runners/main_a.py
 import os
 import time
 import ast
+import gc
+import torch
 
 import sys
 import pandas as pd
@@ -282,39 +284,59 @@ setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M
 df_setups_lags = pd.read_csv(setups_lags_csv)
 df_setups_params = pd.read_csv(setups_params_csv)
 
-def main():
+def clear_memory():
+    gc.collect()
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+
+
+def process_batch(df_batch):
+    futures = []
+
     with ProcessPoolExecutor(
             max_workers=MAX_WORKERS,
             initializer=init_worker
     ) as executor:
 
-        futures = []
+        for _, experiment in df_batch.iterrows():
+            experiment = experiment.to_dict()
 
-        for dataset_name, df_batch in tqdm(df_to_experiment.groupby("dataset_name")):
-            for _, experiment in df_batch.iterrows():
-                experiment = experiment.to_dict()
-
-                futures.append(
-                    executor.submit(
-                        run_experiment,
-                        experiment,
-                        home_path,
-                        export_path,
-                        experiment_path,
-                        results_path,
-                        charts_dir,
-                        progress_csv_path,
-                        df_experiment_design,
-                        logger,
-                        MESSAGES,
-                        logger_language,
-                        df_setups_lags,
-                        df_setups_params,
-                    )
+            futures.append(
+                executor.submit(
+                    run_experiment,
+                    experiment,
+                    home_path,
+                    export_path,
+                    experiment_path,
+                    results_path,
+                    charts_dir,
+                    progress_csv_path,
+                    df_experiment_design,
+                    logger,
+                    MESSAGES,
+                    logger_language,
+                    df_setups_lags,
+                    df_setups_params,
                 )
+            )
 
         for f in tqdm(as_completed(futures), total=len(futures)):
             _ = f.result()
+
+    clear_memory()
+
+
+def main():
+    grouped_batches = list(df_to_experiment.groupby("dataset_name"))
+
+    for dataset_name, df_batch in tqdm(grouped_batches):
+        process_batch(df_batch)
+
+        del df_batch
+
+        clear_memory()
 
 
 if __name__ == "__main__":
