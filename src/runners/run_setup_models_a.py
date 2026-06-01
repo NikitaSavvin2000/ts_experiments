@@ -65,10 +65,28 @@ df_to_experiment_new_method = df_experiment_design_new_method[df_experiment_desi
 print(df_to_experiment_new_ds)
 print(df_to_experiment_new_method)
 
+def make_hashable(df):
+    df = df.copy()
+    for c in df.columns:
+        df[c] = df[c].apply(lambda x: tuple(x) if isinstance(x, list) else x)
+    return df
+
+
+def restore_lists(df):
+    df = df.copy()
+    for c in df.columns:
+        df[c] = df[c].apply(lambda x: list(x) if isinstance(x, tuple) else x)
+    return df
+
+
 df_experiment_design = pd.concat(
     [df_to_experiment_new_ds, df_to_experiment_new_method],
     ignore_index=True
-).drop_duplicates(subset=df_to_experiment_new_ds.columns, ignore_index=True)
+)
+
+df_experiment_design = make_hashable(df_experiment_design)
+df_experiment_design = df_experiment_design.drop_duplicates().reset_index(drop=True)
+df_experiment_design = restore_lists(df_experiment_design)
 
 print(df_experiment_design)
 
