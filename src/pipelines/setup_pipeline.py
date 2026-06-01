@@ -459,7 +459,8 @@ class SetupModel:
                         best_pred = pred
                         best_metrics = metrics or {}
 
-                except Exception:
+                except Exception as e:
+                    self.logger.error(self.msg["stat_select_error"].format(str(e)))
                     score = float("-inf")
 
             self.best_params = best_params

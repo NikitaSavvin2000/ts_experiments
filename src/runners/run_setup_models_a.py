@@ -24,6 +24,7 @@ from src.pipelines.setup_pipeline import SetupModel
 
 MAX_WORKERS = 8
 
+
 MESSAGES = {
     "en": {
         "experiment_created": "Experiment design created. Available at {}",
