@@ -68,7 +68,7 @@ print(df_to_experiment_new_method)
 df_experiment_design = pd.concat(
     [df_to_experiment_new_ds, df_to_experiment_new_method],
     ignore_index=True
-).drop_duplicates()
+).drop_duplicates(subset=df_to_experiment_new_ds.columns, ignore_index=True)
 
 print(df_experiment_design)
 
