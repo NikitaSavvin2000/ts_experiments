@@ -17,6 +17,19 @@ SEED = 42
 os.environ["PYTHONHASHSEED"] = str(SEED)
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
+import torch
+
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
+
+if not torch.cuda.is_available():
+    device = "cpu"
+else:
+    device = "cuda"
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
