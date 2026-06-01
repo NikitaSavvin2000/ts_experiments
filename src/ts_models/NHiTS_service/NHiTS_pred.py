@@ -11,6 +11,9 @@ from pandas.tseries.frequencies import to_offset
 
 from darts import TimeSeries
 from darts.models import NHiTSModel
+import torch
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
 
 
 warnings.filterwarnings("ignore")
@@ -42,7 +45,7 @@ DEFAULT_NHITS_PARAMS = {
     "dropout": 0.1,
     "activation": "ReLU",
     "batch_size": 32,
-    "n_epochs": 10
+    "n_epochs": 1
 }
 
 points_per_call = 1

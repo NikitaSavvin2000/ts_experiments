@@ -1,5 +1,5 @@
 """
-pdm run src/runners/main.py
+pdm run src/runners/run_setup_models.py
 """
 import os
 import time
@@ -68,15 +68,14 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
 df_experiment_design = df_experiment_design[df_experiment_design["trajectory_cols"] == "baseline"]
-df_experiment_design = df_experiment_design[df_experiment_design["model"] == "LightGBM"]
-
+df_experiment_design = df_experiment_design[df_experiment_design["model"] == "NHiTS"]
 
 
 print(df_experiment_design)
 
 
 df_ready_progress = load_and_prepare_progress(progress_csv_path=progress_csv_path, columns=df_experiment_design.columns)
-# df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
+df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
 
 
 def to_list(x):
@@ -88,24 +87,15 @@ def to_list(x):
         return ast.literal_eval(x)
     return []
 
-experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
-df_to_experiment = pd.read_csv(experiment_retest)
-
-df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
-
-
-to_test = ["russia_elista", "Istanbul_Traffic_Index", "Air_Quality_India"]
-
-to_test = ["russia_elista"]
 
 
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
 
 
-df_to_experiment = df_to_experiment[df_to_experiment["model"] == "DLinear"]
-df_to_experiment = df_to_experiment[
-    df_to_experiment["dataset_name"].isin(to_test)
-]
+df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
+
+
+df_experiment_design = df_experiment_design[df_experiment_design["model"] == "NHiTS"]
 
 
 print(df_to_experiment)
@@ -133,6 +123,9 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     # ru: Инициализация экземпляра пайплайна эксперимента
     # zh: 初始化实验管道实例
     # ============================================
+    list_predict_points_to_test = experiment["list_predict_points_to_test"]
+    points_to_pred = max(list_predict_points_to_test)
+
     setups_pipeline = SetupModel(
         experiment=experiment,
         home_path=home_path,
@@ -140,7 +133,9 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
         experiment_path=experiment_path,
         logger=logger,
         messages=MESSAGES,
-        logger_language=logger_language
+        logger_language=logger_language,
+        test_points=points_to_pred
+
     )
 
     # ============================================
