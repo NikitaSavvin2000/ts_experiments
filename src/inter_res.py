@@ -17,10 +17,187 @@ def load_and_merge(results_path):
     return pd.concat(dfs, ignore_index=True)
 
 
+import os
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# trajectory = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "optuna", "сlassic_GA", "GA_horizon_selected_features"]
+trajectory = ["baseline", "engineered_datetime_features", "mi_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "horizon_selected_features",]
+trajectory = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "horizon_selected_features",]
+
+
+trajectory_colors = {
+    "baseline": "#4E79A7",
+    "engineered_datetime_features": "#F28E2B",
+    "mi_features": "#E15759",
+    "spearman_features": "#76B7B2",
+    "chi_features": "#59A14F",
+    "pearson_features": "#EDC948",
+    "сlassic_GA": "#B07AA1",
+    "optuna_features": "#FF9DA7",
+    "horizon_selected_features": "#9C755F",
+}
+
+import os
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+
+
+def create_winner_rank_charts(df, winner_charts_dir):
+    os.makedirs(winner_charts_dir, exist_ok=True)
+
+    metrics_higher_better = {"r2"}
+
+    for metric in sorted(df["metric"].unique()):
+
+        df_metric = df[df["metric"] == metric].copy()
+
+        ascending = False if metric in metrics_higher_better else True
+
+        df_metric["rank"] = (
+            df_metric
+            .groupby(["dataset_name", "model"])["value"]
+            .rank(method="dense", ascending=ascending)
+            .astype(int)
+        )
+
+        rank_table = (
+            df_metric
+            .groupby(["rank", "trajectory_cols"])
+            .size()
+            .unstack(fill_value=0)
+        )
+
+        cols = trajectory[::-1]
+        rank_table = rank_table.reindex(columns=cols, fill_value=0)
+        rank_table = rank_table.sort_index()
+
+        ranks = rank_table.index.to_numpy()
+
+        group_gap = 1.2
+        bar_width = 0.9
+
+        fig = go.Figure()
+
+        tick_positions = []
+        shapes = []
+
+        x_cursor = 0.0
+
+        spacer_added = False
+
+        for r_idx, r in enumerate(ranks):
+
+            row = rank_table.loc[r]
+
+            non_zero_cols = row[row > 0].sort_values(ascending=False).index.tolist()
+
+            if len(non_zero_cols) == 0:
+                continue
+
+            start_x = x_cursor
+
+            if not spacer_added:
+                fig.add_trace(
+                    go.Bar(
+                        x=[x_cursor],
+                        y=[0],
+                        width=bar_width,
+                        marker_color="rgba(0,0,0,0)",
+                        showlegend=False,
+                        hoverinfo="skip"
+                    )
+                )
+                x_cursor += 1
+                spacer_added = True
+
+            for c in non_zero_cols:
+
+                fig.add_trace(
+                    go.Bar(
+                        x=[x_cursor],
+                        y=[row[c]],
+                        width=bar_width,
+                        name=c,
+                        marker_color=trajectory_colors.get(c, "#999999"),
+                        text=[row[c]],
+                        textposition="outside",
+                        textfont=dict(size=14),
+                        showlegend=(r_idx == 0)
+                    )
+                )
+
+                x_cursor += 1
+
+            end_x = x_cursor - 1
+
+            tick_positions.append((start_x + end_x) / 2)
+
+            if r_idx < len(ranks) - 1:
+                shapes.append(
+                    dict(
+                        type="line",
+                        x0=x_cursor - 0.5 + group_gap / 2,
+                        x1=x_cursor - 0.5 + group_gap / 2,
+                        y0=0,
+                        y1=1,
+                        xref="x",
+                        yref="paper",
+                        line=dict(color="lightgray", width=2, dash="dot")
+                    )
+                )
+
+            x_cursor += group_gap
+
+        fig.update_layout(
+            title=dict(
+                text=f"{metric.upper()} Rank Distribution",
+                x=0.5,
+                xanchor="center",
+                font=dict(size=26)
+            ),
+            barmode="overlay",
+            width=1800,
+            height=900,
+            template="plotly_white",
+            xaxis=dict(
+                title=dict(text="Rank", font=dict(size=20)),
+                tickvals=tick_positions,
+                ticktext=[str(r) for r in ranks[:len(tick_positions)]],
+                tickfont=dict(size=20),
+                automargin=True
+            ),
+            yaxis=dict(
+                title=dict(text="Count", font=dict(size=20)),
+                tickfont=dict(size=16)
+            ),
+            shapes=shapes,
+            legend=dict(
+                orientation="h",
+                y=-0.25,
+                x=0.5,
+                xanchor="center",
+                font=dict(size=14)
+            ),
+            margin=dict(l=140, r=50, t=120, b=140)
+        )
+
+        fig.write_html(
+            os.path.join(winner_charts_dir, f"{metric}_winner.html"),
+            include_plotlyjs="cdn"
+        )
+
+        rank_table.to_csv(
+            os.path.join(winner_charts_dir, f"{metric}_rank_table.csv")
+        )
+
 results_path_init = "/Users/nikitasavvin/Downloads/export_expt"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
+winner_charts_dir = os.path.join(article_materials_path, "winner_charts")
 os.makedirs(article_materials_path, exist_ok=True)
+os.makedirs(winner_charts_dir, exist_ok=True)
 
 df = load_and_merge(results_path)
 
@@ -37,10 +214,6 @@ df = df[cols_to_select]
 #     "horizon_selected_features"
 # ]
 
-# trajectory = ["baseline", "calendar_components",  "engineered_datetime_features", "stat_selected_features", "optuna", "сlassic_GA", "GA_horizon_selected_features"]
-trajectory = ["baseline", "engineered_datetime_features", "mi_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
-trajectory = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "chi_features", "pearson_features", "сlassic_GA", "optuna_features", "GA_horizon_selected_features",]
-
 
 order_list = df["trajectory_cols"].unique().tolist()
 
@@ -53,10 +226,15 @@ df.to_csv(f"{article_materials_path}/all_metrix.csv")
 
 df_long = df.melt(
     id_vars=["type", "dataset_name", "trajectory_cols", "model"],
-    value_vars=["mape", "r2"],
+    value_vars=["mape", "r2", "mae", "rmse"],
     var_name="metric",
     value_name="value"
 )
+
+create_winner_rank_charts(df=df_long, winner_charts_dir=winner_charts_dir)
+
+print(df_long)
+print(df_long.columns)
 
 out = (
     df_long.pivot_table(
@@ -78,6 +256,8 @@ out.columns.name = None
 
 mape = out[out["metric"] == "mape"].copy()
 r2 = out[out["metric"] == "r2"].copy()
+mae = out[out["metric"] == "mae"].copy()
+rmse = out[out["metric"] == "rmse"].copy()
 
 model_cols = [c for c in mape.columns if c not in ["type", "dataset", "trajectory", "metric"]]
 
@@ -97,12 +277,43 @@ r2_tmp = r2.melt(
     value_name="r2"
 )
 
+mae_tmp = mae.melt(
+    id_vars=["type", "dataset", "trajectory"],
+    value_vars=model_cols,
+    var_name="model",
+    value_name="mae"
+)
+
+rmse_tmp = rmse.melt(
+    id_vars=["type", "dataset", "trajectory"],
+    value_vars=model_cols,
+    var_name="model",
+    value_name="rmse"
+)
+
+
 best = best.merge(
     r2_tmp,
     on=["type", "dataset", "trajectory", "model"],
     how="left"
-)[["type", "dataset", "trajectory", "model", "mape", "r2"]].reset_index(drop=True)
+).merge(
+    mae_tmp,
+    on=["type", "dataset", "trajectory", "model"],
+    how="left"
+).merge(
+    rmse_tmp,
+    on=["type", "dataset", "trajectory", "model"],
+    how="left"
+)[["type", "dataset", "trajectory", "model", "mape", "r2", "mae", "rmse"]].reset_index(drop=True)
 
+
+print(best.columns.tolist())
+
+print(best[["mae", "rmse"]].head())
+
+best = best[
+    ["type", "dataset", "trajectory", "model", "mape", "r2", "mae", "rmse"]
+].reset_index(drop=True)
 
 # print(out)
 # print("="*100)
@@ -112,8 +323,6 @@ best = best.merge(
 out.to_csv(f"{article_materials_path}/all_metrix_table.csv")
 
 best.to_csv(f"{article_materials_path}/best_table.csv")
-
-
 
 
 

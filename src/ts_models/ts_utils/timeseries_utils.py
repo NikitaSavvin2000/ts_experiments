@@ -10,6 +10,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.metrics import median_absolute_error
 
 
 
@@ -151,15 +152,27 @@ def regression_metrics(true, pred):
     mae = mean_absolute_error(true, pred)
     rmse = np.sqrt(mean_squared_error(true, pred))
     r2 = r2_score(true, pred)
-    mape = np.mean(np.abs((true - pred) / np.clip(np.abs(true), 1e-8, None))) * 100
 
-    round_int = 3
+    mape = np.mean(np.abs((true - pred) / np.clip(np.abs(true), 1e-8, None))) * 100
+    smape = np.mean(2 * np.abs(pred - true) / (np.abs(true) + np.abs(pred) + 1e-8)) * 100
+    wape = np.sum(np.abs(true - pred)) / (np.sum(np.abs(true)) + 1e-8) * 100
+
+    bias = np.mean(pred - true)
+
+    medae = median_absolute_error(true, pred)
+
+    nrmse = rmse / (np.max(true) - np.min(true) + 1e-8)
 
     return {
-        "r2": float(round(r2, round_int)),
-        "mae": float(round(mae, round_int)),
-        "mape": float(round(mape, round_int)),
-        "rmse": float(round(rmse, round_int))
+        "r2": float(round(r2, 3)),
+        "mae": float(round(mae, 3)),
+        "rmse": float(round(rmse, 3)),
+        "mape": float(round(mape, 3)),
+        "smape": float(round(smape, 3)),
+        "wape": float(round(wape, 3)),
+        "bias": float(round(bias, 3)),
+        "medae": float(round(medae, 3)),
+        "nrmse": float(round(nrmse, 3))
     }
 
 
@@ -393,3 +406,36 @@ def plot_predictions(
         pass
 
     plt.close()
+
+
+def assign_end_train_start_test_date(
+        df,
+        col_time,
+        test_points,
+):
+    df = df.copy()
+    df[col_time] = pd.to_datetime(df[col_time])
+    df = df.sort_values(col_time)
+
+    start_train_date = df[col_time].min()
+
+    end_test_date = df[col_time].max()
+
+    df = df[(df[col_time] >= start_train_date) & (df[col_time] <= end_test_date)]
+
+    if test_points is None:
+        return (
+            df[col_time].max().isoformat(sep=" "),
+            df[col_time].max().isoformat(sep=" ")
+        )
+
+    if len(df) < test_points + 1:
+        raise ValueError("Not enough data for requested test_points")
+
+    start_test_date = df[col_time].iloc[-test_points]
+    end_train_date = df[df[col_time] < start_test_date][col_time].max()
+
+    return (
+        end_train_date.isoformat(sep=" "),
+        start_test_date.isoformat(sep=" ")
+    )

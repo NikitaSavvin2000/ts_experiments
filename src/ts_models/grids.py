@@ -9,6 +9,16 @@ lstm_grid = {
     "epochs": [2, 3, 5]
 }
 
+nhits_grid = {
+    "num_stacks": [2, 3],
+    "num_blocks": [1, 2],
+    "num_layers": [1, 2],
+    "layer_widths": [256, 512],
+    "dropout": [0.0, 0.1],
+    "activation": ["ReLU"],
+    "batch_size": [32],
+    "n_epochs": [5, 10]
+}
 
 xgb_grid = {
     "max_depth": [3, 5],
@@ -173,6 +183,7 @@ models_grids = {
     "DLinear": dlinear_grid,
     "TCN": tcn_grid,
     "Transformer": transformer_grid,
+    "NHiTS": nhits_grid,
 }
 
 

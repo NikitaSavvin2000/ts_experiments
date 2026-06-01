@@ -1,3 +1,7 @@
+"""
+pdm run src/runners/run_setup_models_a.py
+"""
+
 import os
 import time
 import ast
@@ -18,7 +22,7 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.setup_pipeline import SetupModel
 
-MAX_WORKERS = 2
+MAX_WORKERS = 8
 
 MESSAGES = {
     "en": {
@@ -49,7 +53,23 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 
 df_experiment_design = df_experiment_design[
     (df_experiment_design["trajectory_cols"] == "baseline")
-    ]
+]
+
+df_experiment_design_new_ds = df_experiment_design.copy()
+df_experiment_design_new_method = df_experiment_design.copy()
+
+df_to_experiment_new_ds = df_experiment_design_new_ds[df_experiment_design_new_ds["dataset_name"] == "Weather"]
+df_to_experiment_new_method = df_experiment_design_new_method[df_experiment_design_new_method["model"] == "NHiTS"]
+
+print(df_to_experiment_new_ds)
+print(df_to_experiment_new_method)
+
+df_experiment_design = pd.concat(
+    [df_to_experiment_new_ds, df_to_experiment_new_method],
+    ignore_index=True
+).drop_duplicates()
+
+print(df_experiment_design)
 
 df_ready_progress = load_and_prepare_progress(
     progress_csv_path=progress_csv_path,
@@ -58,12 +78,12 @@ df_ready_progress = load_and_prepare_progress(
 print("Уже готово")
 print(df_ready_progress)
 
-# df_to_experiment = get_pending_experiments(
-#     df_experiment_design=df_experiment_design,
-#     df_ready_progress=df_ready_progress
-# )
+df_to_experiment = get_pending_experiments(
+    df_experiment_design=df_experiment_design,
+    df_ready_progress=df_ready_progress
+)
 
-# df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
+df_to_experiment = get_pending_experiments(df_experiment_design=df_experiment_design, df_ready_progress=df_ready_progress)
 
 
 def to_list(x):
@@ -75,24 +95,8 @@ def to_list(x):
         return ast.literal_eval(x)
     return []
 
-experiment_retest =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQubvnzfbQFBoiy_Ag0rjS8G3GOX9Q3vFXf49Wf7jGEqPK7dcpjXdj67jRwJb6KdT5st2GpnvdMsvXn/pub?gid=688232135&single=true&output=csv"
-
-# DLinear	russia_elista
-# DLinear	Istanbul_Traffic_Index
-# DLinear	Air_Quality_India
-
-to_test = ["russia_elista", "Air_Quality_India"]
-
-
-df_to_experiment = pd.read_csv(experiment_retest)
-
 df_to_experiment["additional_cols"] = df_to_experiment["additional_cols"].apply(to_list)
 
-
-df_to_experiment = df_to_experiment[df_to_experiment["model"] == "DLinear"]
-df_to_experiment = df_to_experiment[
-    df_to_experiment["dataset_name"].isin(to_test)
-]
 
 
 print(df_to_experiment)
@@ -111,6 +115,9 @@ def run_experiment(experiment):
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
 
+    list_predict_points_to_test = experiment["list_predict_points_to_test"]
+    points_to_pred = max(list_predict_points_to_test)
+
     setups_pipeline = SetupModel(
         experiment=experiment,
         home_path=home_path,
@@ -118,7 +125,9 @@ def run_experiment(experiment):
         experiment_path=experiment_path,
         logger=logger,
         messages=MESSAGES,
-        logger_language=logger_language
+        logger_language=logger_language,
+        test_points=points_to_pred
+
     )
 
     setups_pipeline.init_design(df_experiment_design)

@@ -13,12 +13,13 @@ datasets_csv_dict = {
     # 'ARHENERG_ZONE1_E_PARHENER': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/ARHENERG_ZONE1_E_PARHENER.csv',
     # 'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
 
-    "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=403462504&single=true&output=csv",
-    "Istanbul_Traffic_Index": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQ9NMpg8Uc_aVvKdhg6lOCxIHtZxpwoJL2oNSpN7iQzjCrCDXrwkx23CHivbcVLtZoy-dnD4TUcJac/pub?gid=113448001&single=true&output=csv",
+    "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=442094039&single=true&output=csv",
+    "Istanbul_Traffic_Index": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6LSgQb7b1u-c_zBRhvkEA_CmNd6Cby2tlMLBwoX9GlSsUHjJvdh9Xz9zyQx5HbxQAUH2GEVrn95U7/pub?gid=2111659113&single=true&output=csv",
     "Air_Quality_India": "https://docs.google.com/spreadsheets/d/e/2PACX-1vQTTyEI6cJP1q0SIUlXa46vpBFGdCe6BuI4Y9RxvJ8ZCkSarq85wFAlox6qbcVvsZ3fdHdErmugSJ2l/pub?gid=1652276659&single=true&output=csv",
     "Daily_Climate": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-YtMLu5kDfAfr4ISYnMOulJf4IU3RNAe6vRo7adY_A4Hot6K3vWtO0HKsrAZjNng0cMQkxIxvQbp/pub?gid=81811996&single=true&output=csv",
     "NYC_Taxi_Traffic":"https://docs.google.com/spreadsheets/d/e/2PACX-1vQgq9c-tCaL3ZFDLoFvCaB-dvW1SPwO2u8RHYMGpNAzg4O0Bl-kjRaKatD2i-V2-uafFcNOKYcMytnZ/pub?gid=797724504&single=true&output=csv", # https://www.kaggle.com/datasets/julienjta/nyc-taxi-traffic
     # "NYC_Taxi_Traffic": "", # https://www.kaggle.com/datasets/fedesoriano/traffic-prediction-dataset
+   "Weather": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
 }
 
 # Климат

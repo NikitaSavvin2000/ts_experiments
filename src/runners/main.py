@@ -227,9 +227,13 @@ for _, experiment in tqdm(df_to_experiment.iterrows()):
     exp_result["elapsed_seconds"] = elapsed_seconds
 
 
-    df_result = pd.DataFrame([exp_result])
+    line_result_table_path = os.path.join(iteration_results_path, "line_result_table.csv")
 
-    df_result.to_csv(os.path.join(iteration_results_path, "line_result_table.csv"))
+    append_experiment_to_csv(experiment=exp_result, progress_csv_path=line_result_table_path)
+
+
+    # df_result = pd.DataFrame([exp_result])
+    # df_result.to_csv(line_result_table_path)
 
     ts_pipeline.df_test_pred.to_csv(os.path.join(iteration_results_path, "test_pred_norm.csv"))
     ts_pipeline.df_test_pred_not_norm.to_csv(os.path.join(iteration_results_path, "test_pred_not_norm.csv"))

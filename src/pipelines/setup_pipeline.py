@@ -10,7 +10,8 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_discreteness_interval,
                                                      generate_time_series_df,
                                                      test_method_visualize,
-                                                     calculate_test_points_predict)
+                                                     calculate_test_points_predict,
+                                                     assign_end_train_start_test_date)
 
 from src.ts_models.grids import models_grids, models_easy
 
@@ -94,7 +95,8 @@ class SetupModel:
             experiment_path,
             logger,
             messages,
-            logger_language
+            logger_language,
+            test_points,
     ):
         """
         RU: Инициализация пайплайна эксперимента (без инфраструктуры)
@@ -108,6 +110,8 @@ class SetupModel:
         self.logger = logger
 
         self.msg = MESSAGES[logger_language]
+        self.test_points=test_points
+
 
         self.set_row(experiment)
 
@@ -163,10 +167,6 @@ class SetupModel:
         self.col_time = experiment["col_time"]
         self.col_target = experiment["col_target"]
         self.additional_cols = experiment["additional_cols"]
-        self.start_train_date = experiment["start_train_date"]
-        self.end_train_date = experiment["end_train_date"]
-        self.start_test_date = experiment["start_test_date"]
-        self.end_test_date = experiment["end_test_date"]
         self.result_dir_name = experiment["result_dir_name"]
         self.predict_points = experiment["predict_points"]
         self.baseline_cols = [self.col_time, self.col_target]
@@ -179,10 +179,25 @@ class SetupModel:
         ZH: 加载数据集
         """
         try:
+
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
             self.df_init = pd.read_csv(self.dataset_csv)
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
+
+            self.last_known_data = pd.to_datetime(self.df_init[self.col_time]).max()
+            self.first_known_data = pd.to_datetime(self.df_init[self.col_time]).min()
+            self.discreteness_sec = calculate_discreteness_interval(df=self.df_init, time_column=self.col_time)
+
+            self.start_train_date = self.first_known_data
+
+            self.end_train_date, self.start_test_date = assign_end_train_start_test_date(
+                df=self.df_init,
+                col_time=self.col_time,
+                test_points=self.test_points,
+            )
+
+            self.end_test_date = self.last_known_data
 
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:

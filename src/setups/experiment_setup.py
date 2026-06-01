@@ -20,6 +20,7 @@ from src.ts_models.PatchTST_service.PatchTST_pred import PatchTST_forecast
 from src.ts_models.DLinear_service.DLinear_pred import DLinear_forecast
 from src.ts_models.TCN_service.TCN_pred import TCN_forecast
 from src.ts_models.Transformer_service.Transformer_pred import Transformer_forecast
+from src.ts_models.NHiTS_service.NHiTS_pred import NHiTS_forecast
 
 time_series_models_funcs = {
     "LSTM": LSTM_forecast,
@@ -32,11 +33,12 @@ time_series_models_funcs = {
     "Prophet": Prophet_forecast,
     # "ARIMA": ARIMA_forecast,
     # "SARIMA": SARIMA_forecast,
-    "PatchTST": PatchTST_forecast,
+    # "PatchTST": PatchTST_forecast,
     "DLinear": DLinear_forecast,
     "TCN": TCN_forecast,
     "Transformer": Transformer_forecast,
     # "ARIMAX": ARIMAX_forecast,
+    "NHiTS": NHiTS_forecast,
 }
 
 
@@ -101,11 +103,16 @@ MESSAGES = {
 
 trajectory_cols = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "horizon_selected_features",]
 
+trajectory_cols = ["baseline"]
 
-model_to_test = list(time_series_models_funcs.keys())
 
+# model_to_test = list(time_series_models_funcs.keys())
+
+
+model_to_test = ["NHiTS"]
 
 not_exogenous_models = [""]
+list_predict_points_to_test = [100, 200, 300]
 
 datasets = [
     {
@@ -114,11 +121,8 @@ datasets = [
         "col_time": "Datetime",
         "col_target": "consumption",
         "additional_cols": [],
-        "start_train_date": "2017-01-01",
-        "end_train_date": "2017-11-29",
-        "start_test_date": "2017-11-30",
-        "end_test_date": "2017-12-30",
         "predict_points": 300,
+        "list_predict_points_to_test": list_predict_points_to_test,
     },
     {
         "dataset_name": "russia_elista",
@@ -126,11 +130,9 @@ datasets = [
         "col_time": "datetime",
         "col_target": "value",
         "additional_cols": [],
-        "start_train_date": "2017-12-01",
-        "end_train_date": "2023-07-28",
-        "start_test_date": "2023-07-29",
-        "end_test_date": "2023-08-31",
         "predict_points": 300,
+        "list_predict_points_to_test": list_predict_points_to_test,
+
     },
     {
         "dataset_name": "Istanbul_Traffic_Index",
@@ -138,11 +140,9 @@ datasets = [
         "col_time": "datetime",
         "col_target": "average_traffic_index",
         "additional_cols": [],
-        "start_train_date": "2015-08-06",
-        "end_train_date": "2024-07-02",
-        "start_test_date": "2024-07-03",
-        "end_test_date": "2024-09-03",
         "predict_points": 100,
+        "list_predict_points_to_test": list_predict_points_to_test,
+
     },
     {
         "dataset_name": "NYC_Taxi_Traffic",
@@ -150,23 +150,29 @@ datasets = [
         "col_time": "timestamp",
         "col_target": "value",
         "additional_cols": [],
-        "start_train_date": "2014-07-01",
-        "end_train_date": "2015-01-01",
-        "start_test_date": "2015-01-02",
-        "end_test_date": "2015-01-21",
         "predict_points": 100,
+        "list_predict_points_to_test": list_predict_points_to_test,
+
     },
+    # {
+    #     "dataset_name": "Air_Quality_India",
+    #     "type": "Climate",
+    #     "col_time": "Timestamp",
+    #     "col_target": "PM2.5",
+    #     "additional_cols": [],
+    #     "predict_points": 300,
+    #     "list_predict_points_to_test": list_predict_points_to_test,
+    #
+    # },
     {
-        "dataset_name": "Air_Quality_India",
+        "dataset_name": "Weather",
         "type": "Climate",
-        "col_time": "Timestamp",
-        "col_target": "PM2.5",
+        "col_time": "date",
+        "col_target": "T",
         "additional_cols": [],
-        "start_train_date": "2017-11-07",
-        "end_train_date": "2022-05-03",
-        "start_test_date": "2022-05-04",
-        "end_test_date": "2022-06-04",
         "predict_points": 300,
+        "list_predict_points_to_test": list_predict_points_to_test,
+
     },
     {
         "dataset_name": "Daily_Climate",
@@ -174,11 +180,9 @@ datasets = [
         "col_time": "date",
         "col_target": "meantemp",
         "additional_cols": [],
-        "start_train_date": "2013-01-01",
-        "end_train_date": "2016-09-01",
-        "start_test_date": "2016-09-02",
-        "end_test_date": "2017-01-01",
         "predict_points": 300,
+        "list_predict_points_to_test": list_predict_points_to_test,
+
     },
 ]
 
@@ -359,12 +363,13 @@ def get_pending_experiments(df_experiment_design, df_ready_progress):
         'col_time',
         'col_target',
         'additional_cols',
-        'start_train_date',
-        'end_train_date',
-        'start_test_date',
+        # 'start_train_date',
+        # 'end_train_date',
+        # 'start_test_date',
         'predict_points',
-        'end_test_date',
-        'result_dir_name'
+        # 'end_test_date',
+        'result_dir_name',
+        "list_predict_points_to_test",
     ]
 
     compare_cols = [
@@ -486,12 +491,13 @@ def init_experiment_setup() -> pd.DataFrame:
                             "col_time": d["col_time"],
                             "col_target": d["col_target"],
                             "additional_cols": d["additional_cols"],
-                            "start_train_date": d["start_train_date"],
-                            "end_train_date": d["end_train_date"],
-                            "start_test_date": d["start_test_date"],
+                            # "start_train_date": d["start_train_date"],
+                            # "end_train_date": d["end_train_date"],
+                            # "start_test_date": d["start_test_date"],
                             "predict_points": d["predict_points"],
-                            "end_test_date": d["end_test_date"],
-                            "result_dir_name": key
+                            "list_predict_points_to_test": d["list_predict_points_to_test"],
+                            # "end_test_date": d["end_test_date"],
+                            "result_dir_name": key,
                         })
                         idx += 1
 

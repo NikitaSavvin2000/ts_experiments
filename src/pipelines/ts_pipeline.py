@@ -10,7 +10,8 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      calculate_discreteness_interval,
                                                      generate_time_series_df,
                                                      test_method_visualize,
-                                                     calculate_test_points_predict)
+                                                     calculate_test_points_predict,
+                                                     assign_end_train_start_test_date)
 import time
 from src.setups.experiment_setup import append_progress_to_csv
 
@@ -98,7 +99,9 @@ class TSExperimentPipeline:
             lag,
             params,
             trace_csv_path,
-            logger_language
+            logger_language,
+            already_selected_cols,
+            test_points,
     ):
         """
         RU: Инициализация пайплайна эксперимента (без инфраструктуры)
@@ -106,14 +109,15 @@ class TSExperimentPipeline:
         ZH: 初始化实验管道（不包含基础设施层）
         """
 
-        self.home_path = home_path
-        self.export_path = export_path
-        self.experiment_path = experiment_path
-        self.logger = logger
-        self.lag = lag
-        self.params = params
+        self.home_path=home_path
+        self.export_path=export_path
+        self.experiment_path=experiment_path
+        self.logger=logger
+        self.lag=lag
+        self.params=params
         self.trace_csv_path=trace_csv_path
-
+        self.already_selected_cols=already_selected_cols
+        self.test_points=test_points
         self.msg = MESSAGES[logger_language]
 
         self.set_row(experiment)
@@ -169,12 +173,11 @@ class TSExperimentPipeline:
         self.col_time = experiment["col_time"]
         self.col_target = experiment["col_target"]
         self.additional_cols = experiment["additional_cols"]
-        self.start_train_date = experiment["start_train_date"]
-        self.end_train_date = experiment["end_train_date"]
-        self.start_test_date = experiment["start_test_date"]
-        self.end_test_date = experiment["end_test_date"]
+        # self.start_train_date = experiment["start_train_date"]
+        # self.end_train_date = experiment["end_train_date"]
+        # self.start_test_date = experiment["start_test_date"]
+        # self.end_test_date = experiment["end_test_date"]
         self.result_dir_name = experiment["result_dir_name"]
-        self.predict_points = experiment["predict_points"]
         self.baseline_cols = [self.col_time, self.col_target]
 
         self.traces_row = experiment.copy()
@@ -192,6 +195,20 @@ class TSExperimentPipeline:
             self.df_init = pd.read_csv(self.dataset_csv)
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
+
+            self.last_known_data = pd.to_datetime(self.df_init[self.col_time]).max()
+            self.first_known_data = pd.to_datetime(self.df_init[self.col_time]).min()
+            self.discreteness_sec = calculate_discreteness_interval(df=self.df_init, time_column=self.col_time)
+
+            self.start_train_date = self.first_known_data
+
+            self.end_train_date, self.start_test_date = assign_end_train_start_test_date(
+                df=self.df_init,
+                col_time=self.col_time,
+                test_points=self.test_points,
+            )
+
+            self.end_test_date = self.last_known_data
 
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:
@@ -237,12 +254,9 @@ class TSExperimentPipeline:
         self.logger.info(self.msg["t2v_start"])
 
         try:
-            self.last_known_data = pd.to_datetime(self.df_init[self.col_time]).max()
-            self.discreteness_sec = calculate_discreteness_interval(df=self.df_init, time_column=self.col_time)
-
             self.df_real_pred = generate_time_series_df(
                 start_date=self.last_known_data,
-                n_rows=self.predict_points,
+                n_rows=self.test_points,
                 freq_seconds=self.discreteness_sec ,
                 col_time=self.col_time,
                 col_target=self.col_target,
@@ -1641,6 +1655,11 @@ class TSExperimentPipeline:
         """
         try:
 
+            if self.already_selected_cols is not None:
+                print(f"УЖЕ ВЫБРАНО!!!!!    " *5)
+                self.trajectory_cols = "already_selected"
+
+
             if self.trajectory_cols == "calendar_components":
                 self.col_for_train = self.calendar_components_cols
             elif self.trajectory_cols == "baseline":
@@ -1652,6 +1671,9 @@ class TSExperimentPipeline:
                     discreteness=self.discreteness_sec)
 
                 self.max_lag = self.test_points
+
+            elif self.trajectory_cols == "already_selected":
+                self.col_for_train = self.already_selected_cols
 
             elif self.trajectory_cols == "mi_features":
                 self.col_for_train = self.fetch_stat_select_features()
