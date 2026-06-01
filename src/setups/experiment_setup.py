@@ -107,7 +107,7 @@ model_to_test = list(time_series_models_funcs.keys())
 
 
 not_exogenous_models = [""]
-list_predict_points_to_test = [100, 200, 300]
+list_predict_points_to_test = [144, 288, 576]
 
 datasets = [
     {
