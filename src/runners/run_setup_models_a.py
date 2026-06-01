@@ -59,6 +59,7 @@ df_experiment_design_new_ds = df_experiment_design.copy()
 df_experiment_design_new_method = df_experiment_design.copy()
 
 df_to_experiment_new_ds = df_experiment_design_new_ds[df_experiment_design_new_ds["dataset_name"] == "Weather"]
+
 df_to_experiment_new_method = df_experiment_design_new_method[df_experiment_design_new_method["model"] == "NHiTS"]
 
 print(df_to_experiment_new_ds)

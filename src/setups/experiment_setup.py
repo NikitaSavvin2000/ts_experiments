@@ -103,13 +103,8 @@ MESSAGES = {
 
 trajectory_cols = ["baseline", "engineered_datetime_features", "mi_features", "spearman_features", "pearson_features", "сlassic_GA", "optuna_features", "horizon_selected_features",]
 
-trajectory_cols = ["baseline"]
+model_to_test = list(time_series_models_funcs.keys())
 
-
-# model_to_test = list(time_series_models_funcs.keys())
-
-
-model_to_test = ["NHiTS"]
 
 not_exogenous_models = [""]
 list_predict_points_to_test = [100, 200, 300]
