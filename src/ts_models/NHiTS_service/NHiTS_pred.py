@@ -15,20 +15,7 @@ warnings.filterwarnings("ignore")
 SEED = 42
 
 os.environ["PYTHONHASHSEED"] = str(SEED)
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-import torch
-
-torch.set_num_threads(1)
-torch.set_num_interop_threads(1)
-
-if not torch.cuda.is_available():
-    device = "cpu"
-else:
-    device = "cuda"
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 random.seed(SEED)
 np.random.seed(SEED)
@@ -37,9 +24,6 @@ torch.manual_seed(SEED)
 torch.set_default_dtype(torch.float32)
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
-
-if torch.cuda.is_available():
-    torch.cuda.manual_seed_all(SEED)
 
 DEFAULT_NHITS_PARAMS = {
     "num_stacks": 3,
@@ -56,15 +40,6 @@ points_per_call = 1
 
 
 def _get_pl_kwargs():
-    if torch.cuda.is_available():
-        return {
-            "accelerator": "gpu",
-            "devices": 1,
-            "enable_progress_bar": False,
-            "logger": False,
-            "num_sanity_val_steps": 0
-        }
-
     return {
         "accelerator": "cpu",
         "devices": 1,
@@ -86,8 +61,7 @@ def _infer_freq(df, time_col):
     if len(diffs) == 0:
         raise ValueError("Cannot infer frequency")
 
-    most_common = diffs.mode().iloc[0]
-    return to_offset(most_common).freqstr
+    return to_offset(diffs.mode().iloc[0]).freqstr
 
 
 def _sanitize_dataframe(df, time_col, freq, numeric_cols):
@@ -95,24 +69,16 @@ def _sanitize_dataframe(df, time_col, freq, numeric_cols):
 
     df[time_col] = pd.to_datetime(df[time_col])
 
-    df = (
-        df.sort_values(time_col)
-        .drop_duplicates(time_col)
-        .set_index(time_col)
-    )
+    df = df.sort_values(time_col).drop_duplicates(time_col).set_index(time_col)
 
-    full_index = pd.date_range(
-        start=df.index.min(),
-        end=df.index.max(),
-        freq=freq
-    )
+    full_index = pd.date_range(df.index.min(), df.index.max(), freq=freq)
 
     df = df.reindex(full_index)
 
     for c in numeric_cols:
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
-    if len(numeric_cols) > 0:
+    if numeric_cols:
         df[numeric_cols] = df[numeric_cols].interpolate(method="time").ffill().bfill()
 
     df.index.name = time_col
@@ -141,10 +107,10 @@ def NHiTS_forecast(
 ):
     cfg = params or DEFAULT_NHITS_PARAMS
 
+    exog_cols = list(col_for_train) if col_for_train else []
+
     df_train = df_train.copy()
     df_test = df_test.copy()
-
-    exog_cols = list(col_for_train) if col_for_train else []
 
     df_train[time_column] = pd.to_datetime(df_train[time_column])
     df_test[time_column] = pd.to_datetime(df_test[time_column])
@@ -165,7 +131,7 @@ def NHiTS_forecast(
     cov_train_ts = None
     cov_full_ts = None
 
-    if len(exog_cols) > 0:
+    if exog_cols:
         cov_train_ts = _build_ts(df_train, time_column, exog_cols, freq)
 
         cov_full_df = pd.concat([df_train, df_test], axis=0)
