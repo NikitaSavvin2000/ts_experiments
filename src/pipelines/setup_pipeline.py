@@ -390,6 +390,8 @@ class SetupModel:
                 raise e
 
     def run_setup_models_params(self):
+        print(f" >>>>>>>> MODEL {self.model}")
+
         try:
 
             if self.trajectory_cols == "baseline":
