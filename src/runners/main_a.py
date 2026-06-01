@@ -21,7 +21,7 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 
 
-MAX_WORKERS = 8
+MAX_WORKERS = 12
 
 
 def clear_memory():
