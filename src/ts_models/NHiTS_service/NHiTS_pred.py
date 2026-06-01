@@ -4,38 +4,29 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import tensorflow as tf
 import torch
 
 from pandas.tseries.frequencies import to_offset
-
 from darts import TimeSeries
 from darts.models import NHiTSModel
-import torch
-torch.set_num_threads(1)
-torch.set_num_interop_threads(1)
-
 
 warnings.filterwarnings("ignore")
 
 SEED = 42
 
 os.environ["PYTHONHASHSEED"] = str(SEED)
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 random.seed(SEED)
 np.random.seed(SEED)
-tf.random.set_seed(SEED)
-tf.config.experimental.enable_op_determinism()
-
 torch.manual_seed(SEED)
+
 torch.set_default_dtype(torch.float32)
+torch.set_num_threads(1)
+torch.set_num_interop_threads(1)
 
-gpus = tf.config.list_physical_devices("GPU")
-
-if gpus:
-    for gpu in gpus:
-        tf.config.experimental.set_memory_growth(gpu, True)
-
+if torch.cuda.is_available():
+    torch.cuda.manual_seed_all(SEED)
 
 DEFAULT_NHITS_PARAMS = {
     "num_stacks": 3,
@@ -55,18 +46,18 @@ def _get_pl_kwargs():
     if torch.cuda.is_available():
         return {
             "accelerator": "gpu",
-            "devices": -1
-        }
-
-    if torch.backends.mps.is_available():
-        return {
-            "accelerator": "mps",
-            "devices": 1
+            "devices": 1,
+            "enable_progress_bar": False,
+            "logger": False,
+            "num_sanity_val_steps": 0
         }
 
     return {
         "accelerator": "cpu",
-        "devices": 1
+        "devices": 1,
+        "enable_progress_bar": False,
+        "logger": False,
+        "num_sanity_val_steps": 0
     }
 
 
@@ -109,31 +100,20 @@ def _sanitize_dataframe(df, time_col, freq, numeric_cols):
         df[c] = pd.to_numeric(df[c], errors="coerce")
 
     if len(numeric_cols) > 0:
-        df[numeric_cols] = (
-            df[numeric_cols]
-            .interpolate(method="time")
-            .ffill()
-            .bfill()
-        )
+        df[numeric_cols] = df[numeric_cols].interpolate(method="time").ffill().bfill()
 
     df.index.name = time_col
     return df.reset_index()
 
 
 def _build_ts(df, time_col, value_cols, freq):
-    return (
-        TimeSeries.from_dataframe(
-            df=df,
-            time_col=time_col,
-            value_cols=value_cols,
-            fill_missing_dates=True,
-            freq=freq
-        ).astype(np.float32)
-    )
-
-
-def _make_next_time(ts):
-    return ts.end_time() + ts.freq
+    return TimeSeries.from_dataframe(
+        df=df,
+        time_col=time_col,
+        value_cols=value_cols,
+        fill_missing_dates=True,
+        freq=freq
+    ).astype(np.float32)
 
 
 def NHiTS_forecast(
@@ -152,24 +132,16 @@ def NHiTS_forecast(
     df_test = df_test.copy()
 
     exog_cols = list(col_for_train) if col_for_train else []
-    all_numeric = [col_target] + exog_cols
 
     df_train[time_column] = pd.to_datetime(df_train[time_column])
     df_test[time_column] = pd.to_datetime(df_test[time_column])
 
-    df_train = (
-        df_train.sort_values(time_column)
-        .drop_duplicates(time_column)
-    )
-
-    df_test = (
-        df_test.sort_values(time_column)
-        .drop_duplicates(time_column)
-    )
+    df_train = df_train.sort_values(time_column).drop_duplicates(time_column)
+    df_test = df_test.sort_values(time_column).drop_duplicates(time_column)
 
     freq = _infer_freq(df_train, time_column)
 
-    df_train = _sanitize_dataframe(df_train, time_column, freq, all_numeric)
+    df_train = _sanitize_dataframe(df_train, time_column, freq, [col_target] + exog_cols)
     df_test = _sanitize_dataframe(df_test, time_column, freq, exog_cols)
 
     df_train[col_target] = pd.to_numeric(df_train[col_target], errors="coerce")
@@ -177,14 +149,15 @@ def NHiTS_forecast(
 
     target_ts = _build_ts(df_train, time_column, col_target, freq)
 
+    cov_train_ts = None
+    cov_full_ts = None
+
     if len(exog_cols) > 0:
         cov_train_ts = _build_ts(df_train, time_column, exog_cols, freq)
+
         cov_full_df = pd.concat([df_train, df_test], axis=0)
         cov_full_df = cov_full_df.sort_values(time_column).drop_duplicates(time_column)
         cov_full_ts = _build_ts(cov_full_df, time_column, exog_cols, freq)
-    else:
-        cov_train_ts = None
-        cov_full_ts = None
 
     model = NHiTSModel(
         input_chunk_length=lag,
@@ -202,27 +175,11 @@ def NHiTS_forecast(
     )
 
     if cov_train_ts is not None:
-        model.fit(
-            series=target_ts,
-            past_covariates=cov_train_ts,
-            verbose=True
-        )
-
-        pred = model.predict(
-            n=len(df_test),
-            series=target_ts,
-            past_covariates=cov_full_ts
-        )
+        model.fit(series=target_ts, past_covariates=cov_train_ts, verbose=True)
+        pred = model.predict(n=len(df_test), series=target_ts, past_covariates=cov_full_ts)
     else:
-        model.fit(
-            series=target_ts,
-            verbose=True
-        )
-
-        pred = model.predict(
-            n=len(df_test),
-            series=target_ts
-        )
+        model.fit(series=target_ts, verbose=True)
+        pred = model.predict(n=len(df_test), series=target_ts)
 
     result = df_test[[time_column, col_target]].copy()
     result[col_target] = pred.values().astype(np.float32).flatten()
