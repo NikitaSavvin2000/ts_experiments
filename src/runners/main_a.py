@@ -1,4 +1,7 @@
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
 import time
 import ast
 import sys
@@ -20,15 +23,10 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 
 
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
-
 import torch
 
 torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
-
 
 home_path, export_path, experiment_path, logger = init_experiment_config()
 
