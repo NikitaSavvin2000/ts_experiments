@@ -60,7 +60,7 @@ setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a
 setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=86420863&single=true&output=csv"
 
 CPU = os.cpu_count() or 1
-MAX_WORKERS = 3
+MAX_WORKERS = 2
 MAX_IN_FLIGHT = MAX_WORKERS * 2
 
 
