@@ -6,6 +6,7 @@ import time
 import ast
 import sys
 import pandas as pd
+import gc
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -23,7 +24,7 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
-WORKERS = 8
+WORKERS = 12
 
 
 def scip_not_exogenous_models(experiment):
@@ -240,17 +241,17 @@ def run_experiment(experiment):
         #     save_filename=charts_path_ru,
         #     figsize=(16, 6)
         # )
-
-        append_experiment_to_csv(
-            experiment=experiment,
-            progress_csv_path=progress_csv_path
-        )
-
         del ts_pipeline
         gc.collect()
 
+    append_experiment_to_csv(
+        experiment=experiment,
+        progress_csv_path=progress_csv_path
+    )
 
-with ThreadPoolExecutor(max_workers=WORKERS) as executor:
-    futures = [executor.submit(run_experiment, exp) for _, exp in df_to_experiment.iterrows()]
-    for _ in tqdm(as_completed(futures), total=len(futures)):
-        pass
+
+for dataset_name, df_batch in df_to_experiment.groupby("dataset_name"):
+    with ThreadPoolExecutor(max_workers=WORKERS) as executor:
+        futures = [executor.submit(run_experiment, exp) for _, exp in df_batch.iterrows()]
+        for _ in tqdm(as_completed(futures), total=len(futures)):
+            pass
