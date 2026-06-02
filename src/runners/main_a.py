@@ -2,6 +2,9 @@ import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = ""
 import time
 import ast
 import sys
@@ -26,7 +29,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 import torch
 
 torch.set_num_threads(1)
-torch.set_num_interop_threads(1)
+
 
 home_path, export_path, experiment_path, logger = init_experiment_config()
 
