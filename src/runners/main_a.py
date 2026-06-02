@@ -5,11 +5,13 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 import time
 import ast
 import sys
 import gc
 import pandas as pd
+import multiprocessing as mp
 
 from concurrent.futures import ProcessPoolExecutor, wait, FIRST_COMPLETED
 
@@ -25,23 +27,21 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 
-
 import torch
-
 torch.set_num_threads(1)
 
 
 home_path, export_path, experiment_path, logger = init_experiment_config()
+
+results_path = os.path.join(experiment_path, "results")
+os.makedirs(results_path, exist_ok=True)
+
 
 df_experiment_design = init_experiment_setup()
 
 experiment_design_path = os.path.join(experiment_path, "experiment_design.csv")
 progress_csv_path = os.path.join(experiment_path, "progress.csv")
 trace_csv_path = os.path.join(experiment_path, "traces.csv")
-
-results_path = os.path.join(experiment_path, "results")
-
-os.makedirs(results_path, exist_ok=True)
 
 df_experiment_design.to_csv(experiment_design_path)
 
@@ -61,18 +61,20 @@ if df_to_experiment is None or df_to_experiment.empty:
 setups_lags_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=360674600&single=true&output=csv"
 setups_params_csv = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR2ObHgVx2M6a7rvS5TcIhkxCjGQh3891WcpV8EYUV3vG-FsQAbInhA3xvqCbaPD0slfot2MkBL7ZKL/pub?gid=86420863&single=true&output=csv"
 
-df_setups_lags = pd.read_csv(setups_lags_csv)
-df_setups_params = pd.read_csv(setups_params_csv)
-
 CPU = os.cpu_count() or 1
-# MAX_WORKERS = min(6, max(3, CPU // 4))
 MAX_WORKERS = 3
 MAX_IN_FLIGHT = MAX_WORKERS * 2
 
 
+def load_globals():
+    global df_setups_lags, df_setups_params
+    df_setups_lags = pd.read_csv(setups_lags_csv)
+    df_setups_params = pd.read_csv(setups_params_csv)
+
+
 def worker_init():
-    gc.enable()
-    gc.collect()
+    gc.disable()
+    load_globals()
 
 
 def run_experiment(experiment):
@@ -87,7 +89,6 @@ def run_experiment(experiment):
 
         if model in not_exogenous_models and experiment["trajectory_cols"] != "baseline":
             exp_result = experiment.copy()
-
             exp_result.update({
                 "pacf_lag": None,
                 "col_for_train": None,
@@ -109,12 +110,8 @@ def run_experiment(experiment):
                 index=False
             )
 
-            append_experiment_to_csv(
-                experiment=experiment,
-                progress_csv_path=progress_csv_path
-            )
+            append_experiment_to_csv(experiment=experiment, progress_csv_path=progress_csv_path)
 
-            gc.collect()
             return True
 
         lag_row = df_setups_lags[
@@ -130,7 +127,6 @@ def run_experiment(experiment):
             ]["best_params"]
 
         params = params_row.iloc[0] if not params_row.empty else None
-
         if params:
             params = ast.literal_eval(params)
 
@@ -191,11 +187,9 @@ def run_experiment(experiment):
             if already_selected_cols is None:
                 already_selected_cols = ts_pipeline.col_for_train
 
-            del ts_pipeline
-            del exp_result
+            del ts_pipeline, exp_result
             gc.collect()
 
-        gc.collect()
         return True
 
     except Exception:
@@ -203,9 +197,8 @@ def run_experiment(experiment):
         return False
 
 
-if __name__ == "__main__":
-
-    experiments = [exp for _, exp in df_to_experiment.iterrows()]
+def main():
+    experiments = [exp.to_dict() for _, exp in df_to_experiment.iterrows()]
 
     in_flight = set()
 
@@ -219,8 +212,7 @@ if __name__ == "__main__":
         while idx < len(experiments) or in_flight:
 
             while idx < len(experiments) and len(in_flight) < MAX_IN_FLIGHT:
-                future = executor.submit(run_experiment, experiments[idx])
-                in_flight.add(future)
+                in_flight.add(executor.submit(run_experiment, experiments[idx]))
                 idx += 1
 
             done, in_flight = wait(in_flight, return_when=FIRST_COMPLETED)
@@ -233,4 +225,7 @@ if __name__ == "__main__":
 
             gc.collect()
 
-        gc.collect()
+
+if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)
+    main()
