@@ -65,7 +65,8 @@ df_setups_lags = pd.read_csv(setups_lags_csv)
 df_setups_params = pd.read_csv(setups_params_csv)
 
 CPU = os.cpu_count() or 1
-MAX_WORKERS = min(6, max(3, CPU // 4))
+# MAX_WORKERS = min(6, max(3, CPU // 4))
+MAX_WORKERS = 3
 MAX_IN_FLIGHT = MAX_WORKERS * 2
 
 
