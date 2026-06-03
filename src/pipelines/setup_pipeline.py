@@ -207,8 +207,8 @@ class SetupModel:
 
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:
-            self.logger.error(self.msg["dataset_load_error"].format(self.id, self.dataset_name, self.dataset_csv))
-            self.logger.error(f" Func load_dataset | Model - {self.model} | {e}")
+            self.logger.error(f" Func load_dataset | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
 
             raise e
 
@@ -234,7 +234,8 @@ class SetupModel:
             self.df_test[self.col_target] = None
 
         except Exception as e:
-            self.logger.error(self.msg["split_error"].format(str(e)))
+            self.logger.error(f" Func run_split | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -261,7 +262,8 @@ class SetupModel:
 
             )
         except Exception as e:
-            self.logger.error(self.msg["t2v_error"].format(str(e)))
+            self.logger.error(f" Func prepare_future_dataframe | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -282,7 +284,8 @@ class SetupModel:
 
             self.logger.info(self.msg["t2v_success"])
         except Exception as e:
-            self.logger.error(self.msg["t2v_error"].format(str(e)))
+            self.logger.error(f" Func run_time2vec | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -313,7 +316,8 @@ class SetupModel:
                 logger=self.logger
             )
         except Exception as e:
-            self.logger.error(self.msg["pacf_error"].format(str(e)))
+            self.logger.error(f" Func run_lag_pacf | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -392,8 +396,9 @@ class SetupModel:
             return self.best_lag
 
         except Exception as e:
-                self.logger.error(self.msg["stat_select_error"].format(str(e)))
-                raise e
+                self.logger.error(f" Func run_setup_lag_by_model | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
+            raise e
 
     def run_setup_models_params(self):
         print(f" >>>>>>>> MODEL {self.model}")
@@ -425,16 +430,21 @@ class SetupModel:
 
                 metrics = None
                 try:
-                    df_pred = self.forecast_func(
-                        col_target=self.col_target,
-                        time_column=self.col_time,
-                        df_train=self.df_train,
-                        df_test=self.df_test,
-                        lag=self.pacf_lag,
-                        col_for_train=self.col_for_train,
-                        logger=self.logger,
-                        params=params
-                    )
+
+                    try:
+                        df_pred = self.forecast_func(
+                            col_target=self.col_target,
+                            time_column=self.col_time,
+                            df_train=self.df_train,
+                            df_test=self.df_test,
+                            lag=self.pacf_lag,
+                            params=params,
+                            col_for_train=self.col_for_train,
+                            logger=self.logger,
+                        )
+                    except Exception as e:
+                        self.logger.error(f" Func run_setup_models_params  df_pred | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+                        raise e
 
                     pred = df_pred[self.col_target].tolist()
 
@@ -466,7 +476,7 @@ class SetupModel:
                         best_metrics = metrics or {}
 
                 except Exception as e:
-                    self.logger.error(self.msg["stat_select_error"].format(str(e)))
+                    self.logger.error(f" Func run_setup_models_params | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
                     score = float("-inf")
 
             self.best_params = best_params
