@@ -396,7 +396,7 @@ class SetupModel:
             return self.best_lag
 
         except Exception as e:
-                self.logger.error(f" Func run_setup_lag_by_model | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+            self.logger.error(f" Func run_setup_lag_by_model | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
 
             raise e
 
