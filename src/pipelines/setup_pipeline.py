@@ -112,7 +112,6 @@ class SetupModel:
         self.msg = MESSAGES[logger_language]
         self.test_points=test_points
 
-
         self.set_row(experiment)
 
         self.df_experiment_design = None
@@ -181,10 +180,12 @@ class SetupModel:
         try:
 
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
-            self.df_init = pd.read_csv(self.dataset_csv).dropna()
+
+            self.df_init = pd.read_csv(self.dataset_csv)
 
             self.df_init = self.df_init.drop_duplicates()
             self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
+
 
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
@@ -194,6 +195,7 @@ class SetupModel:
             self.discreteness_sec = calculate_discreteness_interval(df=self.df_init, time_column=self.col_time)
 
             self.start_train_date = self.first_known_data
+
 
             self.end_train_date, self.start_test_date = assign_end_train_start_test_date(
                 df=self.df_init,

@@ -22,7 +22,7 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.setup_pipeline import SetupModel
 
-MAX_WORKERS = 8
+MAX_WORKERS = 6
 
 
 MESSAGES = {
