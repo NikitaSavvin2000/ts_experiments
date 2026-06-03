@@ -181,7 +181,11 @@ class SetupModel:
         try:
 
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
-            self.df_init = pd.read_csv(self.dataset_csv)
+            self.df_init = pd.read_csv(self.dataset_csv).dropna()
+
+            self.df_init = self.df_init.drop_duplicates()
+            self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
+
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
 
@@ -202,9 +206,9 @@ class SetupModel:
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:
             self.logger.error(self.msg["dataset_load_error"].format(self.id, self.dataset_name, self.dataset_csv))
-            raise e
+            self.logger.error(f" Func load_dataset | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
 
-        return self
+            raise e
 
     def run_split(self):
         """

@@ -17,12 +17,38 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
+# df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"]) # "Metro_Traffic"
+df_ts = pd.read_csv(datasets_csv_dict["Metro_Traffic"]) # "Metro_Traffic"
 
-col_time = "Datetime"
-col_target = "consumption"
 
-df_ts = df_ts[["Datetime", "consumption"]]
+
+# col_time = "Datetime" # date_time
+# col_target = "consumption" # traffic_volume
+
+col_time = "date_time" # date_time
+col_target = "traffic_volume" # traffic_volume
+
+df_ts = df_ts[[col_time, col_target]]
+
+total_rows = len(df_ts)
+
+null_time = df_ts[col_time].isna().sum()
+null_target = df_ts[col_target].isna().sum()
+null_any = df_ts[[col_time, col_target]].isna().any(axis=1).sum()
+
+dup_all = df_ts.duplicated().sum()
+dup_time = df_ts.duplicated(subset=[col_time]).sum()
+
+print(f"Total rows: {total_rows}")
+print(f"Missing values in '{col_time}': {null_time}")
+print(f"Missing values in '{col_target}': {null_target}")
+print(f"Rows with missing in any column: {null_any}")
+print(f"Duplicate rows (all columns): {dup_all}")
+print(f"Duplicate rows (by '{col_time}'): {dup_time}")
+
+
+df_ts = df_ts.drop_duplicates()
+df_ts = df_ts.drop_duplicates(subset=[col_time], keep="first")
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()

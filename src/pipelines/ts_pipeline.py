@@ -2,7 +2,6 @@ import os
 import pandas as pd
 
 from src.calendar_encoder.temporal_encoding import Time2Vec
-from src.ts_models.pacf_lag_selection import select_pacf_lag
 from src.ts_models.time_series_split import split_train_test
 from src.ts_models.feature_selection import stat_select_features, chi_select_features, pearson_select_features, spearman_select_features
 from src.setups.experiment_setup import time_series_models_funcs, not_exogenous_models
@@ -12,32 +11,23 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      test_method_visualize,
                                                      calculate_test_points_predict,
                                                      assign_end_train_start_test_date)
-import time
 from src.setups.experiment_setup import append_progress_to_csv
-
-from itertools import combinations
-from tqdm import tqdm
-import itertools
-from itertools import combinations
-
-import plotly.express as px
-
-import random
 
 import networkx as nx
 import plotly.express as px
 import plotly.graph_objects as go
-import random
-import random
-import random
-import numpy as np
+
 from sklearn.feature_selection import mutual_info_regression
 import optuna
 
-import random
-import time
+
 import numpy as np
 import pandas as pd
+
+import random
+import time
+import math
+from collections import defaultdict
 
 
 MESSAGES = {
@@ -173,10 +163,6 @@ class TSExperimentPipeline:
         self.col_time = experiment["col_time"]
         self.col_target = experiment["col_target"]
         self.additional_cols = experiment["additional_cols"]
-        # self.start_train_date = experiment["start_train_date"]
-        # self.end_train_date = experiment["end_train_date"]
-        # self.start_test_date = experiment["start_test_date"]
-        # self.end_test_date = experiment["end_test_date"]
         self.result_dir_name = experiment["result_dir_name"]
         self.baseline_cols = [self.col_time, self.col_target]
 
@@ -192,7 +178,11 @@ class TSExperimentPipeline:
         try:
 
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
-            self.df_init = pd.read_csv(self.dataset_csv)
+            self.df_init = pd.read_csv(self.dataset_csv).dropna()
+
+            self.df_init = self.df_init.drop_duplicates()
+            self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
+
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
 
@@ -213,9 +203,11 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:
             self.logger.error(self.msg["dataset_load_error"].format(self.id, self.dataset_name, self.dataset_csv))
+            self.logger.error(f" Func load_dataset | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
-        return self
+
 
     def run_split(self):
         """
@@ -239,7 +231,8 @@ class TSExperimentPipeline:
             self.df_test[self.col_target] = None
 
         except Exception as e:
-            self.logger.error(self.msg["split_error"].format(str(e)))
+            self.logger.error(f" Func run_split | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -263,7 +256,8 @@ class TSExperimentPipeline:
 
             )
         except Exception as e:
-            self.logger.error(self.msg["t2v_error"].format(str(e)))
+            self.logger.error(f" Func prepare_future_dataframe | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -282,9 +276,13 @@ class TSExperimentPipeline:
             self.df_t2v, self.min_val, self.max_val = t2v.encoder(df=self.df_init)
             self.df_real_pred_t2v, _, _ = t2v.encoder(df=self.df_real_pred)
 
+            self.df_t2v = self.df_t2v.dropna()
+            self.df_real_pred_t2v = self.df_real_pred_t2v.dropna()
+
             self.logger.info(self.msg["t2v_success"])
         except Exception as e:
-            self.logger.error(self.msg["t2v_error"].format(str(e)))
+            self.logger.error(f" Func run_time2vec | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self
@@ -338,7 +336,8 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["stat_select_done"])
 
         except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
+            self.logger.error(f" Func fetch_stat_select_features | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self.stat_selected_features
@@ -361,7 +360,8 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["stat_select_done"])
 
         except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
+            self.logger.error(f" Func fetch_spearman_features | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self.stat_selected_features
@@ -385,7 +385,8 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["stat_select_done"])
 
         except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
+            self.logger.error(f" Func fetch_pearson_features | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
             raise e
 
         return self.stat_selected_features
@@ -1038,16 +1039,21 @@ class TSExperimentPipeline:
 
             start_time = time.time()
 
-            df_test_pred = self.forecast_func(
-                col_target=self.col_target,
-                time_column=self.col_time,
-                df_train=self.df_train,
-                df_test=self.df_test,
-                lag=self.lag,
-                params=self.params,
-                col_for_train=list(cols),
-                logger=self.logger,
-            )
+            try:
+                self.df_test_pred = self.forecast_func(
+                    col_target=self.col_target,
+                    time_column=self.col_time,
+                    df_train=self.df_train,
+                    df_test=self.df_test,
+                    lag=self.lag,
+                    params=self.params,
+                    col_for_train=self.col_for_train,
+                    logger=self.logger,
+                )
+            except Exception as e:
+                self.logger.error(f" Func select_best_t2v_otuna | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
+                raise e
 
             execution_time = time.time() - start_time
             predict_row["pipeline_spend_time"] = execution_time
@@ -1135,10 +1141,6 @@ class TSExperimentPipeline:
             sampler_seed=42,
             startup_trials=10,
     ):
-        import random
-        import time
-        import math
-        from collections import defaultdict
 
         random.seed(sampler_seed)
 
@@ -1169,16 +1171,21 @@ class TSExperimentPipeline:
 
             start_time = time.time()
 
-            df_test_pred = self.forecast_func(
-                col_target=self.col_target,
-                time_column=self.col_time,
-                df_train=self.df_train,
-                df_test=self.df_test,
-                lag=self.lag,
-                params=self.params,
-                col_for_train=list(cols),
-                logger=self.logger,
-            )
+            try:
+                self.df_test_pred = self.forecast_func(
+                    col_target=self.col_target,
+                    time_column=self.col_time,
+                    df_train=self.df_train,
+                    df_test=self.df_test,
+                    lag=self.lag,
+                    params=self.params,
+                    col_for_train=self.col_for_train,
+                    logger=self.logger,
+                )
+            except Exception as e:
+                self.logger.error(f" Func select_best_t2v_tpe_manual | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+
+                raise e
 
             execution_time = time.time() - start_time
 
@@ -1516,16 +1523,20 @@ class TSExperimentPipeline:
 
             start_time = time.time()
 
-            df_test_pred = self.forecast_func(
-                col_target=self.col_target,
-                time_column=self.col_time,
-                df_train=self.df_train,
-                df_test=self.df_test,
-                lag=self.lag,
-                params=self.params,
-                col_for_train=list(cols),
-                logger=self.logger,
-            )
+            try:
+                self.df_test_pred = self.forecast_func(
+                    col_target=self.col_target,
+                    time_column=self.col_time,
+                    df_train=self.df_train,
+                    df_test=self.df_test,
+                    lag=self.lag,
+                    params=self.params,
+                    col_for_train=self.col_for_train,
+                    logger=self.logger,
+                )
+            except Exception as e:
+                self.logger.error(f" Func select_best_t2v_columns_сlassic_GA | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+                raise e
 
             execution_time = time.time() - start_time
             predict_row["pipeline_spend_time"] = execution_time
@@ -1711,16 +1722,20 @@ class TSExperimentPipeline:
 
                 start_time = time.time()
 
-                self.df_test_pred = self.forecast_func(
-                    col_target=self.col_target,
-                    time_column=self.col_time,
-                    df_train=self.df_train,
-                    df_test=self.df_test,
-                    lag=self.lag,
-                    params=self.params,
-                    col_for_train=self.col_for_train,
-                    logger=self.logger,
-                )
+                try:
+                    self.df_test_pred = self.forecast_func(
+                        col_target=self.col_target,
+                        time_column=self.col_time,
+                        df_train=self.df_train,
+                        df_test=self.df_test,
+                        lag=self.lag,
+                        params=self.params,
+                        col_for_train=self.col_for_train,
+                        logger=self.logger,
+                    )
+                except Exception as e:
+                    self.logger.error(f" Func run_test_predict  pred| Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+                    raise e
 
                 execution_time = time.time() - start_time
                 predict_row["pipeline_spend_time"] = execution_time
@@ -1763,7 +1778,7 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["stat_select_done"])
 
         except Exception as e:
-            self.logger.error(self.msg["stat_select_error"].format(str(e)))
+            self.logger.error(f" Func run_test_predict | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
             raise e
 
         return self
