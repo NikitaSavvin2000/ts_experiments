@@ -139,11 +139,21 @@ datasets = [
         "list_predict_points_to_test": list_predict_points_to_test,
 
     },
+    # {
+    #     "dataset_name": "NYC_Taxi_Traffic",
+    #     "type": "Traffic",
+    #     "col_time": "timestamp",
+    #     "col_target": "value",
+    #     "additional_cols": [],
+    #     "predict_points": 100,
+    #     "list_predict_points_to_test": list_predict_points_to_test,
+    #
+    # },
     {
-        "dataset_name": "NYC_Taxi_Traffic",
+        "dataset_name": "Metro_Traffic",
         "type": "Traffic",
-        "col_time": "timestamp",
-        "col_target": "value",
+        "col_time": "date_time",
+        "col_target": "traffic_volume",
         "additional_cols": [],
         "predict_points": 100,
         "list_predict_points_to_test": list_predict_points_to_test,

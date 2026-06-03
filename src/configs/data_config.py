@@ -20,6 +20,7 @@ datasets_csv_dict = {
     "NYC_Taxi_Traffic":"https://docs.google.com/spreadsheets/d/e/2PACX-1vQgq9c-tCaL3ZFDLoFvCaB-dvW1SPwO2u8RHYMGpNAzg4O0Bl-kjRaKatD2i-V2-uafFcNOKYcMytnZ/pub?gid=797724504&single=true&output=csv", # https://www.kaggle.com/datasets/julienjta/nyc-taxi-traffic
     # "NYC_Taxi_Traffic": "", # https://www.kaggle.com/datasets/fedesoriano/traffic-prediction-dataset
    "Weather": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
+    "Metro_Traffic": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSeR7Yjg4gVAUkdivDrivB1IIkOuBMyrjyydu0MF5-_TrOCroOndmY-__kQd0H_prwmfp08EDtEVdme/pub?gid=1260692357&single=true&output=csv" # https://www.kaggle.com/datasets/pooriamst/metro-interstate-traffic-volume
 }
 
 # Климат

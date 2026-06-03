@@ -59,9 +59,9 @@ df_experiment_design = df_experiment_design[
 df_experiment_design_new_ds = df_experiment_design.copy()
 df_experiment_design_new_method = df_experiment_design.copy()
 
-# df_to_experiment_new_ds = df_experiment_design_new_ds[df_experiment_design_new_ds["dataset_name"] == "Weather"]
+df_experiment_design = df_experiment_design[df_experiment_design["dataset_name"] == "Metro_Traffic"]
 
-df_experiment_design = df_experiment_design[df_experiment_design["model"] == "NHiTS"]
+# df_experiment_design = df_experiment_design[df_experiment_design["model"] == "NHiTS"]
 
 # print(df_to_experiment_new_ds)
 # print(df_to_experiment_new_method)

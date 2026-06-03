@@ -1,3 +1,7 @@
+"""
+pdm run src/ts_models/catboost_service/runners.py
+"""
+
 import logging
 import pandas as pd
 
@@ -13,12 +17,12 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
+df_ts = pd.read_csv(datasets_csv_dict["Metro_Traffic"])
 
-col_time = "Datetime"
-col_target = "consumption"
+col_time = "date_time"
+col_target = "traffic_volume"
 
-df_ts = df_ts[["Datetime", "consumption"]]
+df_ts = df_ts[[col_time, col_target]]
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()
