@@ -24,7 +24,7 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
-WORKERS = 12
+WORKERS = 8
 
 
 def scip_not_exogenous_models(experiment):
