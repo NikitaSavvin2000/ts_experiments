@@ -35,7 +35,7 @@ trajectory_colors = {
 }
 
 
-results_path_init = "/Users/nikitasavvin/Downloads/export_prod_run"
+results_path_init = "/Users/nikitasavvin/Downloads/export_prod_v2"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
 winner_charts_dir = os.path.join(article_materials_path, "winner_charts")

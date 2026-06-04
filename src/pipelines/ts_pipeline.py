@@ -1172,7 +1172,7 @@ class TSExperimentPipeline:
             start_time = time.time()
 
             try:
-                self.df_test_pred = self.forecast_func(
+                df_test_pred = self.forecast_func(
                     col_target=self.col_target,
                     time_column=self.col_time,
                     df_train=self.df_train,
@@ -1524,7 +1524,7 @@ class TSExperimentPipeline:
             start_time = time.time()
 
             try:
-                self.df_test_pred = self.forecast_func(
+                df_test_pred = self.forecast_func(
                     col_target=self.col_target,
                     time_column=self.col_time,
                     df_train=self.df_train,
