@@ -165,6 +165,7 @@ class TSExperimentPipeline:
         self.additional_cols = experiment["additional_cols"]
         self.result_dir_name = experiment["result_dir_name"]
         self.baseline_cols = [self.col_time, self.col_target]
+        self.col_for_train = []
 
         self.traces_row = experiment.copy()
         return self
@@ -1040,14 +1041,14 @@ class TSExperimentPipeline:
             start_time = time.time()
 
             try:
-                self.df_test_pred = self.forecast_func(
+                df_test_pred = self.forecast_func(
                     col_target=self.col_target,
                     time_column=self.col_time,
                     df_train=self.df_train,
                     df_test=self.df_test,
                     lag=self.lag,
                     params=self.params,
-                    col_for_train=self.col_for_train,
+                    col_for_train=cols,
                     logger=self.logger,
                 )
             except Exception as e:
@@ -1179,7 +1180,7 @@ class TSExperimentPipeline:
                     df_test=self.df_test,
                     lag=self.lag,
                     params=self.params,
-                    col_for_train=self.col_for_train,
+                    col_for_train=cols,
                     logger=self.logger,
                 )
             except Exception as e:
@@ -1314,10 +1315,10 @@ class TSExperimentPipeline:
                         if f != f2:
                             pair_stats[(f, f2)]["bad"] += 1
 
-            print(f"ITER {i} BEST {best_global[0]}")
+            print(f"ITER {i} BEST {metrics["mape"]}")
 
             self.logger.info(
-                f"ITER={i} BEST_SCORE={best_global[0]} COLS={best_global[1]}"
+                f"ITER={i} BEST_SCORE={metrics["mape"]} COLS={best_global[1]}"
             )
 
         final_cols = best_global[1]
@@ -1328,177 +1329,7 @@ class TSExperimentPipeline:
         self.logger.info(f"FINAL_MAPE={final_score}")
 
         return final_cols, final_metrics, final_pred
-    # def select_best_t2v_columns_сlassic_GA(
-    #             self,
-    #             population_size=15,
-    #             generations=3,
-    #             mutation_rate=0.3,
-    #             elite_size=5,
-    #             cache_enabled=True,
-    #             early_stopping_rounds=3,
-    #     ):
-    #     all_features = self.all_available_cols.copy()
-    #     cache = {}
-    #
-    #     X = self.df_train[all_features].fillna(0)
-    #     y = self.df_train[self.col_target].fillna(0)
-    #
-    #     def run_model(cols):
-    #         key = tuple(sorted(cols))
-    #
-    #         if cache_enabled and key in cache:
-    #             return cache[key]
-    #
-    #         predict_row = {}
-    #         predict_row["col_for_train"] = cols
-    #
-    #         start_time = time.time()
-    #
-    #         df_test_pred = self.forecast_func(
-    #             col_target=self.col_target,
-    #             time_column=self.col_time,
-    #             df_train=self.df_train,
-    #             df_test=self.df_test,
-    #             lag=self.lag,
-    #             params=self.params,
-    #             col_for_train=list(cols),
-    #             logger=self.logger,
-    #         )
-    #
-    #         execution_time = time.time() - start_time
-    #         predict_row["pipeline_spend_time"] = execution_time
-    #         predict_row["model_params"] = self.params
-    #         predict_row["lag"] = self.lag
-    #
-    #         true = self.df_eval[self.col_target].tolist()
-    #         pred = df_test_pred[self.col_target].tolist()
-    #
-    #         metrics = regression_metrics(true=true, pred=pred)
-    #
-    #         predict_row = {**predict_row, **metrics}
-    #         trace_end = {**predict_row, **self.traces_row}
-    #         append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
-    #
-    #         score = metrics.get("mape", float("inf"))
-    #         score += 0.001 * len(cols)
-    #
-    #         res = (score, metrics, df_test_pred)
-    #
-    #         if cache_enabled:
-    #             cache[key] = res
-    #
-    #         return res
-    #
-    #     def init_population():
-    #         population = []
-    #
-    #         for _ in range(population_size):
-    #             k = random.randint(2, max(3, len(all_features) // 5))
-    #             individual = random.sample(all_features, k)
-    #             population.append(individual)
-    #
-    #         return population
-    #
-    #     def crossover(p1, p2):
-    #         if random.random() < 0.5:
-    #             cut = random.randint(1, min(len(p1), len(p2)))
-    #             child = p1[:cut] + p2[cut:]
-    #         else:
-    #             child = list(set(p1 + p2))
-    #
-    #         return list(dict.fromkeys(child))
-    #
-    #     def mutate(individual):
-    #         individual = individual.copy()
-    #
-    #         if random.random() < mutation_rate:
-    #
-    #             if len(individual) > 2 and random.random() < 0.5:
-    #                 individual.remove(random.choice(individual))
-    #
-    #             else:
-    #                 candidates = list(set(all_features) - set(individual))
-    #
-    #                 if candidates:
-    #                     individual.append(random.choice(candidates))
-    #
-    #         return list(dict.fromkeys(individual))
-    #
-    #     def evaluate_population(population):
-    #         results = []
-    #
-    #         for individual in population:
-    #             score, metrics, pred = run_model(individual)
-    #             results.append((individual, score, metrics, pred))
-    #
-    #         results.sort(key=lambda x: x[1])
-    #
-    #         return results
-    #
-    #     population = init_population()
-    #
-    #     best_individual = None
-    #     best_score = float("inf")
-    #     best_metrics = None
-    #     best_pred = None
-    #
-    #     no_improve_rounds = 0
-    #
-    #     for gen in range(generations):
-    #
-    #         scored = evaluate_population(population)
-    #
-    #         current_best_individual = scored[0][0]
-    #         current_best_score = scored[0][1]
-    #         current_best_metrics = scored[0][2]
-    #         current_best_pred = scored[0][3]
-    #
-    #         if current_best_score < best_score:
-    #
-    #             best_individual = current_best_individual
-    #             best_score = current_best_score
-    #             best_metrics = current_best_metrics
-    #             best_pred = current_best_pred
-    #
-    #             no_improve_rounds = 0
-    #
-    #         else:
-    #             no_improve_rounds += 1
-    #
-    #         self.logger.info(
-    #             f"GEN={gen} BEST_MAPE={best_score} NO_IMPROVE={no_improve_rounds}"
-    #         )
-    #
-    #         if no_improve_rounds >= early_stopping_rounds:
-    #             self.logger.info(
-    #                 f"EARLY STOPPING AT GENERATION {gen}"
-    #             )
-    #             break
-    #
-    #         elite = [x[0] for x in scored[:elite_size]]
-    #
-    #         new_population = elite.copy()
-    #
-    #         while len(new_population) < population_size:
-    #
-    #             p1 = random.choice(elite)
-    #             p2 = random.choice(elite)
-    #
-    #             child = crossover(p1, p2)
-    #             child = mutate(child)
-    #
-    #             new_population.append(child)
-    #
-    #         population = new_population
-    #
-    #     final_cols = best_individual
-    #
-    #     final_score, final_metrics, final_pred = run_model(final_cols)
-    #
-    #     self.logger.info(f"FINAL_COLS={final_cols}")
-    #     self.logger.info(f"FINAL_MAPE={final_score}")
-    #
-    #     return final_cols, final_metrics, final_pred
+
 
 
     def select_best_t2v_columns_сlassic_GA(
@@ -1531,7 +1362,7 @@ class TSExperimentPipeline:
                     df_test=self.df_test,
                     lag=self.lag,
                     params=self.params,
-                    col_for_train=self.col_for_train,
+                    col_for_train=cols,
                     logger=self.logger,
                 )
             except Exception as e:
@@ -1553,6 +1384,7 @@ class TSExperimentPipeline:
             predict_row = {**predict_row, **metrics}
 
             trace_end = {**predict_row, **self.traces_row}
+
             append_progress_to_csv(
                 progress_row=trace_end,
                 progress_csv_path=self.trace_csv_path

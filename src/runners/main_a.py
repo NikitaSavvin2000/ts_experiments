@@ -24,8 +24,43 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
-WORKERS = 8
+WORKERS = 1
 
+import os
+import random
+import numpy as np
+import torch
+import tensorflow as tf
+
+def init_deterministic(seed: int = 42):
+
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
+    os.environ["TF_DETERMINISTIC_OPS"] = "1"
+    os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+
+    import random
+    import numpy as np
+    import torch
+    import tensorflow as tf
+
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
+
+    tf.random.set_seed(seed)
+    tf.config.experimental.enable_op_determinism()
+
+init_deterministic(42)
 
 def scip_not_exogenous_models(experiment):
     iteration_results_path = os.path.join(results_path, experiment["result_dir_name"])
@@ -91,6 +126,20 @@ df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
     df_ready_progress=df_ready_progress
 )
+
+
+# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "morocco_zone_1"]
+# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "CatBoost"]
+#
+#
+# # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
+# test_trajectory_cols = [ "horizon_selected_features"]
+#
+#
+# df_to_experiment = df_to_experiment[
+#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+# ]
+
 
 if df_to_experiment is None or df_to_experiment.empty:
     logger.info("All experiments completed")
