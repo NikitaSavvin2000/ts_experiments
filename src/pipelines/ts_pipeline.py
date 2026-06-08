@@ -183,7 +183,14 @@ class TSExperimentPipeline:
 
             self.df_init = self.df_init.drop_duplicates()
             self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
-            self.df_init = self.df_init.replace([np.inf, -np.inf], np.nan).astype("float64")
+
+            cols = self.df_init.columns.drop(self.col_time)
+
+            self.df_init[cols] = (
+                self.df_init[cols]
+                .replace([np.inf, -np.inf], np.nan)
+                .astype("float64")
+            )
 
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
