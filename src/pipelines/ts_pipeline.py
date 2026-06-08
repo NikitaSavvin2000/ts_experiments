@@ -183,6 +183,7 @@ class TSExperimentPipeline:
 
             self.df_init = self.df_init.drop_duplicates()
             self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
+            self.df_init = self.df_init.replace([np.inf, -np.inf], np.nan).astype("float64")
 
             self.existing_cols = [c for c in self.cols_to_select if c in self.df_init.columns]
             self.df_init = self.df_init[self.existing_cols]
@@ -1610,7 +1611,7 @@ class TSExperimentPipeline:
             self.logger.info(self.msg["stat_select_done"])
 
         except Exception as e:
-            self.logger.error(f" Func run_test_predict | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
+            self.logger.error(f" Func run_test_predict | Model - {self.model} | Dataset - { self.dataset_name} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
             raise e
 
         return self

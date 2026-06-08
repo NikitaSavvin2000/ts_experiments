@@ -35,7 +35,7 @@ trajectory_colors = {
 }
 
 
-results_path_init = "/Users/nikitasavvin/Downloads/export_prod_v2"
+results_path_init = "/Users/nikitasavvin/Downloads/export_prod_run"
 results_path = f"{results_path_init}/results"
 article_materials_path = os.path.join(results_path_init, "article_materials")
 winner_charts_dir = os.path.join(article_materials_path, "winner_charts")
@@ -43,39 +43,188 @@ os.makedirs(article_materials_path, exist_ok=True)
 os.makedirs(winner_charts_dir, exist_ok=True)
 
 
+# def create_winner_rank_charts(df, winner_charts_dir):
+#     os.makedirs(winner_charts_dir, exist_ok=True)
+#
+#     metrics_higher_better = {"r2"}
+#
+#     for metric in sorted(df["metric"].unique()):
+#
+#         df_metric = df[df["metric"] == metric].copy()
+#
+#         ascending = False if metric in metrics_higher_better else True
+#
+#         df_metric["rank"] = (
+#             df_metric
+#             .groupby(["dataset_name", "model"])["value"]
+#             .rank(method="dense", ascending=ascending)
+#             .astype(int)
+#         )
+#
+#         rank_table = (
+#             df_metric
+#             .groupby(["rank", "trajectory_cols"])
+#             .size()
+#             .unstack(fill_value=0)
+#         )
+#
+#         cols = trajectory[::-1]
+#         rank_table = rank_table.reindex(columns=cols, fill_value=0)
+#         rank_table = rank_table.sort_index()
+#
+#         ranks = rank_table.index.to_numpy()
+#
+#         group_gap = 1.2
+#         bar_width = 0.9
+#
+#         fig = go.Figure()
+#
+#         tick_positions = []
+#         shapes = []
+#
+#         x_cursor = 0.0
+#
+#         spacer_added = False
+#
+#         for r_idx, r in enumerate(ranks):
+#
+#             row = rank_table.loc[r]
+#
+#             non_zero_cols = row[row > 0].sort_values(ascending=False).index.tolist()
+#
+#             if len(non_zero_cols) == 0:
+#                 continue
+#
+#             start_x = x_cursor
+#
+#             if not spacer_added:
+#                 fig.add_trace(
+#                     go.Bar(
+#                         x=[x_cursor],
+#                         y=[0],
+#                         width=bar_width,
+#                         marker_color="rgba(0,0,0,0)",
+#                         showlegend=False,
+#                         hoverinfo="skip"
+#                     )
+#                 )
+#                 x_cursor += 1
+#                 spacer_added = True
+#
+#             for c in non_zero_cols:
+#
+#                 fig.add_trace(
+#                     go.Bar(
+#                         x=[x_cursor],
+#                         y=[row[c]],
+#                         width=bar_width,
+#                         name=c,
+#                         marker_color=trajectory_colors.get(c, "#999999"),
+#                         text=[row[c]],
+#                         textposition="outside",
+#                         textfont=dict(size=14),
+#                         showlegend=(r_idx == 0)
+#                     )
+#                 )
+#
+#                 x_cursor += 1
+#
+#             end_x = x_cursor - 1
+#
+#             tick_positions.append((start_x + end_x) / 2)
+#
+#             if r_idx < len(ranks) - 1:
+#                 shapes.append(
+#                     dict(
+#                         type="line",
+#                         x0=x_cursor - 0.5 + group_gap / 2,
+#                         x1=x_cursor - 0.5 + group_gap / 2,
+#                         y0=0,
+#                         y1=1,
+#                         xref="x",
+#                         yref="paper",
+#                         line=dict(color="lightgray", width=2, dash="dot")
+#                     )
+#                 )
+#
+#             x_cursor += group_gap
+#
+#         fig.update_layout(
+#             title=dict(
+#                 text=f"{metric.upper()} Rank Distribution",
+#                 x=0.5,
+#                 xanchor="center",
+#                 font=dict(size=26)
+#             ),
+#             barmode="overlay",
+#             width=1800,
+#             height=900,
+#             template="plotly_white",
+#             xaxis=dict(
+#                 title=dict(text="Rank", font=dict(size=20)),
+#                 tickvals=tick_positions,
+#                 ticktext=[str(r) for r in ranks[:len(tick_positions)]],
+#                 tickfont=dict(size=20),
+#                 automargin=True
+#             ),
+#             yaxis=dict(
+#                 title=dict(text="Count", font=dict(size=20)),
+#                 tickfont=dict(size=16)
+#             ),
+#             shapes=shapes,
+#             legend=dict(
+#                 orientation="h",
+#                 y=-0.25,
+#                 x=0.5,
+#                 xanchor="center",
+#                 font=dict(size=14)
+#             ),
+#             margin=dict(l=140, r=50, t=120, b=140)
+#         )
+#
+#         fig.write_html(
+#             os.path.join(winner_charts_dir, f"{metric}_winner.html"),
+#             include_plotlyjs="cdn"
+#         )
+#
+#         rank_table.to_csv(
+#             os.path.join(winner_charts_dir, f"{metric}_rank_table.csv")
+#         )
+
+
 def create_winner_rank_charts(df, winner_charts_dir):
+    import os
+    import plotly.graph_objects as go
+
     os.makedirs(winner_charts_dir, exist_ok=True)
 
     metrics_higher_better = {"r2"}
 
     for metric in sorted(df["metric"].unique()):
-
         df_metric = df[df["metric"] == metric].copy()
 
-        ascending = False if metric in metrics_higher_better else True
+        ascending = metric not in metrics_higher_better
 
         df_metric["rank"] = (
             df_metric
-            .groupby(["dataset_name", "model"])["value"]
+            .groupby(["dataset_name", "model", "points_to_pred"])["value"]
             .rank(method="dense", ascending=ascending)
             .astype(int)
         )
 
         rank_table = (
             df_metric
-            .groupby(["rank", "trajectory_cols"])
+            .groupby(["rank", "trajectory_cols", "points_to_pred"])
             .size()
+            .groupby(level=["rank", "trajectory_cols"])
+            .sum()
             .unstack(fill_value=0)
         )
 
         cols = trajectory[::-1]
-        rank_table = rank_table.reindex(columns=cols, fill_value=0)
-        rank_table = rank_table.sort_index()
+        rank_table = rank_table.reindex(columns=cols, fill_value=0).sort_index()
 
         ranks = rank_table.index.to_numpy()
-
-        group_gap = 1.2
-        bar_width = 0.9
 
         fig = go.Figure()
 
@@ -83,16 +232,15 @@ def create_winner_rank_charts(df, winner_charts_dir):
         shapes = []
 
         x_cursor = 0.0
-
         spacer_added = False
+        group_gap = 1.2
+        bar_width = 0.9
 
         for r_idx, r in enumerate(ranks):
-
             row = rank_table.loc[r]
-
             non_zero_cols = row[row > 0].sort_values(ascending=False).index.tolist()
 
-            if len(non_zero_cols) == 0:
+            if not non_zero_cols:
                 continue
 
             start_x = x_cursor
@@ -112,7 +260,6 @@ def create_winner_rank_charts(df, winner_charts_dir):
                 spacer_added = True
 
             for c in non_zero_cols:
-
                 fig.add_trace(
                     go.Bar(
                         x=[x_cursor],
@@ -126,11 +273,9 @@ def create_winner_rank_charts(df, winner_charts_dir):
                         showlegend=(r_idx == 0)
                     )
                 )
-
                 x_cursor += 1
 
             end_x = x_cursor - 1
-
             tick_positions.append((start_x + end_x) / 2)
 
             if r_idx < len(ranks) - 1:
@@ -200,7 +345,6 @@ def load_and_merge(results_path):
         return pd.DataFrame()
     return pd.concat(dfs, ignore_index=True)
 
-import pandas as pd
 
 
 def prepare_article_table(
@@ -287,7 +431,7 @@ df.to_csv(f"{article_materials_path}/all_metrix.csv")
 
 
 df_long = df.melt(
-    id_vars=["type", "dataset_name", "trajectory_cols", "model"],
+    id_vars=["type", "dataset_name", "trajectory_cols", "points_to_pred", "model"],
     value_vars=["mape", "r2", "mae", "rmse"],
     var_name="metric",
     value_name="value"

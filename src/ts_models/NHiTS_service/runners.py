@@ -14,19 +14,18 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
                                                      generate_time_series_df,
                                                      test_method_visualize)
 
-
 logger = logging.getLogger(__name__)
 
 # df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"]) # "Metro_Traffic"
-df_ts = pd.read_csv(datasets_csv_dict["Metro_Traffic"]) # "Metro_Traffic"
+df_ts = pd.read_csv(datasets_csv_dict["Weather"]) # "Metro_Traffic"
 
 
 
 # col_time = "Datetime" # date_time
 # col_target = "consumption" # traffic_volume
 
-col_time = "date_time" # date_time
-col_target = "traffic_volume" # traffic_volume
+col_time = "date" # date_time
+col_target = "T" # traffic_volume
 
 df_ts = df_ts[[col_time, col_target]]
 
