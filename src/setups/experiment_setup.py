@@ -40,6 +40,20 @@ time_series_models_funcs = {
     # "ARIMAX": ARIMAX_forecast,
     "NHiTS": NHiTS_forecast,
 }
+time_series_models = [
+    "LinearRegression",
+    "SVR",
+    "RandomForest",
+    "XGBoost",
+    "LightGBM",
+    "CatBoost",
+    "Prophet",
+    "LSTM",
+    "TCN",
+    "Transformer",
+    "DLinear",
+    "NHiTS"
+]
 
 
 logging.basicConfig(level=logging.INFO)

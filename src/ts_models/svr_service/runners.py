@@ -1,3 +1,6 @@
+"""
+pdm run src/ts_models/svr_service/runners.py
+"""
 import logging
 import pandas as pd
 
@@ -13,12 +16,14 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
+df_ts = pd.read_csv(datasets_csv_dict["russia_elista"])
 
-col_time = "Datetime"
-col_target = "consumption"
+print(df_ts.columns)
 
-df_ts = df_ts[["Datetime", "consumption"]]
+col_time = "datetime"
+col_target = "value"
+
+df_ts = df_ts[[col_time, col_target]]
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()
@@ -28,7 +33,7 @@ discreteness_sec = calculate_discreteness_interval(df=df_ts, time_column=col_tim
 t2v = Time2Vec(col_time=col_time, col_target=col_target)
 df_ts_t2v, min_val, ax_val = t2v.encoder(df=df_ts)
 
-test_points = 300
+test_points = 576
 predict_points = 300
 
 df_real_pred = generate_time_series_df(
