@@ -7,6 +7,12 @@ from src.setups.experiment_setup import datasets
 from src.configs.data_config import datasets_csv_dict
 from src.ts_models.ts_utils.timeseries_utils import calculate_discreteness_interval
 
+csv_Metro_Traffic = datasets_csv_dict["Metro_Traffic"]
+
+df_Metro_Traffic = pd.read_csv(csv_Metro_Traffic)
+
+print(df_Metro_Traffic)
+
 
 ru_article_datasets = ["russia_elista", "Weather", "Metro_Traffic"]
 
