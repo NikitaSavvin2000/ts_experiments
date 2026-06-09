@@ -186,8 +186,8 @@ class TSExperimentPipeline:
 
             cols = self.df_init.columns.drop(self.col_time)
 
-            self.df_init[cols] = (
-                self.df_init[cols]
+            self.df_init[self.col_target] = (
+                self.df_init[self.col_target]
                 .replace([np.inf, -np.inf], np.nan)
                 .astype("float64")
             )
