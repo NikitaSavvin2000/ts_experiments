@@ -162,8 +162,7 @@ def NHiTS_forecast(
 
     result = df_test[[time_column, col_target]].copy()
     pred_flatten = pred.values().astype(np.float32).flatten()
-    print("="*100)
-    print(pred_flatten)
+
     result[col_target] = pred_flatten
 
     return result
