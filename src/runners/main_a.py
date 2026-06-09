@@ -24,7 +24,7 @@ from config import logger_language
 from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
-WORKERS = 1
+WORKERS = 8
 
 import os
 import random
