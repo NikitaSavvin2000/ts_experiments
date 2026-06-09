@@ -211,9 +211,7 @@ class TSExperimentPipeline:
 
             self.logger.info(self.msg["dataset_load_success"].format(self.id, self.dataset_name))
         except Exception as e:
-            self.logger.error(self.msg["dataset_load_error"].format(self.id, self.dataset_name, self.dataset_csv))
             self.logger.error(f" Func load_dataset | Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
-
             raise e
 
 
