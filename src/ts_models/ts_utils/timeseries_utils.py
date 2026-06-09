@@ -149,6 +149,14 @@ def regression_metrics(true, pred):
     true = np.array(true)
     pred = np.array(pred)
 
+    mask = pd.isna(pred)
+
+    if mask.all():
+        return {}
+
+    if mask.any() and (~mask).any():
+        return {}
+
     mae = mean_absolute_error(true, pred)
     rmse = np.sqrt(mean_squared_error(true, pred))
     r2 = r2_score(true, pred)

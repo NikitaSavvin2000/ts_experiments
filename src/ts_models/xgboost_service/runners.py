@@ -23,7 +23,7 @@ df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
 col_time = "Datetime"
 col_target = "consumption"
 
-df_ts = df_ts[["Datetime", "consumption"]]
+df_ts = df_ts[[col_time, col_target]]
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()
