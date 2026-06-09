@@ -189,7 +189,8 @@ class Time2Vec:
 
         normalized_df = pd.DataFrame(normalized_dates, columns=col_vec + diff_cols)
         normalized_df[self.col_target] = self.normalize_column(normalized_df[self.col_target], min_val, max_val)
-        normalized_df = normalized_df.fillna("None")
+        cols = [c for c in normalized_df.columns if c != self.col_time]
+        normalized_df[cols] = normalized_df[cols].apply(pd.to_numeric, errors="coerce").astype("float64")
 
         return normalized_df, min_val, max_val
 
