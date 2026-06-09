@@ -184,7 +184,6 @@ class TSExperimentPipeline:
             self.df_init = self.df_init.drop_duplicates()
             self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
 
-            cols = self.df_init.columns.drop(self.col_time)
 
             self.df_init[self.col_target] = (
                 self.df_init[self.col_target]
