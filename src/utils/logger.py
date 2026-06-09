@@ -121,14 +121,14 @@ def get_logger(
         console_handler.setLevel(logging.INFO)
         console_handler.setFormatter(MoscowFormatter())
 
-        excel_handler = ExcelLogHandler(log_dir)
-        excel_handler.setLevel(logging.INFO)
+        # excel_handler = ExcelLogHandler(log_dir)
+        # excel_handler.setLevel(logging.INFO)
 
         csv_handler = CSVLogHandler(log_dir)
         csv_handler.setLevel(logging.INFO)
 
         logger.addHandler(console_handler)
-        logger.addHandler(excel_handler)
+        # logger.addHandler(excel_handler)
         logger.addHandler(csv_handler)
 
     return logger
