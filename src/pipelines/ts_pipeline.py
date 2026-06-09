@@ -181,6 +181,8 @@ class TSExperimentPipeline:
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
             self.df_init = pd.read_csv(self.dataset_csv).dropna()
 
+            self.df_init = self.df_init[[self.col_time, self.col_target]]
+
             self.df_init = self.df_init.drop_duplicates()
             self.df_init = self.df_init.drop_duplicates(subset=[self.col_time], keep="first")
 
