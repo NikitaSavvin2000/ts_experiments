@@ -134,11 +134,21 @@ datasets = [
         "predict_points": 300,
         "list_predict_points_to_test": list_predict_points_to_test,
     },
+    # {
+    #     "dataset_name": "russia_elista",
+    #     "type": "Energy",
+    #     "col_time": "datetime",
+    #     "col_target": "value",
+    #     "additional_cols": [],
+    #     "predict_points": 300,
+    #     "list_predict_points_to_test": list_predict_points_to_test,
+    #
+    # },
     {
-        "dataset_name": "russia_elista",
+        "dataset_name": "russia_amur_region",
         "type": "Energy",
         "col_time": "datetime",
-        "col_target": "value",
+        "col_target": "VC_факт",
         "additional_cols": [],
         "predict_points": 300,
         "list_predict_points_to_test": list_predict_points_to_test,
@@ -195,15 +205,25 @@ datasets = [
 
     },
     {
-        "dataset_name": "Daily_Climate",
+        "dataset_name": "Weather_water_temp",
         "type": "Climate",
         "col_time": "date",
-        "col_target": "meantemp",
+        "col_target": "H2OC",
         "additional_cols": [],
         "predict_points": 300,
         "list_predict_points_to_test": list_predict_points_to_test,
 
     },
+    # {
+    #     "dataset_name": "Daily_Climate",
+    #     "type": "Climate",
+    #     "col_time": "date",
+    #     "col_target": "meantemp",
+    #     "additional_cols": [],
+    #     "predict_points": 300,
+    #     "list_predict_points_to_test": list_predict_points_to_test,
+    #
+    # },
 ]
 
 

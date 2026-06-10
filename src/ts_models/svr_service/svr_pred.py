@@ -31,8 +31,7 @@ def SVR_forecast(
 
     logger.info("START SVR_forecast")
 
-    df_train = df_train.copy()
-    df_test = df_test.copy()
+    print(df_train)
 
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
@@ -99,10 +98,6 @@ def SVR_forecast(
         n_features = len(use_features)
 
     df_test_values = df_test[test_features].replace([np.inf, -np.inf], np.nan).astype(np.float64)
-
-    if df_test_values.isna().any().any():
-        logger.error("NaN in df_test features")
-        raise ValueError("df_test contains NaN after preprocessing")
 
     x_input = create_x_input(
         df_train[test_features].astype(np.float64),

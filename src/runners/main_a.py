@@ -25,7 +25,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-WORKERS = 1
+WORKERS = 8
 
 import os
 import random
@@ -137,17 +137,17 @@ df_to_experiment = get_pending_experiments(
 )
 
 
-df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Daily_Climate"]
-df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
-#
-#
-# # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-test_trajectory_cols = ["horizon_selected_features"]
-#
-#
-df_to_experiment = df_to_experiment[
-    df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
-]
+# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Daily_Climate"]
+# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
+# #
+# #
+# # # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
+# test_trajectory_cols = ["horizon_selected_features"]
+# #
+# #
+# df_to_experiment = df_to_experiment[
+#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+# ]
 
 
 if df_to_experiment is None or df_to_experiment.empty:
@@ -171,16 +171,24 @@ def run_experiment(experiment):
     dataset_name = experiment["dataset_name"]
     trajectory = experiment["trajectory_cols"]
 
+
+    if dataset_name == "Weather_water_temp":
+        dataset_name_monkey = "Weather"
+    elif dataset_name == "russia_amur_region":
+            dataset_name_monkey = "russia_elista"
+    else:
+        dataset_name_monkey = dataset_name
+
     lag_filtered = df_setups_lags.loc[
         (df_setups_lags["model"] == model) &
-        (df_setups_lags["dataset_name"] == dataset_name),
+        (df_setups_lags["dataset_name"] == dataset_name_monkey),
         "best_lag"
     ]
     lag = lag_filtered.iloc[0] if not lag_filtered.empty else None
 
     params_filtered = df_setups_params.loc[
         (df_setups_params["model"] == model) &
-        (df_setups_params["dataset_name"] == dataset_name),
+        (df_setups_params["dataset_name"] == dataset_name_monkey),
         "best_params"
     ]
     params = params_filtered.iloc[0] if not params_filtered.empty else None

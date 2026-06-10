@@ -11,7 +11,8 @@ datasets_csv_dict = {
 
     # 'DEKENERG_ZONE2_S_PEVRAOBL': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PEVRAOBL.csv',
     # 'ARHENERG_ZONE1_E_PARHENER': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/ARHENERG_ZONE1_E_PARHENER.csv',
-    # 'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
+    'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
+    'russia_amur_region': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
 
     "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=442094039&single=true&output=csv",
     "Istanbul_Traffic_Index": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6LSgQb7b1u-c_zBRhvkEA_CmNd6Cby2tlMLBwoX9GlSsUHjJvdh9Xz9zyQx5HbxQAUH2GEVrn95U7/pub?gid=2111659113&single=true&output=csv",
@@ -19,7 +20,8 @@ datasets_csv_dict = {
     "Daily_Climate": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6-YtMLu5kDfAfr4ISYnMOulJf4IU3RNAe6vRo7adY_A4Hot6K3vWtO0HKsrAZjNng0cMQkxIxvQbp/pub?gid=81811996&single=true&output=csv",
     "NYC_Taxi_Traffic":"https://docs.google.com/spreadsheets/d/e/2PACX-1vQgq9c-tCaL3ZFDLoFvCaB-dvW1SPwO2u8RHYMGpNAzg4O0Bl-kjRaKatD2i-V2-uafFcNOKYcMytnZ/pub?gid=797724504&single=true&output=csv", # https://www.kaggle.com/datasets/julienjta/nyc-taxi-traffic
     # "NYC_Taxi_Traffic": "", # https://www.kaggle.com/datasets/fedesoriano/traffic-prediction-dataset
-   "Weather": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
+    "Weather": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
+    "Weather_water_temp": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
     "Metro_Traffic": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSeR7Yjg4gVAUkdivDrivB1IIkOuBMyrjyydu0MF5-_TrOCroOndmY-__kQd0H_prwmfp08EDtEVdme/pub?gid=1260692357&single=true&output=csv" # https://www.kaggle.com/datasets/pooriamst/metro-interstate-traffic-volume
 }
 
