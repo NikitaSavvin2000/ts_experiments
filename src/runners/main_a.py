@@ -25,7 +25,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-WORKERS = 6
+WORKERS = 1
 
 import os
 import random
@@ -137,19 +137,17 @@ df_to_experiment = get_pending_experiments(
 )
 
 
-# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "morocco_zone_1"]
-# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "NHiTS"]
-# #
-# #
-# # # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-# test_trajectory_cols = ["optuna_features"]
-# #
-# #
-# df_to_experiment = df_to_experiment[
-#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
-# ]
-
-# morocco_zone_1 NHiTS engineered_datetime_features
+df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Daily_Climate"]
+df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
+#
+#
+# # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
+test_trajectory_cols = ["horizon_selected_features"]
+#
+#
+df_to_experiment = df_to_experiment[
+    df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+]
 
 
 if df_to_experiment is None or df_to_experiment.empty:

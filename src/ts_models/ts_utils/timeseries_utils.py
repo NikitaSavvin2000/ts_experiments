@@ -152,10 +152,31 @@ def regression_metrics(true, pred):
     mask = pd.isna(pred)
 
     if mask.all():
-        return {}
+        return {
+            "r2": float("inf"),
+            "mae": float("inf"),
+            "rmse": float("inf"),
+            "mape": float("inf"),
+            "smape": float("inf"),
+            "wape": float("inf"),
+            "bias": float("inf"),
+            "medae": float("inf"),
+            "nrmse": float("inf")
+        }
+
 
     if mask.any() and (~mask).any():
-        return {}
+        return {
+            "r2": float("inf"),
+            "mae": float("inf"),
+            "rmse": float("inf"),
+            "mape": float("inf"),
+            "smape": float("inf"),
+            "wape": float("inf"),
+            "bias": float("inf"),
+            "medae": float("inf"),
+            "nrmse": float("inf")
+        }
 
     mae = mean_absolute_error(true, pred)
     rmse = np.sqrt(mean_squared_error(true, pred))

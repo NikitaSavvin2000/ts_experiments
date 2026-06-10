@@ -123,6 +123,7 @@ model_to_test = list(time_series_models_funcs.keys())
 not_exogenous_models = [""]
 list_predict_points_to_test = [144, 288, 576]
 
+["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
 datasets = [
     {
         "dataset_name": "morocco_zone_1",
