@@ -123,6 +123,14 @@ df_ready_progress = load_and_prepare_progress(
     columns=df_experiment_design.columns
 )
 
+df_ready_progress = df_ready_progress[
+    ~(
+            (df_ready_progress["dataset_name"] == "morocco_zone_1") &
+            (df_ready_progress["model"] == "NHiTS") &
+            (df_ready_progress["trajectory_cols"] == "engineered_datetime_features")
+    )
+]
+
 df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
     df_ready_progress=df_ready_progress
@@ -140,6 +148,8 @@ df_to_experiment = get_pending_experiments(
 # df_to_experiment = df_to_experiment[
 #     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
 # ]
+
+# morocco_zone_1 NHiTS engineered_datetime_features
 
 
 if df_to_experiment is None or df_to_experiment.empty:

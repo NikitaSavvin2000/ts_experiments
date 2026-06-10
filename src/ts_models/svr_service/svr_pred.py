@@ -29,9 +29,6 @@ def SVR_forecast(
 ):
     params = params or DEFAULT_SVR_PARAMS
 
-    df_train = df_train.copy()
-    df_test = df_test.copy()
-
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
 
@@ -39,6 +36,10 @@ def SVR_forecast(
         col_for_train = []
 
     use_features = [col_target] + list(col_for_train)
+
+    df_train[use_features] = df_train[use_features].replace([np.inf, -np.inf], np.nan)
+    df_train[use_features] = df_train[use_features].astype(float)
+    df_train[use_features] = df_train[use_features].fillna(method="ffill").fillna(method="bfill")
 
     df_train = df_train[use_features].copy()
     df_test_pred = df_test[[time_column, col_target]].copy()
