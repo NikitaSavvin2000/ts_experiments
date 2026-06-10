@@ -124,26 +124,112 @@ not_exogenous_models = [""]
 list_predict_points_to_test = [144, 288, 576]
 
 ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
+# datasets = [
+#     {
+#         "dataset_name": "morocco_zone_1",
+#         "type": "Energy",
+#         "col_time": "Datetime",
+#         "col_target": "consumption",
+#         "additional_cols": [],
+#         "predict_points": 300,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#     },
+#     # {
+#     #     "dataset_name": "russia_elista",
+#     #     "type": "Energy",
+#     #     "col_time": "datetime",
+#     #     "col_target": "value",
+#     #     "additional_cols": [],
+#     #     "predict_points": 300,
+#     #     "list_predict_points_to_test": list_predict_points_to_test,
+#     #
+#     # },
+#     {
+#         "dataset_name": "russia_amur_region",
+#         "type": "Energy",
+#         "col_time": "datetime",
+#         "col_target": "VC_факт",
+#         "additional_cols": [],
+#         "predict_points": 300,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#
+#     },
+#     {
+#         "dataset_name": "Istanbul_Traffic_Index",
+#         "type": "Traffic",
+#         "col_time": "datetime",
+#         "col_target": "average_traffic_index",
+#         "additional_cols": [],
+#         "predict_points": 100,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#
+#     },
+#     # {
+#     #     "dataset_name": "NYC_Taxi_Traffic",
+#     #     "type": "Traffic",
+#     #     "col_time": "timestamp",
+#     #     "col_target": "value",
+#     #     "additional_cols": [],
+#     #     "predict_points": 100,
+#     #     "list_predict_points_to_test": list_predict_points_to_test,
+#     #
+#     # },
+#     {
+#         "dataset_name": "Metro_Traffic",
+#         "type": "Traffic",
+#         "col_time": "date_time",
+#         "col_target": "traffic_volume",
+#         "additional_cols": [],
+#         "predict_points": 100,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#
+#     },
+#     # {
+#     #     "dataset_name": "Air_Quality_India",
+#     #     "type": "Climate",
+#     #     "col_time": "Timestamp",
+#     #     "col_target": "PM2.5",
+#     #     "additional_cols": [],
+#     #     "predict_points": 300,
+#     #     "list_predict_points_to_test": list_predict_points_to_test,
+#     #
+#     # },
+#     {
+#         "dataset_name": "Weather",
+#         "type": "Climate",
+#         "col_time": "date",
+#         "col_target": "T",
+#         "additional_cols": [],
+#         "predict_points": 300,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#
+#     },
+#
+#     {
+#         "dataset_name": "Temperature_in_Celsius",
+#         "type": "Climate",
+#         "col_time": "Datetime",
+#         "col_target": "Value",
+#         "additional_cols": [],
+#         "predict_points": 300,
+#         "list_predict_points_to_test": list_predict_points_to_test,
+#
+#     },
+#     # {
+#     #     "dataset_name": "Daily_Climate",
+#     #     "type": "Climate",
+#     #     "col_time": "date",
+#     #     "col_target": "meantemp",
+#     #     "additional_cols": [],
+#     #     "predict_points": 300,
+#     #     "list_predict_points_to_test": list_predict_points_to_test,
+#     #
+#     # },
+# ]
+
+
 datasets = [
-    {
-        "dataset_name": "morocco_zone_1",
-        "type": "Energy",
-        "col_time": "Datetime",
-        "col_target": "consumption",
-        "additional_cols": [],
-        "predict_points": 300,
-        "list_predict_points_to_test": list_predict_points_to_test,
-    },
-    # {
-    #     "dataset_name": "russia_elista",
-    #     "type": "Energy",
-    #     "col_time": "datetime",
-    #     "col_target": "value",
-    #     "additional_cols": [],
-    #     "predict_points": 300,
-    #     "list_predict_points_to_test": list_predict_points_to_test,
-    #
-    # },
+
     {
         "dataset_name": "russia_amur_region",
         "type": "Energy",
@@ -155,77 +241,16 @@ datasets = [
 
     },
     {
-        "dataset_name": "Istanbul_Traffic_Index",
-        "type": "Traffic",
-        "col_time": "datetime",
-        "col_target": "average_traffic_index",
-        "additional_cols": [],
-        "predict_points": 100,
-        "list_predict_points_to_test": list_predict_points_to_test,
-
-    },
-    # {
-    #     "dataset_name": "NYC_Taxi_Traffic",
-    #     "type": "Traffic",
-    #     "col_time": "timestamp",
-    #     "col_target": "value",
-    #     "additional_cols": [],
-    #     "predict_points": 100,
-    #     "list_predict_points_to_test": list_predict_points_to_test,
-    #
-    # },
-    {
-        "dataset_name": "Metro_Traffic",
-        "type": "Traffic",
-        "col_time": "date_time",
-        "col_target": "traffic_volume",
-        "additional_cols": [],
-        "predict_points": 100,
-        "list_predict_points_to_test": list_predict_points_to_test,
-
-    },
-    # {
-    #     "dataset_name": "Air_Quality_India",
-    #     "type": "Climate",
-    #     "col_time": "Timestamp",
-    #     "col_target": "PM2.5",
-    #     "additional_cols": [],
-    #     "predict_points": 300,
-    #     "list_predict_points_to_test": list_predict_points_to_test,
-    #
-    # },
-    {
-        "dataset_name": "Weather",
+        "dataset_name": "Temperature_in_Celsius",
         "type": "Climate",
-        "col_time": "date",
-        "col_target": "T",
+        "col_time": "Datetime",
+        "col_target": "Value",
         "additional_cols": [],
         "predict_points": 300,
         "list_predict_points_to_test": list_predict_points_to_test,
 
     },
-    {
-        "dataset_name": "Weather_water_temp",
-        "type": "Climate",
-        "col_time": "date",
-        "col_target": "H2OC",
-        "additional_cols": [],
-        "predict_points": 300,
-        "list_predict_points_to_test": list_predict_points_to_test,
-
-    },
-    # {
-    #     "dataset_name": "Daily_Climate",
-    #     "type": "Climate",
-    #     "col_time": "date",
-    #     "col_target": "meantemp",
-    #     "additional_cols": [],
-    #     "predict_points": 300,
-    #     "list_predict_points_to_test": list_predict_points_to_test,
-    #
-    # },
 ]
-
 
 def validate_models(
         model_to_test,

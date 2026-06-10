@@ -18,10 +18,10 @@ from src.ts_models.pacf_lag_selection import select_pacf_lag
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["morocco_zone_1"])
+df_ts = pd.read_csv(datasets_csv_dict["Temperature_in_Celsius"])
 
 col_time = "Datetime"
-col_target = "consumption"
+col_target = "Value"
 
 df_ts = df_ts[[col_time, col_target]]
 
@@ -33,7 +33,7 @@ discreteness_sec = calculate_discreteness_interval(df=df_ts, time_column=col_tim
 t2v = Time2Vec(col_time=col_time, col_target=col_target)
 df_ts_t2v, min_val, ax_val = t2v.encoder(df=df_ts)
 
-test_points = 300
+test_points = 576
 predict_points = 300
 
 df_real_pred = generate_time_series_df(
@@ -58,16 +58,19 @@ df_test[col_target] = None
 lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
 
 # lag = len(df_test)
-# lag = 28
+# lag = 288
 
 print(f"lag = {lag}")
+#
+# col_for_train = stat_select_features(
+#     df=df_train,
+#     col_time=col_time,
+#     col_target=col_target,
+#     logger=logger
+# )
 
-col_for_train = stat_select_features(
-    df=df_train,
-    col_time=col_time,
-    col_target=col_target,
-    logger=logger
-)
+
+col_for_train = [c for c in df_train.columns if c not in (col_time, col_target)]
 
 len(df_test)
 col_for_train = []

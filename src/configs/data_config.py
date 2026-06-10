@@ -22,7 +22,9 @@ datasets_csv_dict = {
     # "NYC_Taxi_Traffic": "", # https://www.kaggle.com/datasets/fedesoriano/traffic-prediction-dataset
     "Weather": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
     "Weather_water_temp": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbZQWfPBOCnG6OQI5uzi886u0ZjOYeNdCcyJCx3up2bjjPdm7BX20akl8oSM2rjpiEoAtQmREK2s_7/pub?gid=2018623599&single=true&output=csv", # https://www.kaggle.com/datasets/alistairking/weather-long-term-time-series-forecasting
-    "Metro_Traffic": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSeR7Yjg4gVAUkdivDrivB1IIkOuBMyrjyydu0MF5-_TrOCroOndmY-__kQd0H_prwmfp08EDtEVdme/pub?gid=1260692357&single=true&output=csv" # https://www.kaggle.com/datasets/pooriamst/metro-interstate-traffic-volume
+    "Metro_Traffic": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSeR7Yjg4gVAUkdivDrivB1IIkOuBMyrjyydu0MF5-_TrOCroOndmY-__kQd0H_prwmfp08EDtEVdme/pub?gid=1260692357&single=true&output=csv", # https://www.kaggle.com/datasets/pooriamst/metro-interstate-traffic-volume
+    "Air_Pollution": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTms7XrNlLNAHq1r9CMhpr8CpcC3wpLDkqJN4lb376f1jq31up9FPVvDVNEDYoAGY32iDmNNGhL_K1n/pub?gid=1982192545&single=true&output=csv", # https://www.kaggle.com/datasets/rupakroy/lstm-datasets-multivariate-univariate
+    "Temperature_in_Celsius": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSVuumAit9fVNgMukSYmD8Xf6fdjc0DMsdwS5a1ObXvgWSEHsedi-E36TZ0RlV9Y-9dJp6x1G6ta2A3/pub?gid=327522163&single=true&output=csv", # https://www.kaggle.com/datasets/mohammedabdullah02/time-series-data-of-temp-sensor?resource=download
 }
 
 # Климат

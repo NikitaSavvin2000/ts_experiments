@@ -24,24 +24,43 @@ trajectory = ["baseline", "engineered_datetime_features", "mi_features", "spearm
 trajectories = trajectory
 
 
+# trajectory_colors = {
+#     "baseline": "#4E79A7",
+#     "engineered_datetime_features": "#F28E2B",
+#     "mi_features": "#E15759",
+#     "spearman_features": "#76B7B2",
+#     "pearson_features": "#EDC948",
+#     "сlassic_GA": "#B07AA1",
+#     "optuna_features": "#FF9DA7",
+#     "horizon_selected_features": "#9C755F",
+# }
+
 trajectory_colors = {
-    "baseline": "#4E79A7",
-    "engineered_datetime_features": "#F28E2B",
+    "baseline": "#A0A0A0",
+    "engineered_datetime_features": "#4E79A7",
     "mi_features": "#E15759",
-    "spearman_features": "#76B7B2",
+    "spearman_features": "#F28E2B",
     "pearson_features": "#EDC948",
     "сlassic_GA": "#B07AA1",
-    "optuna_features": "#FF9DA7",
-    "horizon_selected_features": "#9C755F",
+    "optuna_features": "#76B7B2",
+    "horizon_selected_features": "#59A14F",
 }
-
+russian_mood = True
 russian_mood = False
+
+
+new_datasets = ["morocco_zone_1", "russia_amur_region", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Weather_water_temp"]
+
 russian_vers = [ "Istanbul_Traffic_Index", "Daily_Climate"]
 
-russian_vers = ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
-russian_vers = ["russia_elista", "Istanbul_Traffic_Index", "Weather"]
+bad = ["morocco_zone_1", "russia_elista", "Daily_Climate"]
 
-russian_vers = ["morocco_zone_1"]
+russian_vers = ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
+russian_vers = ["Daily_Climate", "Istanbul_Traffic_Index", "Weather"]
+russian_vers = ["Istanbul_Traffic_Index",]
+
+
+# russian_vers = ["morocco_zone_1"]
 # russian_vers = ["morocco_zone_1",]
 
 
@@ -183,13 +202,7 @@ def create_winner_rank_charts(df, winner_charts_dir):
                 tickfont=dict(size=16)
             ),
             shapes=shapes,
-            legend=dict(
-                orientation="h",
-                y=-0.25,
-                x=0.5,
-                xanchor="center",
-                font=dict(size=14)
-            ),
+
             margin=dict(l=140, r=50, t=120, b=140)
         )
 
@@ -277,7 +290,7 @@ def create_metric_bar_chart(df, trajectories, metric, winner_charts_dir):
                 color="black",
                 family="Arial"
             ),
-            name="base"
+            name=""
         )
     )
 
@@ -367,6 +380,8 @@ def load_and_merge(results_path):
     broken_files = []
 
     for f in files:
+        if any(b in str(f) for b in bad):
+            continue
         try:
             df = pd.read_csv(f)
             dfs.append(df)
@@ -458,6 +473,8 @@ def prepare_article_table(
 
 
 df = load_and_merge(results_path)
+
+df = df[df["dataset_name"].isin(new_datasets)]
 
 if russian_mood:
     df = df[df["dataset_name"].isin(russian_vers)]
@@ -555,7 +572,7 @@ rmse_tmp = rmse.melt(
 
 # trajectories = ["baseline", "engineered_datetime_features", "horizon_selected_features",]
 metric = "mape"
-metric = "mae"
+# metric = "mae"
 
 
 create_metric_bar_chart(df=df, trajectories=trajectories, metric=metric, winner_charts_dir=winner_charts_dir)
