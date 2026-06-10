@@ -31,69 +31,53 @@ def SVR_forecast(
 
     logger.info("START SVR_forecast")
 
+    df_train = df_train.copy()
+    df_test = df_test.copy()
+
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
-    logger.info(f"After time sort: shape={df_train.shape}")
 
     if col_for_train is None or len(col_for_train) == 0:
         col_for_train = []
 
     use_features = [col_target] + list(col_for_train)
-    logger.info(f"Use features: {use_features}")
+
+    logger.info(f"use_features: {use_features}")
 
     df_train[use_features] = df_train[use_features].replace([np.inf, -np.inf], np.nan)
-    logger.info("Replaced inf with NaN")
 
     df_train[use_features] = df_train[use_features].astype(float)
-    logger.info("Cast to float done")
-
     df_train[use_features] = df_train[use_features].ffill().bfill()
-    logger.info("NaN filled (ffill/bfill)")
 
-    df_train = df_train[use_features].copy()
-    logger.info(f"Train reduced: shape={df_train.shape}")
+    df_train[col_target] = df_train[col_target].replace("None", np.nan).astype(float)
 
-    df_test_pred = df_test[[time_column, col_target]].copy()
-    logger.info(f"Test pred init: shape={df_test_pred.shape}")
-
-    if len(col_for_train) > 0:
-        df_test = df_test[use_features].copy()
-    else:
-        df_test = df_test[[col_target]].copy()
-
-    logger.info(f"Test features prepared: shape={df_test.shape}")
-
-    df_train[col_target] = df_train[col_target].replace("None", None).astype(float)
-
-    if df_train.isna().any().any():
-        logger.error("NaN detected after preprocessing")
-        logger.error(df_train.isna().sum())
+    if df_train[use_features].isna().any().any():
+        logger.error("NaN in train after preprocessing")
         raise ValueError("NaN values detected in training data")
 
-    values = df_train[use_features].astype(np.float64).values
-    logger.info(f"Values shape: {values.shape}")
+    values = df_train[use_features].to_numpy(dtype=np.float64)
 
     if not np.isfinite(values).all():
-        idx = np.where(~np.isfinite(values))
-        logger.error(f"Non-finite values found at indices: {idx}")
-        raise ValueError("Input contains inf or too large values")
+        bad_idx = np.where(~np.isfinite(values))
+        logger.error(f"Non-finite in train values at {bad_idx}")
+        raise ValueError("Train contains inf or NaN")
 
     X, y = split_sequence(values, lag)
-    logger.info(f"Split sequence: X={len(X)}, y={len(y)}")
 
-    X = np.asarray(X).astype(np.float64)
-    y = np.asarray(y).astype(np.float64)
+    X = np.asarray(X, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
 
     if not np.isfinite(X).all():
-        logger.error("Non-finite values in X after split_sequence")
+        bad_idx = np.where(~np.isfinite(X))
+        logger.error(f"Non-finite in X at {bad_idx}")
         raise ValueError("X contains inf or NaN")
 
     if not np.isfinite(y).all():
-        logger.error("Non-finite values in y after split_sequence")
+        bad_idx = np.where(~np.isfinite(y))
+        logger.error(f"Non-finite in y at {bad_idx}")
         raise ValueError("y contains inf or NaN")
 
     X_reshaped = X.reshape(X.shape[0], -1)
-    logger.info(f"X reshaped: {X_reshaped.shape}")
 
     model = SVR(
         kernel=params["kernel"],
@@ -103,56 +87,61 @@ def SVR_forecast(
         shrinking=params["shrinking"]
     )
 
-    logger.info("Training SVR model")
+    logger.info("Training SVR")
     model.fit(X_reshaped, y.ravel())
-    logger.info("Model trained")
+    logger.info("SVR trained")
 
     if len(col_for_train) == 0:
-        x_input = create_x_input(
-            df_train[[col_target]].astype(np.float64),
-            lag
-        ).astype(np.float64)
+        test_features = [col_target]
         n_features = 1
     else:
-        x_input = create_x_input(
-            df_train[use_features].astype(np.float64),
-            lag
-        ).astype(np.float64)
+        test_features = use_features
         n_features = len(use_features)
 
-    logger.info(f"x_input shape before reshape: {x_input.shape}")
+    df_test_values = df_test[test_features].replace([np.inf, -np.inf], np.nan).astype(np.float64)
+
+    if df_test_values.isna().any().any():
+        logger.error("NaN in df_test features")
+        raise ValueError("df_test contains NaN after preprocessing")
+
+    x_input = create_x_input(
+        df_train[test_features].astype(np.float64),
+        lag
+    ).astype(np.float64)
 
     if not np.isfinite(x_input).all():
-        logger.error("Non-finite values in x_input")
+        bad_idx = np.where(~np.isfinite(x_input))
+        logger.error(f"Non-finite in x_input at {bad_idx}")
         raise ValueError("x_input contains inf or NaN")
 
     x_input = x_input.reshape((1, lag, n_features))
-    logger.info(f"x_input reshaped: {x_input.shape}")
 
-    count_pred_points = len(df_test.values)
-    logger.info(f"Prediction steps: {count_pred_points}")
+    count_pred_points = len(df_test_values)
 
-    if not np.isfinite(df_test.values).all():
-        logger.error("Non-finite values in df_test")
+    df_test_values_np = df_test_values.to_numpy()
+
+    if not np.isfinite(df_test_values_np).all():
+        bad_idx = np.where(~np.isfinite(df_test_values_np))
+        logger.error(f"Non-finite in df_test_values at {bad_idx}")
         raise ValueError("df_test contains inf or NaN")
 
     predict_values = make_predictions_np_input(
         x_input=x_input,
-        x_future=df_test.values,
+        x_future=df_test_values_np,
         n_features=n_features,
         model=model,
         lag=lag,
         count_pred_points=count_pred_points
     )
 
-    predict_values = np.array(predict_values).flatten()
-
-    logger.info(f"Prediction done: shape={predict_values.shape}")
+    predict_values = np.asarray(predict_values).ravel()
 
     if not np.isfinite(predict_values).all():
-        logger.error("Non-finite values in predictions")
+        bad_idx = np.where(~np.isfinite(predict_values))
+        logger.error(f"Non-finite in predictions at {bad_idx}")
         raise ValueError("Predictions contain inf or NaN")
 
+    df_test_pred = df_test[[time_column, col_target]].copy()
     df_test_pred[col_target] = predict_values
 
     logger.info("FINISH SVR_forecast")
