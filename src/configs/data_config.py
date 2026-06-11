@@ -12,7 +12,7 @@ datasets_csv_dict = {
     # 'DEKENERG_ZONE2_S_PEVRAOBL': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PEVRAOBL.csv',
     # 'ARHENERG_ZONE1_E_PARHENER': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/ARHENERG_ZONE1_E_PARHENER.csv',
     'DEKENERG_ZONE2_S_PAMURENE': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
-    'russia_amur_region': '/Users/nikitasavvin/Desktop/Business/repo/collection_rus_energy_data/result_end/DEKENERG_ZONE2_S_PAMURENE.csv',
+    'russia_amur_region': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSnke5YReb1RRwN6ZynJSxoUcXnr2buEXP45mOtnv7X3neOQhT-_vMPnIB4lUBpeu0nQaqWq6awDvtG/pub?gid=935054795&single=true&output=csv',
 
     "russia_elista": "https://docs.google.com/spreadsheets/d/e/2PACX-1vTK8aQxQ15u_BZDSe1Qz5HW1gm-C7pLCEoJ8OrBskXMFgOzgUblKdJzGMUNFCnHe8JjPOBJzMcp1W8V/pub?gid=442094039&single=true&output=csv",
     "Istanbul_Traffic_Index": "https://docs.google.com/spreadsheets/d/e/2PACX-1vT6LSgQb7b1u-c_zBRhvkEA_CmNd6Cby2tlMLBwoX9GlSsUHjJvdh9Xz9zyQx5HbxQAUH2GEVrn95U7/pub?gid=2111659113&single=true&output=csv",
