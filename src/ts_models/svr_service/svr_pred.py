@@ -17,6 +17,30 @@ DEFAULT_SVR_PARAMS = {
 }
 
 
+
+def clean_dataframe(df):
+    df = df.copy()
+
+    cols_to_drop = []
+
+    for col in df.columns:
+        invalid_mask = df[col].isna() | np.isinf(pd.to_numeric(df[col], errors="coerce"))
+
+        invalid_count = invalid_mask.sum()
+        invalid_ratio = invalid_count / len(df)
+
+        if invalid_count == len(df):
+            cols_to_drop.append(col)
+        elif invalid_ratio > 0.5:
+            cols_to_drop.append(col)
+        elif invalid_count > 0:
+            df = df.loc[~invalid_mask]
+
+    df = df.drop(columns=cols_to_drop)
+
+    return df.reset_index(drop=True)
+
+
 def SVR_forecast(
         col_target,
         time_column,
@@ -30,6 +54,11 @@ def SVR_forecast(
     params = params or DEFAULT_SVR_PARAMS
 
     logger.info("START SVR_forecast")
+
+    df_test[col_target] = "pass"
+
+    df_test = clean_dataframe(df_test)
+    df_train = clean_dataframe(df_train)
 
     print(df_train)
 
@@ -114,11 +143,6 @@ def SVR_forecast(
     count_pred_points = len(df_test_values)
 
     df_test_values_np = df_test_values.to_numpy()
-
-    if not np.isfinite(df_test_values_np).all():
-        bad_idx = np.where(~np.isfinite(df_test_values_np))
-        logger.error(f"Non-finite in df_test_values at {bad_idx}")
-        raise ValueError("df_test contains inf or NaN")
 
     predict_values = make_predictions_np_input(
         x_input=x_input,
