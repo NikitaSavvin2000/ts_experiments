@@ -16,12 +16,11 @@ from src.ts_models.ts_utils.timeseries_utils import (regression_metrics,
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["russia_elista"])
 
-print(df_ts.columns)
+df_ts = pd.read_csv(datasets_csv_dict["Temperature_in_Celsius"])
 
-col_time = "datetime"
-col_target = "value"
+col_time = "Datetime"
+col_target = "Value"
 
 df_ts = df_ts[[col_time, col_target]]
 

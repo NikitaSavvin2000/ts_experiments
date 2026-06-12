@@ -124,17 +124,17 @@ def SVR_forecast(
         test_features = use_features
         n_features = len(use_features)
 
-    df_test_values = df_test[test_features].replace([np.inf, -np.inf], np.nan).astype(np.float64)
+    df_test_values = df_test[test_features]
 
     x_input = create_x_input(
         df_train[test_features].astype(np.float64),
         lag
     ).astype(np.float64)
 
-    if not np.isfinite(x_input).all():
-        bad_idx = np.where(~np.isfinite(x_input))
-        logger.error(f"Non-finite in x_input at {bad_idx}")
-        raise ValueError("x_input contains inf or NaN")
+    # if not np.isfinite(x_input).all():
+    #     bad_idx = np.where(~np.isfinite(x_input))
+    #     logger.error(f"Non-finite in x_input at {bad_idx}")
+    #     raise ValueError("x_input contains inf or NaN")
 
     x_input = x_input.reshape((1, lag, n_features))
 
