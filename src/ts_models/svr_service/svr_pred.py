@@ -60,8 +60,6 @@ def SVR_forecast(
     df_test = clean_dataframe(df_test)
     df_train = clean_dataframe(df_train)
 
-    print(df_train)
-
     df_train[time_column] = pd.to_datetime(df_train[time_column], errors="coerce")
     df_train = df_train.sort_values(by=time_column).reset_index(drop=True)
 
@@ -77,7 +75,7 @@ def SVR_forecast(
     df_train[use_features] = df_train[use_features].astype(float)
     df_train[use_features] = df_train[use_features].ffill().bfill()
 
-    df_train[col_target] = df_train[col_target].replace("None", np.nan).astype(float)
+    df_train[col_for_train] = df_train[col_for_train].astype(float)
 
     if df_train[use_features].isna().any().any():
         logger.error("NaN in train after preprocessing")
