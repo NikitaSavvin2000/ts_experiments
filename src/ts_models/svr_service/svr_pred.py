@@ -72,7 +72,7 @@ def SVR_forecast(
 
     df_train[use_features] = df_train[use_features].replace([np.inf, -np.inf], np.nan)
 
-    df_train[use_features] = df_train[use_features].astype(float)
+    df_train[use_features] = df_train[col_for_train].astype(float)
     df_train[use_features] = df_train[use_features].ffill().bfill()
 
     df_train[col_for_train] = df_train[col_for_train].astype(float)
