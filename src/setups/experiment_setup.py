@@ -227,7 +227,6 @@ list_predict_points_to_test = [144, 288, 576]
 #     # },
 # ]
 
-
 datasets = [
     {
         "dataset_name": "russia_amur_region",

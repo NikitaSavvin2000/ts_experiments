@@ -8,6 +8,11 @@ import sys
 import pandas as pd
 import gc
 
+import random
+import numpy as np
+import torch
+import tensorflow as tf
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from src.configs.experiment_conf import init_experiment_config
@@ -27,11 +32,6 @@ from tqdm import tqdm
 
 WORKERS = 8
 
-import os
-import random
-import numpy as np
-import torch
-import tensorflow as tf
 
 def init_deterministic(seed: int = 42):
 
@@ -42,10 +42,6 @@ def init_deterministic(seed: int = 42):
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
 
-    import random
-    import numpy as np
-    import torch
-    import tensorflow as tf
 
     random.seed(seed)
     np.random.seed(seed)
@@ -118,18 +114,22 @@ os.makedirs(charts_dir_en, exist_ok=True)
 df_experiment_design.to_csv(experiment_design_path, index=False)
 logger.info(msg["experiment_created"].format(experiment_design_path))
 
+
+
+
+df_ready_progress = pd.read_csv(progress_csv_path)
+dataset_name_to_drop = ["russia_amur_region", "Temperature_in_Celsius"]
+df_ready_progress = df_ready_progress[~df_ready_progress["dataset_name"].isin(dataset_name_to_drop)]
+df_ready_progress.to_csv(progress_csv_path)
+
+
+
+
 df_ready_progress = load_and_prepare_progress(
     progress_csv_path=progress_csv_path,
     columns=df_experiment_design.columns
 )
 
-df_ready_progress = df_ready_progress[
-    ~(
-            (df_ready_progress["dataset_name"] == "morocco_zone_1") &
-            (df_ready_progress["model"] == "NHiTS") &
-            (df_ready_progress["trajectory_cols"] == "engineered_datetime_features")
-    )
-]
 
 df_to_experiment = get_pending_experiments(
     df_experiment_design=df_experiment_design,
