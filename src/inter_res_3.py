@@ -49,11 +49,14 @@ russian_mood = True
 russian_mood = False
 
 
-new_datasets = ["morocco_zone_1", "russia_amur_region", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Weather_water_temp"]
+# new_datasets = ["morocco_zone_1", "russia_amur_region", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Weather_water_temp", "russia_amur_region", "Temperature_in_Celsius"]
+new_datasets = ["russia_amur_region", "Istanbul_Traffic_Index", "Metro_Traffic", "Temperature_in_Celsius"]
 
 russian_vers = [ "Istanbul_Traffic_Index", "Daily_Climate"]
 
 bad = ["morocco_zone_1", "russia_elista", "Daily_Climate"]
+bad = ["morocco_zone_1",]
+
 
 russian_vers = ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
 russian_vers = ["Daily_Climate", "Istanbul_Traffic_Index", "Weather"]
@@ -474,10 +477,10 @@ def prepare_article_table(
 
 df = load_and_merge(results_path)
 
-df = df[df["dataset_name"].isin(new_datasets)]
+# df = df[df["dataset_name"].isin(new_datasets)]
 
-if russian_mood:
-    df = df[df["dataset_name"].isin(russian_vers)]
+# if russian_mood:
+#     df = df[df["dataset_name"].isin(russian_vers)]
 
 
 metrics_col = ['r2', 'mae', 'rmse', 'mape', 'smape', 'wape', 'bias', 'medae', 'nrmse']

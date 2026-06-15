@@ -1515,6 +1515,7 @@ class TSExperimentPipeline:
             elif self.trajectory_cols == "baseline":
                 self.col_for_train = self.calendar_components_cols
 
+
                 self.test_points = calculate_test_points_predict(
                     start_test_date=self.start_test_date,
                     end_test_date=self.end_test_date,
@@ -1539,11 +1540,13 @@ class TSExperimentPipeline:
             self.forecast_func = time_series_models_funcs[self.model]
 
 
+            print(f"self.lag = {self.lag}")
+            print(f"self.lag type = {type(self.lag)}")
+
             if isinstance(self.lag, (tuple, list)):
                 self.lag = int(self.lag[0])
             else:
                 self.lag = int(self.lag)
-
 
             if self.trajectory_cols == "horizon_selected_features":
                 self.all_available_cols = self.col_for_train
@@ -1572,9 +1575,11 @@ class TSExperimentPipeline:
                         col_for_train=self.col_for_train,
                         logger=self.logger,
                     )
+
                 except Exception as e:
                     self.logger.error(f" Func run_test_predict  pred| Model - {self.model} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | {e}")
                     raise e
+
 
                 execution_time = time.time() - start_time
                 predict_row["pipeline_spend_time"] = execution_time
@@ -1590,7 +1595,7 @@ class TSExperimentPipeline:
                 trace_end = {**predict_row, **self.traces_row}
                 append_progress_to_csv(progress_row=trace_end, progress_csv_path=self.trace_csv_path)
 
-
+                self.logger.info(f" >>>> FINAL| Model - {self.model} | Dataset - {self.dataset_name} | Trajectory - {self.trajectory_cols} | Points - { self.test_points} | METRICS = {self.metrix_dict}")
 
 
             self.df_test_pred = self.df_test_pred.merge(

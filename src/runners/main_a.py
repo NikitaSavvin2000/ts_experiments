@@ -136,15 +136,14 @@ df_to_experiment = get_pending_experiments(
     df_ready_progress=df_ready_progress
 )
 
+# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
+# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "LinearRegression"]
 
-# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Daily_Climate"]
-# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
-# #
-# #
-# # # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-# test_trajectory_cols = ["horizon_selected_features"]
-# #
-# #
+
+# test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
+# test_trajectory_cols = ["baseline"]
+#
+#
 # df_to_experiment = df_to_experiment[
 #     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
 # ]
