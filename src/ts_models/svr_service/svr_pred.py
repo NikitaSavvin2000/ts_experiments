@@ -51,6 +51,8 @@ def SVR_forecast(
         logger,
         params=None
 ):
+    df_train = df_train.tail(50000)
+
     params = params or DEFAULT_SVR_PARAMS
 
     logger.info("START SVR_forecast")
