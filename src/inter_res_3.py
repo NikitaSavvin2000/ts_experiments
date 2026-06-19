@@ -46,7 +46,7 @@ trajectory_colors = {
     "horizon_selected_features": "#59A14F",
 }
 russian_mood = True
-russian_mood = False
+# russian_mood = False
 
 
 # new_datasets = ["morocco_zone_1", "russia_amur_region", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Weather_water_temp", "russia_amur_region", "Temperature_in_Celsius"]
@@ -58,11 +58,14 @@ bad = ["morocco_zone_1", "russia_elista", "Daily_Climate"]
 bad = ["morocco_zone_1",]
 
 
-russian_vers = ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Daily_Climate"]
+russian_vers = ["morocco_zone_1", "russia_elista", "Istanbul_Traffic_Index", "Metro_Traffic", "Weather", "Temperature_in_Celsius"]
 russian_vers = ["Daily_Climate", "Istanbul_Traffic_Index", "Weather"]
-russian_vers = ["Istanbul_Traffic_Index",]
+russian_vers = ["morocco_zone_1",]
 
+russian_vers = ["Temperature_in_Celsius", "Daily_Climate", "Istanbul_Traffic_Index", "russia_amur_region"]
+russian_vers = ["Temperature_in_Celsius","russia_amur_region"]
 
+good = ["Temperature_in_Celsius", "Daily_Climate", "Istanbul_Traffic_Index", ]
 # russian_vers = ["morocco_zone_1"]
 # russian_vers = ["morocco_zone_1",]
 
@@ -83,6 +86,8 @@ import pandas as pd
 
 
 def create_winner_rank_charts(df, winner_charts_dir):
+    import os
+    import plotly.graph_objects as go
 
     os.makedirs(winner_charts_dir, exist_ok=True)
 
@@ -205,7 +210,13 @@ def create_winner_rank_charts(df, winner_charts_dir):
                 tickfont=dict(size=16)
             ),
             shapes=shapes,
-
+            legend=dict(
+                orientation="h",
+                y=-0.25,
+                x=0.5,
+                xanchor="center",
+                font=dict(size=14)
+            ),
             margin=dict(l=140, r=50, t=120, b=140)
         )
 
@@ -217,6 +228,7 @@ def create_winner_rank_charts(df, winner_charts_dir):
         rank_table.to_csv(
             os.path.join(winner_charts_dir, f"{metric}_rank_table.csv")
         )
+
 
 def create_metric_bar_chart(df, trajectories, metric, winner_charts_dir):
 
@@ -479,8 +491,8 @@ df = load_and_merge(results_path)
 
 # df = df[df["dataset_name"].isin(new_datasets)]
 
-# if russian_mood:
-#     df = df[df["dataset_name"].isin(russian_vers)]
+if russian_mood:
+    df = df[df["dataset_name"].isin(russian_vers)]
 
 
 metrics_col = ['r2', 'mae', 'rmse', 'mape', 'smape', 'wape', 'bias', 'medae', 'nrmse']
@@ -579,6 +591,7 @@ metric = "mape"
 
 
 create_metric_bar_chart(df=df, trajectories=trajectories, metric=metric, winner_charts_dir=winner_charts_dir)
+
 
 
 best = best.merge(

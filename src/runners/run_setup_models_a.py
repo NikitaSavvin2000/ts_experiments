@@ -22,7 +22,7 @@ from src.setups.experiment_setup import (
 from config import logger_language
 from src.pipelines.setup_pipeline import SetupModel
 
-MAX_WORKERS = 6
+MAX_WORKERS = 1
 
 
 MESSAGES = {
@@ -58,6 +58,9 @@ df_experiment_design = df_experiment_design[
 
 df_experiment_design_new_ds = df_experiment_design.copy()
 df_experiment_design_new_method = df_experiment_design.copy()
+
+df_experiment_design = df_experiment_design[df_experiment_design["dataset_name"] == "Temperature_in_Celsius"]
+df_experiment_design = df_experiment_design[df_experiment_design["model"] == "SVR"]
 
 # df_experiment_design = df_experiment_design[df_experiment_design["dataset_name"] == "Metro_Traffic"]
 

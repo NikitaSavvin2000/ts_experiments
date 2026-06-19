@@ -30,7 +30,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-WORKERS = 8
+WORKERS = 1
 
 
 def init_deterministic(seed: int = 42):
@@ -138,17 +138,17 @@ df_to_experiment = get_pending_experiments(
     df_ready_progress=df_ready_progress
 )
 
-# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
-# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "LinearRegression"]
+df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
+df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
 
 
 # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-# test_trajectory_cols = ["baseline"]
+test_trajectory_cols = ["optuna_features"]
 #
 #
-# df_to_experiment = df_to_experiment[
-#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
-# ]
+df_to_experiment = df_to_experiment[
+    df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+]
 
 
 if df_to_experiment is None or df_to_experiment.empty:
@@ -196,6 +196,8 @@ def run_experiment(experiment):
 
     if params is not None:
         params = ast.literal_eval(params)
+
+    print(params)
 
     already_selected_cols = None
     list_predict_points_to_test = sorted(experiment["list_predict_points_to_test"], reverse=True)
