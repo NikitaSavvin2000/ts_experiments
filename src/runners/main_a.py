@@ -30,7 +30,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-WORKERS = 1
+WORKERS = 12
 
 
 def init_deterministic(seed: int = 42):
@@ -138,17 +138,17 @@ df_to_experiment = get_pending_experiments(
     df_ready_progress=df_ready_progress
 )
 
-df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
-df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
+# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
+# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
 
 
 # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-test_trajectory_cols = ["optuna_features"]
+# test_trajectory_cols = ["optuna_features"]
 #
 #
-df_to_experiment = df_to_experiment[
-    df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
-]
+# df_to_experiment = df_to_experiment[
+#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+# ]
 
 
 if df_to_experiment is None or df_to_experiment.empty:
