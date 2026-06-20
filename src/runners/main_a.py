@@ -138,6 +138,13 @@ df_to_experiment = get_pending_experiments(
     df_ready_progress=df_ready_progress
 )
 
+df_to_experiment = df_to_experiment[
+    ~(
+            (df_to_experiment["dataset_name"] == "Temperature_in_Celsius")
+            & (df_to_experiment["model"] != "SVR")
+    )
+]
+
 # df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
 # df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
 
