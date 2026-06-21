@@ -138,24 +138,24 @@ df_to_experiment = get_pending_experiments(
     df_ready_progress=df_ready_progress
 )
 
-df_to_experiment = df_to_experiment[
-    ~(
-            (df_to_experiment["dataset_name"] == "Temperature_in_Celsius")
-            & (df_to_experiment["model"] != "SVR")
-    )
-]
+# df_to_experiment = df_to_experiment[
+#     ~(
+#             (df_to_experiment["dataset_name"] == "Temperature_in_Celsius")
+#             & (df_to_experiment["model"] != "SVR")
+#     )
+# ]
 
-# df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
-# df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
+df_to_experiment = df_to_experiment[df_to_experiment["dataset_name"] == "Temperature_in_Celsius"]
+df_to_experiment = df_to_experiment[df_to_experiment["model"] == "SVR"]
 
 
 # test_trajectory_cols = ["optuna_features", "horizon_selected_features"]
-# test_trajectory_cols = ["optuna_features"]
+test_trajectory_cols = ["horizon_selected_features"]
 #
 #
-# df_to_experiment = df_to_experiment[
-#     df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
-# ]
+df_to_experiment = df_to_experiment[
+    df_to_experiment["trajectory_cols"].isin(test_trajectory_cols)
+]
 
 
 if df_to_experiment is None or df_to_experiment.empty:
@@ -324,7 +324,6 @@ def run_experiment(experiment):
         experiment=experiment,
         progress_csv_path=progress_csv_path
     )
-
 
 for dataset_name, df_batch in df_to_experiment.groupby("dataset_name"):
     with ThreadPoolExecutor(max_workers=WORKERS) as executor:
