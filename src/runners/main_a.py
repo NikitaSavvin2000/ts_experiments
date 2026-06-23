@@ -117,14 +117,14 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
 #
-# df_ready_progress = pd.read_csv(progress_csv_path)
-# dataset_name_to_drop = ["russia_amur_region", "Temperature_in_Celsius"]
-# df_ready_progress = df_ready_progress[~df_ready_progress["dataset_name"].isin(dataset_name_to_drop)]
-# df_ready_progress.to_csv(progress_csv_path)
-#
-# print("WAS DROPPED!!!!!")
-# print("WAS DROPPED!!!!!")
-# print("WAS DROPPED!!!!!")
+df_ready_progress = pd.read_csv(progress_csv_path)
+dataset_name_to_drop = ["russia_amur_region", "Temperature_in_Celsius"]
+df_ready_progress = df_ready_progress[~df_ready_progress["dataset_name"].isin(dataset_name_to_drop)]
+df_ready_progress.to_csv(progress_csv_path)
+
+print("WAS DROPPED!!!!!")
+print("WAS DROPPED!!!!!")
+print("WAS DROPPED!!!!!")
 
 
 df_ready_progress = load_and_prepare_progress(
@@ -179,24 +179,16 @@ def run_experiment(experiment):
     dataset_name = experiment["dataset_name"]
     trajectory = experiment["trajectory_cols"]
 
-
-    if dataset_name == "Weather_water_temp":
-        dataset_name_monkey = "Weather"
-    elif dataset_name == "russia_amur_region":
-            dataset_name_monkey = "russia_elista"
-    else:
-        dataset_name_monkey = dataset_name
-
     lag_filtered = df_setups_lags.loc[
         (df_setups_lags["model"] == model) &
-        (df_setups_lags["dataset_name"] == dataset_name_monkey),
+        (df_setups_lags["dataset_name"] == dataset_name),
         "best_lag"
     ]
     lag = lag_filtered.iloc[0] if not lag_filtered.empty else None
 
     params_filtered = df_setups_params.loc[
         (df_setups_params["model"] == model) &
-        (df_setups_params["dataset_name"] == dataset_name_monkey),
+        (df_setups_params["dataset_name"] == dataset_name),
         "best_params"
     ]
     params = params_filtered.iloc[0] if not params_filtered.empty else None
