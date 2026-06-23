@@ -30,7 +30,7 @@ from src.pipelines.ts_pipeline import TSExperimentPipeline
 from tqdm import tqdm
 
 
-WORKERS = 1
+WORKERS = 12
 
 
 def init_deterministic(seed: int = 42):
