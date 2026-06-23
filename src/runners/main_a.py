@@ -117,14 +117,14 @@ logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
 #
-df_ready_progress = pd.read_csv(progress_csv_path)
-dataset_name_to_drop = ["russia_amur_region", "Temperature_in_Celsius"]
-df_ready_progress = df_ready_progress[~df_ready_progress["dataset_name"].isin(dataset_name_to_drop)]
-df_ready_progress.to_csv(progress_csv_path)
-
-print("WAS DROPPED!!!!!")
-print("WAS DROPPED!!!!!")
-print("WAS DROPPED!!!!!")
+# df_ready_progress = pd.read_csv(progress_csv_path)
+# dataset_name_to_drop = ["russia_amur_region", "Temperature_in_Celsius"]
+# df_ready_progress = df_ready_progress[~df_ready_progress["dataset_name"].isin(dataset_name_to_drop)]
+# df_ready_progress.to_csv(progress_csv_path)
+#
+# print("WAS DROPPED!!!!!")
+# print("WAS DROPPED!!!!!")
+# print("WAS DROPPED!!!!!")
 
 
 df_ready_progress = load_and_prepare_progress(
