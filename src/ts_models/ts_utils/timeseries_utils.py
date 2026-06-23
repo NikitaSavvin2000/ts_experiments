@@ -49,7 +49,25 @@ def create_x_input(df_train, n_steps):
 
     return df_train.iloc[-n_steps:].values
 
+import numpy as np
 
+def check_invalid_values(y_predict, name="y_predict", threshold=1e308):
+    y = np.asarray(y_predict, dtype=np.float64)
+
+    inf_mask = np.isinf(y)
+    nan_mask = np.isnan(y)
+    big_mask = np.abs(y) > threshold
+
+    if np.any(inf_mask):
+        print(f"{name}: found INF values, count={np.sum(inf_mask)}")
+
+    if np.any(nan_mask):
+        print(f"{name}: found NAN values, count={np.sum(nan_mask)}")
+
+    if np.any(big_mask):
+        print(f"{name}: found VERY LARGE values, count={np.sum(big_mask)}, max={np.nanmax(np.abs(y))}")
+
+    return y
 
 def make_predictions(x_input, x_future, n_features, model, lag, count_pred_points):
     """
@@ -69,13 +87,20 @@ def make_predictions(x_input, x_future, n_features, model, lag, count_pred_point
     predict_values = []
     for _ in range(count_pred_points):
         x_input_tensor = tf.convert_to_tensor(x_input.reshape((1, -1)), dtype=tf.float32)
-        y_predict = model.predict(x_input_tensor)
+        try:
+            y_predict = model.predict(x_input_tensor)
+        except Exception as e:
+            print(e)
         predict_values.append(y_predict)
 
         x_input = np.delete(x_input, 0, axis=1)
+
+
         future_lag = x_future[0]
         x_future = np.delete(x_future, 0, axis=0)
         future_lag[0] = y_predict
+
+
         x_input = np.append(x_input, future_lag.reshape(1, 1, -1), axis=1)
         x_input = x_input.reshape((1, lag, n_features))
 
@@ -143,6 +168,7 @@ def make_predictions_np_input(x_input, x_future, n_features, model, lag, count_p
         x_input = x_input.reshape((1, lag, n_features))
 
     return predict_values
+
 
 
 def regression_metrics(true, pred):
