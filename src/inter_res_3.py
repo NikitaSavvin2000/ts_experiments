@@ -63,7 +63,7 @@ russian_vers = ["Daily_Climate", "Istanbul_Traffic_Index", "Weather"]
 russian_vers = ["morocco_zone_1",]
 
 russian_vers = ["Temperature_in_Celsius", "Daily_Climate", "Istanbul_Traffic_Index", "russia_amur_region"]
-russian_vers = ["Weather"]
+russian_vers = ["Istanbul_Traffic_Index"]
 
 good = ["Temperature_in_Celsius", "Daily_Climate", "Istanbul_Traffic_Index", ]
 # russian_vers = ["Temperature_in_Celsius", "Daily_Climate", "Istanbul_Traffic_Index", ]

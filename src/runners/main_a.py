@@ -115,7 +115,6 @@ df_experiment_design.to_csv(experiment_design_path, index=False)
 logger.info(msg["experiment_created"].format(experiment_design_path))
 
 
-1
 #
 df_ready_progress = pd.read_csv(progress_csv_path)
 dataset_name_to_drop = ["russia_amur_region", "Daily_Climate"]
@@ -177,6 +176,9 @@ def run_experiment(experiment):
 
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
+
+    if dataset_name == "Temperature_in_Celsius":
+        continue
     trajectory = experiment["trajectory_cols"]
 
     lag_filtered = df_setups_lags.loc[

@@ -18,7 +18,7 @@ from src.ts_models.pacf_lag_selection import select_pacf_lag
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["russia_amur_region"])
+df_ts = pd.read_csv(datasets_csv_dict["Istanbul_Traffic_Index"])
 
 print(df_ts.columns)
 
@@ -28,16 +28,16 @@ print(df_ts.columns)
 
 
 # Istanbul_Traffic_Index
-# col_time = "datetime"
-# col_target = "maximum_traffic_index"
+col_time = "datetime"
+col_target = "maximum_traffic_index"
 
 # Temperature_in_Celsius
 # col_time = "Datetime"
 # col_target = "Value"
 
 # russia_amur_region
-col_time = "datetime"
-col_target = "VC_факт"
+# col_time = "datetime"
+# col_target = "VC_факт"
 
 df_ts = df_ts[[col_time, col_target]]
 
