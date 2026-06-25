@@ -177,8 +177,6 @@ def run_experiment(experiment):
     model = experiment["model"]
     dataset_name = experiment["dataset_name"]
 
-    if dataset_name == "Temperature_in_Celsius":
-        continue
     trajectory = experiment["trajectory_cols"]
 
     lag_filtered = df_setups_lags.loc[
@@ -320,6 +318,8 @@ def run_experiment(experiment):
     )
 
 for dataset_name, df_batch in df_to_experiment.groupby("dataset_name"):
+    if dataset_name == "Temperature_in_Celsius":
+        continue
     with ThreadPoolExecutor(max_workers=WORKERS) as executor:
         futures = [executor.submit(run_experiment, exp) for _, exp in df_batch.iterrows()]
         for _ in tqdm(as_completed(futures), total=len(futures)):
