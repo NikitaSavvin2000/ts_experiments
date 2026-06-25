@@ -18,12 +18,43 @@ from src.ts_models.pacf_lag_selection import select_pacf_lag
 
 logger = logging.getLogger(__name__)
 
-df_ts = pd.read_csv(datasets_csv_dict["Temperature_in_Celsius"])
+df_ts = pd.read_csv(datasets_csv_dict["russia_amur_region"])
 
-col_time = "Datetime"
-col_target = "Value"
+print(df_ts.columns)
+
+# Daily_Climate
+# col_time = "date"
+# col_target = "meantemp"
+
+
+# Istanbul_Traffic_Index
+# col_time = "datetime"
+# col_target = "maximum_traffic_index"
+
+# Temperature_in_Celsius
+# col_time = "Datetime"
+# col_target = "Value"
+
+# russia_amur_region
+col_time = "datetime"
+col_target = "VC_факт"
 
 df_ts = df_ts[[col_time, col_target]]
+
+original_dtype = df_ts[col_time].dtype
+
+df_ts[col_time] = pd.to_datetime(df_ts[col_time])
+
+df_ts = (
+    df_ts[[col_time, col_target]]
+    .sort_values(by=col_time, ascending=True)
+    .reset_index(drop=True)
+)
+
+if original_dtype == object:
+    df_ts[col_time] = df_ts[col_time].dt.strftime("%Y-%m-%d %H:%M:%S")
+else:
+    df_ts[col_time] = df_ts[col_time].astype(original_dtype)
 
 
 last_known_data = pd.to_datetime(df_ts[col_time]).max()
@@ -58,7 +89,6 @@ df_test[col_target] = None
 lag = select_pacf_lag(df=df_train, col_target=col_target, col_time=col_time, max_lag=35, logger=None)
 
 # lag = len(df_test)
-# lag = 288
 
 print(f"lag = {lag}")
 #

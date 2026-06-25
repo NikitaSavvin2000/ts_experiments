@@ -181,6 +181,22 @@ class TSExperimentPipeline:
             self.cols_to_select = [self.col_time, self.col_target] + self.additional_cols
             self.df_init = pd.read_csv(self.dataset_csv).dropna()
 
+
+            original_dtype = self.df_init[self.col_time].dtype
+
+            self.df_init[self.col_time] = pd.to_datetime(self.df_init[self.col_time])
+
+            self.df_init = (
+                self.df_init[[self.col_time, self.col_target]]
+                .sort_values(by=self.col_time, ascending=True)
+                .reset_index(drop=True)
+            )
+            
+            if original_dtype == object:
+                self.df_init[self.col_time] = self.df_init[self.col_time].dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                self.df_init[self.col_time] = self.df_init[self.col_time].astype(original_dtype)
+
             self.df_init = self.df_init[[self.col_time, self.col_target]]
 
             self.df_init = self.df_init.drop_duplicates()
